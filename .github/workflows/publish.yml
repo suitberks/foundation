@@ -10,7 +10,7 @@ jobs:
     name: Build and Publish
     runs-on: ubuntu-latest
     # Environment-scoped secret used for npm publishing.
-    environment: kalutskii-foundation-environment
+    environment: foundation-environment
     permissions:
       contents: read
 
