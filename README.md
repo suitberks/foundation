@@ -1,104 +1,125 @@
 # @esb-market-contracts/core
 
-Shared TypeScript HTTP contracts and response factories for consistent API communication across esb-market-space services.
+Shared HTTP contracts and helpers for consistent API communication across esb-market-space services.
 
-## Overview
+## What this package provides
 
-This package provides shared HTTP contract primitives used across services in the ecosystem:
-
-- response contract types
-- small factory helpers
-- contract resolver helpers
-- shared status-code constants
-
-The goal is to keep API response handling consistent between backend and frontend projects while preserving strong TypeScript typing.
+- Typed API response contracts.
+- Response factories for success and failure payloads.
+- Safe async resolvers for contract-based fetch functions.
+- A Hono helper for typed JSON success responses.
+- Utility types/helpers for query parsing and Date serialization.
 
 ## Installation
 
 ```bash
-bun add @kalutskii/foundation
+bun add @esb-market-contracts/core
 ```
+
+or
+
+```bash
+npm i @esb-market-contracts/core
+```
+
+## Core concepts
+
+Contract shape:
+
+- Success: `{ kind: 'data', status, data }`
+- Error: `{ kind: 'error', status, error }`
+
+Status code groups are exported as constants and used by types:
+
+- `SUCCESS_STATUS_CODES`
+- `EXCEPTION_STATUS_CODES`
 
 ## Usage
 
+### 1. Build typed contracts
+
 ```ts
-import type { APIError, APISuccess, APIVoidSuccess } from '@esb-market-contracts/core';
-import { failure, success, voidSuccess } from '@esb-market-contracts/core';
+import { failure, success } from '@esb-market-contracts/core';
+import type { APIContractResult } from '@esb-market-contracts/core';
 
-// Successful response with data
-const response: APISuccess<User> = success({ status: 200, data: user });
+type User = { id: string; name: string };
 
-// Successful response without data
-const created: APIVoidSuccess = voidSuccess({ status: 201 });
+const ok = success<User>({ status: 200, data: { id: '1', name: 'Kate' } });
+const bad = failure({ status: 404, error: 'User not found' });
 
-// Error response
-const error: APIError = failure({ status: 404, error: 'User not found' });
+const result: APIContractResult<User> = Math.random() > 0.5 ? ok : bad;
 ```
 
-## Typical usage pattern
+### 2. Resolve fetchers safely
 
 ```ts
+import { fetchAndThrow, fetchSafely } from '@esb-market-contracts/core';
 import type { APIContractResult } from '@esb-market-contracts/core';
-import { resolveAPIContract, withResolveAPIContract } from '@esb-market-contracts/core';
 
-declare function getUser(): Promise<APIContractResult<{ id: string; name: string }>>;
+type User = { id: string; name: string };
 
-const fetchUser = withResolveAPIContract(getUser);
+declare function getUser(): Promise<APIContractResult<User>>;
 
-try {
-  const user = await fetchUser();
-  console.log(user.name);
-} catch (error) {
-  // error is a typed APIError contract object
-  console.error(error);
+const safe = await fetchSafely(getUser);
+if (safe.error) {
+  console.error(safe.error.message);
+} else {
+  console.log(safe.data.name);
 }
 
-// or resolve directly from an awaited response
-const user = resolveAPIContract(await getUser());
+try {
+  const user = await fetchAndThrow(getUser);
+  console.log(user.name);
+} catch (error) {
+  console.error(error);
+}
 ```
 
-## API surface
+### 3. Use typed Hono JSON responses
 
-The package exports contracts, helper types, constants, factories, and resolver utilities from a single entry point.
+```ts
+import { respond } from '@esb-market-contracts/core';
+import { Hono } from 'hono';
 
-Use your editor IntelliSense or type definitions for the exact up-to-date API list.
+const app = new Hono();
+
+app.get('/health', (c) => {
+  return respond(c, {
+    status: 200,
+    data: { ok: true, now: new Date() },
+  });
+});
+```
+
+`respond` returns a typed JSON response contract and includes API error type in route output unions.
+
+### 4. Parse query params with helpers
+
+```ts
+import { asQueryBoolean, asQueryNumber } from '@esb-market-contracts/core';
+import { z } from 'zod';
+
+const pageSchema = asQueryNumber(z.number().int().min(1));
+const enabledSchema = asQueryBoolean(z.boolean());
+
+pageSchema.parse('2'); // 2
+enabledSchema.parse('yes'); // true
+enabledSchema.parse('off'); // false
+```
+
+## Exports
+
+The package exports all public APIs from a single entrypoint:
+
+- HTTP constants, schemas, factories, and resolvers.
+- Hono `respond` helper.
+- Serialization/query utilities, including `SerializeDates`.
 
 ## Development
 
 ```bash
 bun install
+bun run lint
 bun run typecheck
 bun run build
 ```
-
-## Git flow and releases
-
-This repository uses a simple trunk-based flow.
-
-1. Create a feature branch from `main`.
-2. Open a PR and merge into `main`.
-3. Bump `version` in `package.json` before merge or in the merge commit.
-4. Push to `main`.
-5. GitHub Actions builds and publishes automatically if this version does not yet exist on npm.
-
-No release tags are required for publishing.
-
-## CI publish flow
-
-- Workflow: `.github/workflows/publish.yml`
-- Trigger: push to `main` or manual `workflow_dispatch`
-- Publish secret source: GitHub Environment `esb-market-contracts-environment`
-- Required secret: `NPM_TOKEN`
-
-The workflow logic:
-
-1. Installs dependencies with Bun.
-2. Runs typecheck and build.
-3. Reads package `name` + `version`.
-4. Checks npm registry for the same version.
-5. Publishes only when that version is not already published.
-
-## Notes
-
-- Keep this README high-level.
-- Treat source code and type definitions as the single source of truth for exact runtime/type behavior.
