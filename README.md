@@ -1,6 +1,6 @@
 # @kalutskii/foundation
 
-Shared HTTP contracts and helpers for consistent API communication across esb-market-space services.
+Collection of utilities, types, and helpers for building typed API contracts and responses in TypeScript projects. Designed for use in Bun/Node.js and Cloudflare Workers environments.
 
 ## What this package provides
 

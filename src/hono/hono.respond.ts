@@ -2,7 +2,7 @@ import type { Context, TypedResponse } from 'hono';
 
 import { success } from '@/http/http.factory';
 import type { APIError, APISuccess, SuccessStatusCode } from '@/http/http.schemas';
-import type { SerializeDates } from '@/utilities/serialize.utilities';
+import type { SerializeDates } from '@/utilities/serialization.utilities';
 
 /**
  * Wraps c.json with a typed success payload & possible APIError.
