@@ -1,6 +1,7 @@
-import { getColoredHTTPStatus, log } from '@kalutskii/foundation';
 import type { MiddlewareHandler } from 'hono';
 import { blue, bold, dim, white } from 'kleur/colors';
+
+import { getColoredHTTPStatus, log } from '@/utilities/logging.utilities';
 
 /**
  * Request logging middleware for Hono, providing detailed logs for each incoming request.
