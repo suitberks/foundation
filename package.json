@@ -1,6 +1,6 @@
 {
   "name": "@kalutskii/foundation",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Typescript collection of most common utilities, schemas and functions among private projects.",
   "type": "module",
   "repository": {
