@@ -5,7 +5,7 @@ export async function fetchSafely<TResult extends APIContractResult<unknown>>(
   fetcher: () => Promise<TResult>
 ): Promise<FetchResult<APIContractData<TResult>>> {
   const response = await fetcher();
-  if (response.kind === 'error') return { error: new Error(response.error), data: null };
+  if (response.kind === 'error') return { error: response.error, data: null };
   return { error: null, data: response.data as APIContractData<TResult> };
 }
 

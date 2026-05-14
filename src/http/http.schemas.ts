@@ -18,4 +18,4 @@ export type APIContractData<TResult extends APIContractResult<unknown>> =
 export type APIContractError<TResult extends APIContractResult<unknown>> = Extract<TResult, APIError>;
 
 /** Discriminated union result of a fetch operation. If `error` is set, `data` is null and vice versa. */
-export type FetchResult<T> = { error: null; data: T } | { error: Error; data: null };
+export type FetchResult<T> = { error: null; data: T } | { error: string; data: null };
