@@ -26,7 +26,7 @@ async function fetchAndThrow(fetcher) {
 
 // src/hono/hono.execution.ts
 import { HTTPException } from "hono/http-exception";
-import { red as red2 } from "kleur";
+import { red as red2 } from "kleur/colors";
 
 // src/utilities/generation.utilities.ts
 var DEFAULT_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

@@ -1,6 +1,6 @@
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { red } from 'kleur';
+import { red } from 'kleur/colors';
 
 import { failure } from '@/http/http.factory';
 import type { APIError, ExceptionStatusCode } from '@/http/http.schemas';
