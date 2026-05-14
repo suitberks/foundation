@@ -1,6 +1,7 @@
 # @kalutskii/foundation
 
-Collection of utilities, types, and helpers for building typed API contracts and responses in TypeScript projects. Designed for use in Bun/Node.js and Cloudflare Workers environments.
+Collection of utilities, types, and helpers for building typed API contracts and responses in TypeScript projects.
+Designed for use in Bun/Node.js and Cloudflare Workers environments.
 
 ## What this package provides
 
@@ -62,7 +63,7 @@ declare function getUser(): Promise<APIContractResult<User>>;
 
 const safe = await fetchSafely(getUser);
 if (safe.error) {
-  console.error(safe.error.message);
+  console.error(safe.error);
 } else {
   console.log(safe.data.name);
 }
