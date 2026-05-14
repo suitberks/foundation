@@ -1,4 +1,4 @@
-# @esb-market-contracts/core
+# @kalutskii/foundation
 
 Shared HTTP contracts and helpers for consistent API communication across esb-market-space services.
 
@@ -13,13 +13,13 @@ Shared HTTP contracts and helpers for consistent API communication across esb-ma
 ## Installation
 
 ```bash
-bun add @esb-market-contracts/core
+bun add @kalutskii/foundation
 ```
 
 or
 
 ```bash
-npm i @esb-market-contracts/core
+npm i @kalutskii/foundation
 ```
 
 ## Core concepts
@@ -39,8 +39,8 @@ Status code groups are exported as constants and used by types:
 ### 1. Build typed contracts
 
 ```ts
-import { failure, success } from '@esb-market-contracts/core';
-import type { APIContractResult } from '@esb-market-contracts/core';
+import { failure, success } from '@kalutskii/foundation';
+import type { APIContractResult } from '@kalutskii/foundation';
 
 type User = { id: string; name: string };
 
@@ -53,8 +53,8 @@ const result: APIContractResult<User> = Math.random() > 0.5 ? ok : bad;
 ### 2. Resolve fetchers safely
 
 ```ts
-import { fetchAndThrow, fetchSafely } from '@esb-market-contracts/core';
-import type { APIContractResult } from '@esb-market-contracts/core';
+import { fetchAndThrow, fetchSafely } from '@kalutskii/foundation';
+import type { APIContractResult } from '@kalutskii/foundation';
 
 type User = { id: string; name: string };
 
@@ -78,7 +78,7 @@ try {
 ### 3. Use typed Hono JSON responses
 
 ```ts
-import { respond } from '@esb-market-contracts/core';
+import { respond } from '@kalutskii/foundation';
 import { Hono } from 'hono';
 
 const app = new Hono();
@@ -96,7 +96,7 @@ app.get('/health', (c) => {
 ### 4. Parse query params with helpers
 
 ```ts
-import { asQueryBoolean, asQueryNumber } from '@esb-market-contracts/core';
+import { asQueryBoolean, asQueryNumber } from '@kalutskii/foundation';
 import { z } from 'zod';
 
 const pageSchema = asQueryNumber(z.number().int().min(1));
