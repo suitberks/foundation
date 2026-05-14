@@ -16,7 +16,7 @@ The goal is to keep API response handling consistent between backend and fronten
 ## Installation
 
 ```bash
-bun add @esb-market-contracts/core
+bun add @kalutskii/foundation
 ```
 
 ## Usage

@@ -4,8 +4,8 @@ import { red } from 'kleur';
 
 import { failure } from '@/http/http.factory';
 import type { APIError, ExceptionStatusCode } from '@/http/http.schemas';
-import { generateRandomString } from '@/utilities/generation.utils';
-import { log } from '@/utilities/logging.utils';
+import { generateRandomString } from '@/utilities/generation.utilities';
+import { log } from '@/utilities/logging.utilities';
 
 function proceedUnhandledError(error: unknown): APIError {
   // Handles unrecognized errors by logging them with a unique ID and
