@@ -12,3 +12,6 @@ export * from './utilities/execution.utilities';
 export * from './utilities/generation.utilities';
 export * from './utilities/logging.utilities';
 export * from './utilities/serialization.utilities';
+
+export * from './zod-jwt/zod-jwt.schemas';
+export * from './zod-jwt/zod-jwt.types';
