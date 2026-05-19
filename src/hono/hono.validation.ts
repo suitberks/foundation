@@ -8,7 +8,7 @@ import { safeExecute } from '@/utilities/execution.utilities';
 type PayloadTarget = Extract<keyof ValidationTargets, 'json' | 'query' | 'param'>;
 
 /** Fallback error message when payload reading/parsing fails without a specific error. */
-const FALLBACK_ERROR_MESSAGE = 'Failed to read payload';
+const FALLBACK_ERROR_MESSAGE = 'Failed to decode request payload, please ensure it is correctly formatted.';
 
 /** Raw payload readers for each supported target, keyed by {@link PayloadTarget}. */
 export const requestReaders = {
