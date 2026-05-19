@@ -12,7 +12,13 @@ const FALLBACK_ERROR_MESSAGE = 'Failed to read payload';
 
 /** Raw payload readers for each supported target, keyed by {@link PayloadTarget}. */
 export const requestReaders = {
-  json: async (c: Context): Promise<unknown> => c.req.json(),
+  json: async (c: Context): Promise<unknown> =>
+    safeExecute(
+      () => c.req.json(),
+      () => {
+        throw new HTTPException(400, { message: FALLBACK_ERROR_MESSAGE });
+      }
+    ),
   query: (c: Context): unknown => c.req.query(),
   param: (c: Context): unknown => c.req.param(),
 } satisfies Record<PayloadTarget, (c: Context) => unknown>;
@@ -26,16 +32,9 @@ export async function requirePayload<TSchema extends z.ZodTypeAny>(
   target: PayloadTarget,
   schema: TSchema
 ): Promise<z.infer<TSchema>> {
-  return safeExecute(
-    async () => {
-      const rawPayload = await requestReaders[target](c);
-      const parsedPayload = await schema.safeParseAsync(rawPayload);
+  const rawPayload = await requestReaders[target](c);
+  const parsedPayload = await schema.safeParseAsync(rawPayload);
 
-      if (parsedPayload.success) return parsedPayload.data;
-      throw new HTTPException(400, { message: parsedPayload.error.message });
-    },
-    () => {
-      throw new HTTPException(400, { message: FALLBACK_ERROR_MESSAGE });
-    }
-  );
+  if (parsedPayload.success) return parsedPayload.data;
+  throw new HTTPException(400, { message: parsedPayload.error.message });
 }
