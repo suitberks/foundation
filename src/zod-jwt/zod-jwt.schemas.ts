@@ -1,4 +1,4 @@
-import { sign as signJWT, verify as verifyJWT } from 'hono/jwt';
+import { decode as decodeJWT, sign as signJWT, verify as verifyJWT } from 'hono/jwt';
 import type { SymmetricAlgorithm } from 'hono/utils/jwt/jwa';
 import type z from 'zod';
 
@@ -21,17 +21,28 @@ export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
    * Signs a JWT token with the provided payload and secret, using the configured algorithm and expiration settings.
    * Example usage: `const accessToken = await JWTServiceInstance.sign({ userId: 123 }, 'my-secret', { expiresInSeconds: 300 });`
    */
-  async sign(payload: z.infer<TSchema>, secret: string, options?: JWTSignOptions): Promise<string> {
+  public async sign(payload: z.infer<TSchema>, secret: string, options?: JWTSignOptions): Promise<string> {
     const exp = Math.floor(Date.now() / 1000) + (options?.expiresInSeconds ?? this.defaultExpirationSeconds);
 
     return signJWT({ ...payload, exp }, secret, this.algorithm);
   }
 
   /**
+   * Decodes a JWT token, and validates the payload against the Zod payload schema.
+   * Note: This method does NOT verify the token's signature or check for expiration.
+   */
+  public async decode(token: string): Promise<z.infer<TSchema> | null> {
+    const { payload } = decodeJWT(token);
+    const { success, data } = await this.payloadSchema.safeParseAsync(payload);
+
+    return success ? data : null;
+  }
+
+  /**
    * Verifies and decodes a JWT token using the provided secret and configured algorithm,
    * then validates the payload against the Zod schema, also throws on expired tokens.
    */
-  async verifyOrThrow(token: string, secret: string): Promise<z.infer<TSchema>> {
+  public async verifyOrThrow(token: string, secret: string): Promise<z.infer<TSchema>> {
     const payload = await verifyJWT(token, secret, this.algorithm);
 
     return this.payloadSchema.parse(payload);
