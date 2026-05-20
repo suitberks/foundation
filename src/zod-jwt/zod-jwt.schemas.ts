@@ -28,7 +28,7 @@ export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
   }
 
   /**
-   * Decodes a JWT token, and validates the payload against the Zod payload schema.
+   * Decodes a JWT token, and validates the payload against the Zod schema.
    * Note: This method does NOT verify the token's signature or check for expiration.
    */
   public async decode(token: string): Promise<z.infer<TSchema> | null> {
