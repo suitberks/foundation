@@ -12,7 +12,7 @@ function proceedUnhandledError(error: unknown): APIError {
   // returning a generic 500 response with the error ID for reference.
 
   const errorId = generateRandomString(6);
-  const errorMessage = error instanceof Error ? error.message + error.stack : JSON.stringify(error);
+  const errorMessage = error instanceof Error ? (error.stack ?? error.message) : JSON.stringify(error);
 
   log.error(`Unhandled error: ${red(errorMessage)}`, errorId);
   return failure({ status: 500, error: `Internal server error | ${errorId}` });

@@ -7,13 +7,13 @@ import { getFormattedTime } from './datetime.utilities';
  * 2xx - green, 4xx - yellow, 5xx - red, others - default color.
  */
 export function getColoredHTTPStatus(status: number): (text: string) => string {
-  const colorMap = [
+  const colorMap: { range: [number, number]; colorFn: (text: string) => string }[] = [
     { range: [200, 299], colorFn: green },
     { range: [400, 499], colorFn: yellow },
     { range: [500, 599], colorFn: red },
   ];
 
-  const statusColor = colorMap.find(({ range: [min, max] }) => status >= (min || 0) && status <= (max || 600));
+  const statusColor = colorMap.find(({ range: [min, max] }) => status >= min && status <= max);
   return statusColor ? statusColor.colorFn : (text: string) => text;
 }
 
@@ -23,7 +23,7 @@ function writeLog(message: string, level: 'info' | 'warn' | 'error', service: st
   const logColorMap = { info: blue, warn: yellow, error: red } satisfies Record<typeof level, (text: string) => string>;
 
   const timestamp = dim(getFormattedTime());
-  const serviceName = logColorMap[level](service).padEnd(18);
+  const serviceName = logColorMap[level](service.padEnd(12));
   const formattedMessage = white(message);
 
   console.log(`[${timestamp}] ${serviceName} | ${formattedMessage}`);

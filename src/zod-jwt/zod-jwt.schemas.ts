@@ -45,6 +45,6 @@ export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
   public async verifyOrThrow(token: string, secret: string): Promise<z.infer<TSchema>> {
     const payload = await verifyJWT(token, secret, this.algorithm);
 
-    return this.payloadSchema.parse(payload);
+    return this.payloadSchema.parseAsync(payload);
   }
 }
