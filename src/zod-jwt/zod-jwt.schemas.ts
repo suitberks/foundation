@@ -5,12 +5,12 @@ import type z from 'zod';
 import type { JWTServiceOptions, JWTSignOptions } from './zod-jwt.types';
 
 export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
-  public readonly payloadSchema: TSchema;
+  public readonly payloadSchema: TSchema | undefined;
 
   protected readonly algorithm: SymmetricAlgorithm;
   protected readonly defaultExpirationSeconds: number;
 
-  constructor(payloadSchema: TSchema, options?: JWTServiceOptions) {
+  constructor(payloadSchema?: TSchema, options?: JWTServiceOptions) {
     this.payloadSchema = payloadSchema;
 
     this.algorithm = options?.algorithm ?? 'HS256';
@@ -33,6 +33,8 @@ export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
    */
   public async decode(token: string): Promise<z.infer<TSchema> | null> {
     const { payload } = decodeJWT(token);
+
+    if (!this.payloadSchema) return payload as z.infer<TSchema>;
     const { success, data } = await this.payloadSchema.safeParseAsync(payload);
 
     return success ? data : null;
@@ -44,6 +46,8 @@ export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
    */
   public async verifyOrThrow(token: string, secret: string): Promise<z.infer<TSchema>> {
     const payload = await verifyJWT(token, secret, this.algorithm);
+
+    if (!this.payloadSchema) return payload as z.infer<TSchema>;
 
     return this.payloadSchema.parseAsync(payload);
   }
