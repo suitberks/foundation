@@ -35,8 +35,8 @@ export class ZodJWTService<TSchema extends z.ZodObject<z.ZodRawShape>> {
     const { payload } = decodeJWT(token);
 
     if (!this.payloadSchema) return payload as z.infer<TSchema>;
-    const { success, data } = await this.payloadSchema.safeParseAsync(payload);
 
+    const { success, data } = await this.payloadSchema.safeParseAsync(payload);
     return success ? data : null;
   }
 
