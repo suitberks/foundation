@@ -1,4 +1,4 @@
-import type { APIContractData, APIContractResult, APIError, FetchResult } from './http.schemas';
+import type { APIContractData, APIContractResult, FetchResult } from './http.schemas';
 
 /** Resolves an APIContractResult fetcher into a FetchResult discriminated union. */
 export async function fetchSafely<TResult extends APIContractResult<unknown>>(
