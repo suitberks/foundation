@@ -18,10 +18,12 @@ export async function fetchAndThrow<TResult extends APIContractResult<unknown>>(
   return response.data as APIContractData<TResult>;
 }
 
-export function isAPIResponse<TResponse>(response: TResponse): response is TResponse & APIContractResult<unknown> {
-  if (typeof response !== 'object' || response === null) return false;
-  if (!('kind' in response) || !('status' in response)) return false;
+/** Pure type guard to check if a response is an APIContractResult. */
+export function isAPIResponse<TResponseData extends object>(
+  responseData: TResponseData
+): responseData is TResponseData & APIContractResult<unknown> {
+  if (!('kind' in responseData) || !('status' in responseData)) return false;
 
-  const { kind, status } = response as { kind?: unknown; status?: unknown };
+  const { kind, status } = responseData as { kind?: unknown; status?: unknown };
   return (kind === 'data' || kind === 'error') && (typeof status === 'number' || typeof status === 'string');
 }
