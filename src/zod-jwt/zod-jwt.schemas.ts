@@ -3,6 +3,10 @@ import type { SymmetricAlgorithm } from 'hono/utils/jwt/jwa';
 
 import type { JWTServiceOptions, JWTSignOptions, Payload, PayloadSchema } from './zod-jwt.types';
 
+/**
+ * A service class for handling JWT operations with optional Zod schema validation for the payload.
+ * The class is generic, allowing you to specify the type of the payload or a schema for validation.
+ */
 export class ZodJWTService<TPayloadOrSchema> {
   public readonly payloadSchema: PayloadSchema<TPayloadOrSchema> | undefined;
 
@@ -27,8 +31,9 @@ export class ZodJWTService<TPayloadOrSchema> {
   }
 
   /**
-   * Decodes a JWT token, and validates the payload against the Zod schema.
-   * Note: This method does NOT verify the token's signature or check for expiration.
+   * Decodes a JWT token, and if a Zod schema is provided, validates the payload against it.
+   * Returns the decoded payload if valid, or null if invalid or if the token cannot be decoded.
+   * Example usage: `const payload = await JWTServiceInstance.decode(token);`
    */
   public async decode(token: string): Promise<Payload<TPayloadOrSchema> | null> {
     const { payload } = decodeJWT(token);
@@ -43,7 +48,8 @@ export class ZodJWTService<TPayloadOrSchema> {
 
   /**
    * Verifies and decodes a JWT token using the provided secret and configured algorithm,
-   * then validates the payload against the Zod schema, also throws on expired tokens.
+   * then validates the payload against the Zod schema if one is provided. Throws an error if verification fails or if the payload is invalid.
+   * Example usage: `const payload = await JWTServiceInstance.verifyOrThrow(token, 'my-secret');`
    */
   public async verifyOrThrow(token: string, secret: string): Promise<Payload<TPayloadOrSchema>> {
     const payload = await verifyJWT(token, secret, this.algorithm);
