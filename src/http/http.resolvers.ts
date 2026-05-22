@@ -1,4 +1,4 @@
-import type { APIContractData, APIContractResult, FetchResult } from './http.schemas';
+import type { APIContractData, APIContractResult, APIError, FetchResult } from './http.schemas';
 
 /** Resolves an APIContractResult fetcher into a FetchResult discriminated union. */
 export async function fetchSafely<TResult extends APIContractResult<unknown>>(
@@ -16,4 +16,13 @@ export async function fetchAndThrow<TResult extends APIContractResult<unknown>>(
   const response = await fetcher();
   if (response.kind === 'error') throw new Error(response.error);
   return response.data as APIContractData<TResult>;
+}
+
+/** Pure type guard for APIError responses, used to narrow the type of a response object. */
+export function isErrorResponse<TResponse>(response: TResponse): response is TResponse & APIError {
+  if (typeof response !== 'object' || response === null) return false;
+  if (!('kind' in response) || !('status' in response)) return false;
+
+  const { kind, status } = response as { kind?: unknown; status?: unknown };
+  return kind === 'error' && (typeof status === 'number' || typeof status === 'string');
 }
