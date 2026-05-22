@@ -18,11 +18,10 @@ export async function fetchAndThrow<TResult extends APIContractResult<unknown>>(
   return response.data as APIContractData<TResult>;
 }
 
-/** Pure type guard for APIError responses, used to narrow the type of a response object. */
-export function isErrorResponse<TResponse>(response: TResponse): response is TResponse & APIError {
+export function isAPIResponse<TResponse>(response: TResponse): response is TResponse & APIContractResult<unknown> {
   if (typeof response !== 'object' || response === null) return false;
   if (!('kind' in response) || !('status' in response)) return false;
 
   const { kind, status } = response as { kind?: unknown; status?: unknown };
-  return kind === 'error' && (typeof status === 'number' || typeof status === 'string');
+  return (kind === 'data' || kind === 'error') && (typeof status === 'number' || typeof status === 'string');
 }
