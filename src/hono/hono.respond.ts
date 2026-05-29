@@ -5,8 +5,8 @@ import type { APIError, APISuccess, SuccessStatusCode } from '@/http/http.schema
 import type { SerializeDates } from '@/utilities/serialization.utilities';
 
 /**
- * Wraps c.json with a typed success payload & possible APIError.
- * When no data is provided, responds with an empty object {}.
+ * Wraps c.json with a typed success payload / (or void data) & possible APIError response.
+ * When no data is provided, responds with an empty object {} (purely for type consistency).
  */
 export function respond<T extends object = Record<string, never>, S extends SuccessStatusCode = SuccessStatusCode>(
   c: Context,

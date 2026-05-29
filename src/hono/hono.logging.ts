@@ -4,7 +4,7 @@ import { blue, bold, dim, white } from 'kleur/colors';
 import { getColoredHTTPStatus, log } from '@/utilities/logging.utilities';
 
 /**
- * Request logging middleware for Hono, providing detailed logs for each incoming request.
+ * Request logging middleware for Hono, providing deeply detailed logs for each incoming request.
  * Example log output: [12:12:12 (+4 UTC)] hono     | POST 200  123ms /api/v1/users (search=term)
  */
 export const honoLoggingHandler: MiddlewareHandler = async (c, next) => {

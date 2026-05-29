@@ -34,7 +34,7 @@ function writeLog(message: string, level: 'info' | 'warn' | 'error', service: st
 
 /**
  * Unified logging interface for different levels (info, warn, error)
- * with optional service name and stack trace for errors.
+ * with optional service name and stack trace for errors (error level).
  */
 export const log = {
   info: (message: string, service?: string) => writeLog(message, 'info', service),

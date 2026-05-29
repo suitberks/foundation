@@ -3,8 +3,8 @@ import { type ZodNumber, z } from 'zod';
 /**
  * Type utility that recursively transforms all Date fields to string, as well as handling arrays and objects.
  * This is necessary for proper typing when working with RPC, as JSON does not support the Date type directly.
- * Example: SerializeDates<{ createdAt: Date; nested: { updatedAt: Date }; tags: Date[] }> \
- * = { createdAt: string; nested: { updatedAt: string }; tags: string[] }
+ * Example usage: `SerializeDates<{ createdAt: Date; nested: { updatedAt: Date }; tags: Date[] }>` \
+ * = `{ createdAt: string; nested: { updatedAt: string }; tags: string[] }`
  */
 export type SerializeDates<T> = T extends Date
   ? string
@@ -18,7 +18,7 @@ export type SerializeDates<T> = T extends Date
 
 /**
  * Transforms a string to a number (when passing query parameters).
- * Example: asQueryNumber(z.number())('123') = 123
+ * Example usage: `asQueryNumber(z.number())('123') = 123`
  */
 export const asQueryNumber = <T extends ZodNumber>(schema: T) =>
   z.preprocess((v) => (typeof v === 'string' ? Number(v) : v), schema);

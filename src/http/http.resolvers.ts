@@ -1,6 +1,10 @@
 import type { APIContractData, APIContractResult, FetchResult } from './http.schemas';
 
-/** Resolves an APIContractResult fetcher into a FetchResult discriminated union. */
+/**
+ * Resolves an APIContractResult fetcher into a FetchResult discriminated union.
+ * Does not throw errors, instead returning them in the error property of the FetchResult.
+ * Example usage: const result = await fetchSafely(() => api.fetchUser(userId));
+ */
 export async function fetchSafely<TResult extends APIContractResult<unknown>>(
   fetcher: () => Promise<TResult>
 ): Promise<FetchResult<APIContractData<TResult>>> {
@@ -10,7 +14,10 @@ export async function fetchSafely<TResult extends APIContractResult<unknown>>(
   return { error: null, data: response.data as APIContractData<TResult> };
 }
 
-/** Resolves an APIContractResult fetcher, throwing an error if the result is an APIError. */
+/**
+ * Resolves an APIContractResult fetcher, throwing an error if the result is an APIError.
+ * Example usage: const data = await fetchAndThrow(() => api.fetchUser(userId));
+ */
 export async function fetchAndThrow<TResult extends APIContractResult<unknown>>(
   fetcher: () => Promise<TResult>
 ): Promise<APIContractData<TResult>> {
