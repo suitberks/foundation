@@ -33,6 +33,7 @@ export class ZodJWTService<TPayloadOrSchema> {
   /**
    * Decodes a JWT token, and if a Zod schema is provided, validates the payload against it.
    * Returns the decoded payload if valid, or null if invalid or if the token cannot be decoded.
+   *
    * Example usage: `const payload = await JWTServiceInstance.decode(token);`
    */
   public async decode(token: string): Promise<Payload<TPayloadOrSchema> | null> {
@@ -48,7 +49,9 @@ export class ZodJWTService<TPayloadOrSchema> {
 
   /**
    * Verifies and decodes a JWT token using the provided secret and configured algorithm,
-   * then validates the payload against the Zod schema if one is provided. Throws an error if verification fails or if the payload is invalid.
+   * then validates the payload against the Zod schema if one is provided.
+   *
+   * Throws an error if verification fails or if the payload is invalid according to the schema.
    * Example usage: `const payload = await JWTServiceInstance.verifyOrThrow(token, 'my-secret');`
    */
   public async verifyOrThrow(token: string, secret: string): Promise<Payload<TPayloadOrSchema>> {
