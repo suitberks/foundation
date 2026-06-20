@@ -1,3 +1,5 @@
+# Read more about ignoring files here: https://docs.npmjs.com/cli/v8/using-npm/developers
+
 src/
 *.config.ts
 *.config.js

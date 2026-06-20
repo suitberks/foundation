@@ -7,11 +7,11 @@ import type { PaginationOptions } from './pagination.schemas';
  *
  * ```ts
  * await db.query.someTable.findMany({
- *   ...getPagination(options),
+ *   ...refinePagination(options),
  * });
  * ```
  */
-export const getPagination = (options?: PaginationOptions) => {
+export const refinePagination = (options?: PaginationOptions) => {
   const pagination: PaginationOptions = {};
 
   if (options?.offset !== undefined) {

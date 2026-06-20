@@ -1,15 +1,15 @@
+// A union type representing all primitive types that can be directly serialized to query parameters.
+type QueryPrimitive = string | number | boolean | bigint | Date | null | undefined;
+
 /**
- * Type utility that recursively transforms all Date fields to string, as well as handling arrays and objects.
- * This is necessary for proper typing when working with RPC, as JSON does not support the Date type directly.
- * Example usage: `SerializeDates<{ createdAt: Date; nested: { updatedAt: Date }; tags: Date[] }>` \
- * = `{ createdAt: string; nested: { updatedAt: string }; tags: string[] }`
+ * Type utility that recursively transforms all fields to string, as well as handling arrays and objects.
+ * This is useful for serializing complex data structures into query parameters, which must be strings.
+ * Example usage: `AsQuery<{ id: number; name: string; tags: string[] }>` = `{ id: string; name: string; tags: string[] }`
  */
-export type SerializeDates<T> = T extends Date
+export type AsQuery<T> = T extends QueryPrimitive
   ? string
-  : T extends (infer U)[] // Arrays
-    ? SerializeDates<U>[]
-    : T extends readonly (infer U)[]
-      ? readonly SerializeDates<U>[]
-      : T extends object // Object
-        ? { [K in keyof T]: SerializeDates<T[K]> }
-        : T;
+  : T extends readonly (infer Item)[]
+    ? AsQuery<Item>[]
+    : T extends object
+      ? { [Key in keyof T]: AsQuery<T[Key]> }
+      : string;

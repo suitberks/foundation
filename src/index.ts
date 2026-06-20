@@ -8,7 +8,7 @@ export * from './http/http.resolvers';
 export * from './http/http.schemas';
 
 export * from './pagination/pagination.schemas';
-export * from './pagination/pagination.utilities';
+export * from './pagination/pagination.refiners';
 
 export * from './utilities/datetime.utilities';
 export * from './utilities/execution.utilities';
