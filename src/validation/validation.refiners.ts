@@ -4,8 +4,13 @@ import z from 'zod';
  * Transforms a string to a number (when passing query parameters).
  * Example usage: `asQueryNumber(z.number())('123') = 123`
  */
-export const asQueryNumber = <T extends z.ZodNumber | z.ZodInt>(schema: T) =>
-  z.preprocess((v) => (typeof v === 'string' ? Number(v) : v), schema);
+export const asQueryNumber = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => {
+    if (typeof value !== 'string') return value;
+    if (value.trim() === '') return value;
+
+    return Number(value);
+  }, schema);
 
 /**
  * Transforms various string representations of boolean values into actual booleans.
