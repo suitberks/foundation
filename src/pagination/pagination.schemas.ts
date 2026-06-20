@@ -1,5 +1,7 @@
 import z from 'zod';
 
+import { asQueryNumber } from '@/validation/validation.refiners';
+
 /**
  * A Zod schema for validating pagination options, specifically the `offset` and `limit` parameters.
  * - `offset`: An optional non-negative integer representing the starting point for pagination.
@@ -14,8 +16,8 @@ import z from 'zod';
  * ```
  */
 export const paginationSchema = z.object({
-  offset: z.number().int().nonnegative().optional(),
-  limit: z.number().int().positive().optional(),
+  offset: asQueryNumber(z.number().int().nonnegative()).optional(),
+  limit: asQueryNumber(z.number().int().positive()).optional(),
 });
 
 /**
