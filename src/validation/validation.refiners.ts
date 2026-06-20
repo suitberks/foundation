@@ -1,37 +1,29 @@
 import z from 'zod';
 
-// Default error message about at least one key being required.
-const AT_LEAST_ONE_DEFINED_ERROR = (keys: (string | number | symbol)[]) =>
-  `At least one of the specified keys must be defined: ${keys.join(', ')}`;
+import { AT_LEAST_ONE_DEFINED_ERROR } from './validation.messages';
+import type { AtLeastOne } from './validation.types';
 
 /**
- * A Zod refinement function that ensures at least one of the specified keys in a Zod object schema is defined.
- * This is useful for validating input where at least one of several optional fields must be provided.
+ * Refines a Zod object schema to ensure that at least one of its keys is defined.
+ * This is useful for validating objects where at least one property must be present.
  *
  * ```ts
- * const mySchema = atLeastOneDefined(
- *   z.object({
- *     name: z.string().optional(),
- *     email: z.string().email().optional(),
- *     phone: z.string().optional(),
- *   })
- * );
- *
- * // Valid: { name: "Alice" }, { email: "alice@example.com" }, { phone: "123-456-7890" }
- * // Invalid: {}, { name: undefined, email: undefined, phone: undefined }
+ * const mySchema = z.object({
+ *   a: z.string()
+ *   b: z.number()
+ * }).refine(atLeastOneDefined);
  * ```
  */
-export const atLeastOneDefined = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
+export const atLeastOneDefined = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>
+): z.ZodType<AtLeastOne<z.infer<z.ZodObject<T>>>> => {
   const keys = Object.keys(schema.shape) as (keyof T)[];
 
-  return schema.refine(
-    (value) =>
-      keys.some(
-        (key) =>
-          (value as Record<keyof T, unknown>)[key] !== undefined && (value as Record<keyof T, unknown>)[key] !== null
-      ),
-    { message: AT_LEAST_ONE_DEFINED_ERROR(keys) }
-  );
+  return schema
+    .partial()
+    .refine((value) => keys.some((key) => (value as Record<string, unknown>)[key as string] != null), {
+      message: AT_LEAST_ONE_DEFINED_ERROR(keys),
+    }) as unknown as z.ZodType<AtLeastOne<z.infer<z.ZodObject<T>>>>;
 };
 
 /**
