@@ -2,7 +2,7 @@ import type { Context, TypedResponse } from 'hono';
 
 import { success } from '@/http/http.factory';
 import type { APIError, APISuccess, SuccessStatusCode } from '@/http/http.schemas';
-import type { AsQuery } from '@/utilities/serialization.utilities';
+import type { AsQuery } from '@/zod-validation/zod-validation.types';
 
 /**
  * Wraps c.json with a typed success payload / (or void data) & possible APIError response.

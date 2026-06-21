@@ -15,8 +15,12 @@ export type JWTSignOptions = {
   expiresInSeconds?: number;
 };
 
-/** Utility types for inferring payload types from Zod schemas. */
+/**
+ * Utility types for inferring payload types from Zod schemas.
+ */
 export type Payload<T> = T extends z.ZodType ? z.infer<T> : T;
 
-/** Utility type to extract the payload schema type from a Zod schema. */
+/**
+ * Utility type to extract the payload schema type from a Zod schema.
+ * */
 export type PayloadSchema<T> = T extends z.ZodType ? T : never;

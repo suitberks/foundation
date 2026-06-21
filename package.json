@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "tsup",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
     "typecheck": "tsc --noEmit"
   },
   "exports": {
