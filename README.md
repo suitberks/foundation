@@ -10,7 +10,7 @@ Designed for use in Bun/Node.js and Cloudflare Workers environments.
 - Execution utilities: safe async execution and execution time measurement.
 - Datetime utilities: timezone-aware formatting helpers.
 - Logging utility: unified colored log interface.
-- Random string generation.
+- Random string generation utility.
 - JWT service with optional Zod schema validation.
 - Zod helpers for query param coercion, pagination schemas, and type utilities.
 
