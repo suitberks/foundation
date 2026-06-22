@@ -1,4 +1,4 @@
-import type { Simplify } from '../../dist';
+import type { Simplify } from 'drizzle-orm';
 
 // All primitive types that can be directly serialized to query parameters.
 type QueryPrimitive = string | number | boolean | bigint | Date;
