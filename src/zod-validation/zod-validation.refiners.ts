@@ -1,6 +1,7 @@
-import type { AtLeastOne } from '@kalutskii/foundation';
 import type { z } from 'zod';
 import type { ZodObject, ZodRawShape } from 'zod';
+
+import type { AtLeastOne } from './zod-validation.types';
 
 // Default error message for the "at least one field required" validation.
 const DEFAULT_ERROR_MESSAGE = 'Invalid input. At least one field must be provided.';
