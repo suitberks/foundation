@@ -2,9 +2,9 @@ import z from 'zod';
 
 export const zodPaginationSchema = z.object({
   /** Integer representing the starting point for pagination. */
-  offset: z.coerce.number().int().nonnegative().optional(),
+  offset: z.coerce.number().int().nonnegative().default(0).optional(),
   /** Integer representing the maximum number of items to return. */
-  limit: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().default(10).optional(),
 });
 
 /**
