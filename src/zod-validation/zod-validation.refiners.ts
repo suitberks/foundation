@@ -1,10 +1,16 @@
 import z from 'zod';
 
+import { isPlainObject } from './zod-validation.utilities';
+
 export const parseQueryValue = (value: unknown): unknown => {
-  // Converts only unambiguous primitive values before Zod validation, so
-  // schemas like z.number() and z.boolean() сan correctly parse the values.
+  // Converts only unambiguous primitive query values before Zod validation, so regular
+  // z.number() and z.boolean() schemas can correctly parse string-based query input.
 
   if (Array.isArray(value)) return value.map(parseQueryValue);
+  if (isPlainObject(value)) {
+    return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, parseQueryValue(value)]));
+  }
+
   if (typeof value !== 'string') return value;
 
   const normalized = value.trim().toLowerCase();
@@ -18,20 +24,20 @@ export const parseQueryValue = (value: unknown): unknown => {
 };
 
 /**
- * Query parameters always arrive as strings, even when they semantically represent numbers
- * or booleans, so we preprocess them to convert to the appropriate types before validation.
+ * Preprocesses query-like values before Zod validation.
+ *
+ * Query parameters are string-based by nature, even when they semantically represent
+ * numbers or booleans. This helper converts only clear primitive values, allowing
+ * regular schemas like `z.number()` and `z.boolean()` to validate query input directly.
  *
  * ```ts
- * const schema = z.object({
+ * const schema = asQuery(z.object({
  *   page: z.number().int().positive(),
  *   isActive: z.boolean(),
- * });
+ * }));
  *
- * const queryParams = { page: '2', isActive: 'true' };
- * const result = schema.parse(queryParams); // { page: 2, isActive: true }
+ * schema.parse({ page: '2', isActive: 'true' });
+ * // { page: 2, isActive: true }
  * ```
- *
- * @param schema - The Zod schema to validate the query parameters against.
- * @returns A new Zod schema that preprocesses query parameter values before validation.
  */
 export const asQuery = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(parseQueryValue, schema);
