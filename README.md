@@ -12,7 +12,7 @@ Designed for use in Bun/Node.js and Cloudflare Workers environments.
 - Logging utility: unified colored log interface.
 - Random string generation utility.
 - JWT service with optional Zod schema validation.
-- Zod helpers for query param coercion, pagination schemas, and type utilities.
+- Zod helpers for query param coercion, pagination schemas, nested schema flattening, and type utilities.
 
 ## Installation
 
@@ -144,7 +144,34 @@ schema.parse({ page: '2', isActive: 'true' }); // { page: 2, isActive: true }
 
 `asQuery` preprocesses string values from query parameters — coercing `'true'`/`'false'` to booleans and numeric strings to numbers — before passing them to the Zod schema for validation.
 
-### 7. Use pagination schema
+### 8. Build flat query schemas from nested objects
+
+```ts
+import { asQuerySchema } from '@kalutskii/foundation';
+import { z } from 'zod';
+
+const schema = asQuerySchema(
+  z.object({
+    search: z.string().optional(),
+    sort: z
+      .object({
+        field: z.string(),
+        order: z.enum(['asc', 'desc']),
+      })
+      .optional(),
+  })
+);
+
+schema.parse({ search: 'foo', field: 'name', order: 'asc' });
+// { search: 'foo', field: 'name', order: 'asc' }
+
+// Rejects the original nested structure
+schema.parse({ sort: { field: 'name', order: 'asc' } }); // throws
+```
+
+`asQuerySchema` flattens nested `z.object(...)` fields to the top level, making it suitable for flat query parameter validation. Nested object fields are lifted, while optionality is preserved: required parents keep their fields required, optional parents make all promoted fields optional. The result is a strict schema (unknown keys are rejected).
+
+### 8. Use pagination schema
 
 ```ts
 import { refinePagination, zodPaginationSchema, zodPaginationShape } from '@kalutskii/foundation';
@@ -166,7 +193,7 @@ await db.query.users.findMany({
 });
 ```
 
-### 8. Work with JWT using `ZodJWTService`
+### 9. Work with JWT using `ZodJWTService`
 
 ```ts
 import { ZodJWTService } from '@kalutskii/foundation';
@@ -183,7 +210,7 @@ const payload = await jwt.verifyOrThrow(token, 'secret');
 const decoded = await jwt.decode(token);
 ```
 
-### 9. Datetime helpers
+### 10. Datetime helpers
 
 ```ts
 import { formatTime, getFormattedDate, getFormattedTime, getZonedTime } from '@kalutskii/foundation';
@@ -194,7 +221,7 @@ getFormattedDate({ tz: 'Europe/Moscow', withTime: false }); // '22.06.2026'
 formatTime(new Date(), { tz: 'Europe/Moscow' }); // '15:30:00, 22 июня 2026 (+3 UTC)'
 ```
 
-### 10. Logging
+### 11. Logging
 
 ```ts
 import { log } from '@kalutskii/foundation';
@@ -214,6 +241,7 @@ The package exports all public APIs from a single entrypoint:
 - **Utilities**: `safeExecute`, `measureExecutionTime`, `generateRandomString`, `log`, `getColoredHTTPStatus`, datetime helpers.
 - **Zod JWT**: `ZodJWTService`.
 - **Zod Pagination**: `zodPaginationSchema`, `zodPaginationShape`, `refinePagination`, `ZodPaginationOptions`.
+- **Zod Flatten**: `asQuerySchema`, `flattenZodShape`, `isZodObject`, `isZodOptional`, `unwrapOptional`, `FlattenZodShape`.
 - **Zod Validation**: `asQuery`, `AsQuery`, `AtLeastOne`.
 - **Type Utilities**: `Simplify`.
 
