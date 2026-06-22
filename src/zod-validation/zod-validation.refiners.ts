@@ -1,6 +1,6 @@
 import z from 'zod';
 
-const parseQueryValue = (value: unknown): unknown => {
+export const parseQueryValue = (value: unknown): unknown => {
   // Converts only unambiguous primitive values before Zod validation, so
   // schemas like z.number() and z.boolean() сan correctly parse the values.
 
