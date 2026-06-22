@@ -22,5 +22,6 @@ export * from './zod-pagination/zod-pagination.refiners';
 export * from './zod-pagination/zod-pagination.schemas';
 
 export * from './zod-validation/zod-validation.refiners';
+export * from './zod-validation/zod-validation.parsing';
 export * from './zod-validation/zod-validation.types';
 export * from './zod-validation/zod-validation.utilities';
