@@ -1,12 +1,10 @@
 import z from 'zod';
 
-import { asQuery } from '@/zod-validation/zod-validation.refiners';
-
 export const zodPaginationSchema = z.object({
   /** Integer representing the starting point for pagination. */
-  offset: asQuery(z.number().int().nonnegative()).optional(),
+  offset: z.coerce.number().int().nonnegative().optional(),
   /** Integer representing the maximum number of items to return. */
-  limit: asQuery(z.number().int().positive()).optional(),
+  limit: z.coerce.number().int().positive().optional(),
 });
 
 /**
