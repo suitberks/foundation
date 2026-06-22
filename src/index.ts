@@ -21,5 +21,9 @@ export * from './zod-jwt/zod-jwt.types';
 export * from './zod-pagination/zod-pagination.refiners';
 export * from './zod-pagination/zod-pagination.schemas';
 
+export * from './zod-flatten/zod-flatten.schemas';
+export * from './zod-flatten/zod-flatten.types';
+export * from './zod-flatten/zod-flatten.utilities';
+
 export * from './zod-validation/zod-validation.refiners';
 export * from './zod-validation/zod-validation.types';

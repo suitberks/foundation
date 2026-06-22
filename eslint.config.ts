@@ -46,6 +46,19 @@ const eslintConfig: Config[] = defineConfig([
       '@typescript-eslint/no-misused-promises': 'error',
     },
   },
+
+  {
+    // Relax unsafe-* rules in test files — Zod schema introspection and runtime
+    // assertions naturally involve dynamic typing that the type-checker can't fully track.
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+    },
+  },
 ]);
 
 export default eslintConfig;

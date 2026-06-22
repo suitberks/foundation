@@ -1,11 +1,11 @@
 import type { Simplify } from '@/utilities/type.utilities';
 
-// A union type representing all primitive types that can be directly serialized to query parameters.
+// All primitive types that can be directly serialized to query parameters.
 type QueryPrimitive = string | number | boolean | bigint | Date | null | undefined;
 
 /**
- * Type utility that recursively transforms all fields to string, as well as handling arrays and objects.
- * This is useful for serializing complex data structures into query parameters, which must be strings.
+ * Recursively transforms all fields of T to `string`, matching how query parameters are serialized.
+ * Handles nested objects, arrays, and primitive values (including null and undefined as optional).
  */
 export type AsQuery<T> = T extends QueryPrimitive
   ? string
