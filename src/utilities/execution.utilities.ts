@@ -26,7 +26,7 @@ export type MeasuredExecution<T> = {
  * Utility function to measure the execution time of an asynchronous function.
  * @returns An object containing the result of the execution and the time taken in milliseconds.
  *
- * ```ts
+ * ```typescript
  * const { result, executionTime } = await measureExecutionTime(async () => {
  *    return await fetchData();
  * });

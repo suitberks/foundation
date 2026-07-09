@@ -24,7 +24,7 @@ export type AsQuery<T> = T extends null | undefined
  * This is useful for scenarios where you want to enforce that at least one
  * of several optional (nullable) properties must be provided in an object.
  *
- * ```ts
+ * ```typescript
  * type Example = AtLeastOne<{ a?: string; b?: number; c?: boolean }>;
  * // Valid: { a: "hello" }, { b: 42 }, { c: true }, { a: "hello", b: 42 }
  * // Invalid: {}, { a: undefined, b: undefined, c: undefined }

@@ -12,7 +12,7 @@ const DEFAULT_ERROR_MESSAGE = 'Invalid input. At least one field must be provide
  * 2. A `.transform()` that narrows the output type to `AtLeastOne<T>`,
  *    making it directly assignable to domain `*Select` and `*Update` types without casting.
  *
- * ```ts
+ * ```typescript
  * zQuery(zodAtLeastOne(userSelectSchema)) // result: UserSelect ✓
  * ```
  */

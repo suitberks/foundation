@@ -10,7 +10,7 @@ const AT_LEAST_ONE_DEFINED_CONDITION_ERROR = 'sqlWhere requires at least one def
  * Maps each `where` entry to `eq(table[key], value)` and combines them with `and`.
  * Assumes that `where` was already validated and contains only existing table fields.
  *
- * ```ts
+ * ```typescript
  * await db.update(usersTable).set(values).where(sqlWhere(usersTable, { id: 1 })).returning();
  * ```
  */

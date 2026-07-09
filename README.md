@@ -42,7 +42,7 @@ Status code groups are exported as constants and used by types:
 
 ### 1. Build typed contracts
 
-```ts
+```typescript
 import { failure, success } from '@kalutskii/foundation';
 import type { APIContractResult } from '@kalutskii/foundation';
 
@@ -56,7 +56,7 @@ const result: APIContractResult<User> = Math.random() > 0.5 ? ok : bad;
 
 ### 2. Resolve fetchers safely
 
-```ts
+```typescript
 import { fetchAndThrow, fetchSafely } from '@kalutskii/foundation';
 import type { APIContractResult } from '@kalutskii/foundation';
 
@@ -81,7 +81,7 @@ try {
 
 ### 3. Use typed Hono JSON responses
 
-```ts
+```typescript
 import { respond } from '@kalutskii/foundation';
 import { Hono } from 'hono';
 
@@ -99,7 +99,7 @@ app.get('/health', (c) => {
 
 ### 4. Wire up Hono error handler and logging middleware
 
-```ts
+```typescript
 import { honoLoggingHandler, onHandlerError } from '@kalutskii/foundation';
 import { Hono } from 'hono';
 
@@ -116,7 +116,7 @@ Example: `[12:12:12 (+4 UTC)] hono         | POST 200    123ms /api/v1/users (se
 
 ### 5. Execute functions safely and measure performance
 
-```ts
+```typescript
 import { measureExecutionTime, safeExecute } from '@kalutskii/foundation';
 
 const result = await safeExecute(
@@ -130,7 +130,7 @@ console.log(`Done in ${executionTime}ms`);
 
 ### 6. Parse query params with `asQuery`
 
-```ts
+```typescript
 import { asQuery } from '@kalutskii/foundation';
 import { z } from 'zod';
 
@@ -146,7 +146,7 @@ schema.parse({ page: '2', isActive: 'true' }); // { page: 2, isActive: true }
 
 ### 8. Build flat query schemas from nested objects
 
-```ts
+```typescript
 import { asQuerySchema } from '@kalutskii/foundation';
 import { z } from 'zod';
 
@@ -173,7 +173,7 @@ schema.parse({ sort: { field: 'name', order: 'asc' } }); // throws
 
 ### 8. Use pagination schema
 
-```ts
+```typescript
 import { refinePagination, zodPaginationSchema, zodPaginationShape } from '@kalutskii/foundation';
 import { z } from 'zod';
 
@@ -195,7 +195,7 @@ await db.query.users.findMany({
 
 ### 9. Work with JWT using `ZodJWTService`
 
-```ts
+```typescript
 import { ZodJWTService } from '@kalutskii/foundation';
 import { z } from 'zod';
 
@@ -212,7 +212,7 @@ const decoded = await jwt.decode(token);
 
 ### 10. Datetime helpers
 
-```ts
+```typescript
 import { formatTime, getFormattedDate, getFormattedTime, getZonedTime } from '@kalutskii/foundation';
 
 getFormattedTime({ tz: 'Europe/Moscow' }); // '15:30:00 (+3 UTC)'
@@ -223,7 +223,7 @@ formatTime(new Date(), { tz: 'Europe/Moscow' }); // '15:30:00, 22 июня 2026 
 
 ### 11. Logging
 
-```ts
+```typescript
 import { log } from '@kalutskii/foundation';
 
 log.info('Server started', 'app');
