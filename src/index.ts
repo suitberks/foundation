@@ -10,6 +10,7 @@ export * from './http/http.resolvers';
 export * from './http/http.schemas';
 
 export * from './utilities/datetime.utilities';
+export * from './utilities/enums.utilities';
 export * from './utilities/execution.utilities';
 export * from './utilities/generation.utilities';
 export * from './utilities/logging.utilities';
