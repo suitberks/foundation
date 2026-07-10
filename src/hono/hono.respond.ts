@@ -11,6 +11,6 @@ import type { AsQuery } from '@/zod-validation/zod-validation.types';
 export function respond<T extends object = Record<string, never>, S extends SuccessStatusCode = SuccessStatusCode>(
   c: Context,
   options: { status: S; data?: T }
-): Response & TypedResponse<APISuccess<AsQuery<T>> | APIError, S, 'json'> {
+): Response & TypedResponse<APISuccess<T> | APIError, S, 'json'> {
   return c.json(success({ status: options.status, data: (options.data ?? {}) as T }), options.status) as never;
 }
