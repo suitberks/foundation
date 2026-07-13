@@ -14,6 +14,7 @@
     "build": "tsup",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write .",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "exports": {

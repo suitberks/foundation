@@ -144,7 +144,7 @@ schema.parse({ page: '2', isActive: 'true' }); // { page: 2, isActive: true }
 
 `asQuery` preprocesses string values from query parameters — coercing `'true'`/`'false'` to booleans and numeric strings to numbers — before passing them to the Zod schema for validation.
 
-### 8. Build flat query schemas from nested objects
+### 7. Build flat query schemas from nested objects
 
 ```typescript
 import { asQuerySchema } from '@kalutskii/foundation';
@@ -171,26 +171,32 @@ schema.parse({ sort: { field: 'name', order: 'asc' } }); // throws
 
 `asQuerySchema` flattens nested `z.object(...)` fields to the top level, making it suitable for flat query parameter validation. Nested object fields are lifted, while optionality is preserved: required parents keep their fields required, optional parents make all promoted fields optional. The result is a strict schema (unknown keys are rejected).
 
-### 8. Use pagination schema
+### 8. Build reusable search schemas
 
 ```typescript
-import { refinePagination, zodPaginationSchema, zodPaginationShape } from '@kalutskii/foundation';
+import { zodPaginationSchema, zodSearchSchema } from '@kalutskii/foundation';
 import { z } from 'zod';
 
-// Use as a standalone schema
-const options = zodPaginationSchema.parse({ offset: '0', limit: '20' });
+const assetSchema = z.object({
+  status: z.enum(['active', 'archived']),
+  categoryId: z.number(),
+});
+
+const assetSearchSchema = zodSearchSchema({
+  filters: assetSchema.pick({ status: true, categoryId: true }),
+});
+
+type AssetSearch = z.infer<typeof assetSearchSchema>;
+
+assetSearchSchema.parse({
+  where: { status: 'active' },
+  query: 'asset name',
+  pagination: { offset: 0, limit: 20 },
+});
+
+// Pagination remains available as a standalone reusable schema.
+zodPaginationSchema.parse({ offset: '0', limit: '20' });
 // { offset: 0, limit: 20 }
-
-// Spread shape into a larger query schema
-const querySchema = z.object({
-  search: z.string().optional(),
-  ...zodPaginationShape,
-});
-
-// Strip undefined pagination values before passing to a query builder (e.g. Drizzle)
-await db.query.users.findMany({
-  ...refinePagination(options),
-});
 ```
 
 ### 9. Work with JWT using `ZodJWTService`
@@ -240,7 +246,8 @@ The package exports all public APIs from a single entrypoint:
 - **Hono**: `respond`, `onHandlerError`, `honoLoggingHandler`.
 - **Utilities**: `safeExecute`, `measureExecutionTime`, `generateRandomString`, `log`, `getColoredHTTPStatus`, datetime helpers.
 - **Zod JWT**: `ZodJWTService`.
-- **Zod Pagination**: `zodPaginationSchema`, `zodPaginationShape`, `refinePagination`, `ZodPaginationOptions`.
+- **Zod Search**: `zodSearchSchema`, `ZodSearchSchemaOptions`.
+- **Zod Pagination**: `zodPaginationSchema`, `zodPaginationShape`, `ZodPaginationOptions`.
 - **Zod Flatten**: `asQuerySchema`, `flattenZodShape`, `isZodObject`, `isZodOptional`, `unwrapOptional`, `FlattenZodShape`.
 - **Zod Validation**: `asQuery`, `AsQuery`, `AtLeastOne`.
 - **Type Utilities**: `Simplify`.

@@ -19,7 +19,9 @@ export * from './utilities/type.utilities';
 export * from './zod-jwt/zod-jwt.schemas';
 export * from './zod-jwt/zod-jwt.types';
 
-export * from './zod-pagination/zod-pagination.schemas';
+export * from './zod-search/zod-search.pagination.schemas';
+export * from './zod-search/zod-search.schemas';
+export * from './zod-search/zod-search.types';
 
 export * from './zod-validation/zod-validation.refiners';
 export * from './zod-validation/zod-validation.parsing';
