@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import z from 'zod';
+import { z } from 'zod';
 
 import { type AtLeastOne, zodPaginationSchema, zodSearchSchema } from '@/index';
 

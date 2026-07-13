@@ -1,4 +1,4 @@
-import z from 'zod';
+import { z } from 'zod';
 
 // Default error message for the "selection identifiers required" validation.
 const DEFAULT_ERROR_MESSAGE = 'Selection identifiers must be provided.';

@@ -1,4 +1,4 @@
-import z from 'zod';
+import { z } from 'zod';
 
 /**
  * Validates offset-based pagination shared by search request contracts.

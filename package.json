@@ -12,10 +12,10 @@
   },
   "scripts": {
     "build": "tsup",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write .",
-    "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "test": "bun test"
   },
   "exports": {
     ".": {
