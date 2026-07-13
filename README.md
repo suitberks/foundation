@@ -199,7 +199,34 @@ zodPaginationSchema.parse({ offset: '0', limit: '20' });
 // { offset: 0, limit: 20 }
 ```
 
-### 9. Work with JWT using `ZodJWTService`
+### 9. Share bulk selection between frontend and backend
+
+```typescript
+import { zodBulkSelectionSchema, zodSearchSchema } from '@kalutskii/foundation';
+import { z } from 'zod';
+
+const assetBulkSelectionSchema = zodBulkSelectionSchema({
+  identifierSchema: z.string().min(1),
+});
+
+const assetBulkFilterSchema = zodSearchSchema({
+  filters: assetSchema.pick({ status: true, categoryId: true }),
+  paginationEnabled: false,
+});
+
+const assetBulkRequestSchema = z
+  .object({
+    selection: assetBulkSelectionSchema,
+    filter: assetBulkFilterSchema,
+  })
+  .strict();
+
+type AssetBulkRequest = z.infer<typeof assetBulkRequestSchema>;
+```
+
+In `include` mode, the backend targets only `identifiers`. In `exclude` mode, it resolves all entities matching the same filter snapshot and removes `excludedIdentifiers` from that operation.
+
+### 10. Work with JWT using `ZodJWTService`
 
 ```typescript
 import { ZodJWTService } from '@kalutskii/foundation';
@@ -216,7 +243,7 @@ const payload = await jwt.verifyOrThrow(token, 'secret');
 const decoded = await jwt.decode(token);
 ```
 
-### 10. Datetime helpers
+### 11. Datetime helpers
 
 ```typescript
 import { formatTime, getFormattedDate, getFormattedTime, getZonedTime } from '@kalutskii/foundation';
@@ -227,7 +254,7 @@ getFormattedDate({ tz: 'Europe/Moscow', withTime: false }); // '22.06.2026'
 formatTime(new Date(), { tz: 'Europe/Moscow' }); // '15:30:00, 22 июня 2026 (+3 UTC)'
 ```
 
-### 11. Logging
+### 12. Logging
 
 ```typescript
 import { log } from '@kalutskii/foundation';
@@ -245,6 +272,7 @@ The package exports all public APIs from a single entrypoint:
 - **HTTP**: `success`, `failure`, `fetchSafely`, `fetchAndThrow`, constants, schemas.
 - **Hono**: `respond`, `onHandlerError`, `honoLoggingHandler`.
 - **Utilities**: `safeExecute`, `measureExecutionTime`, `generateRandomString`, `log`, `getColoredHTTPStatus`, datetime helpers.
+- **Zod Bulk**: `zodBulkSelectionSchema`, `ZodBulkSelection`, `ZodBulkIncludeSelection`, `ZodBulkExcludeSelection`.
 - **Zod JWT**: `ZodJWTService`.
 - **Zod Search**: `zodSearchSchema`, `ZodSearchSchemaOptions`.
 - **Zod Pagination**: `zodPaginationSchema`, `zodPaginationShape`, `ZodPaginationOptions`.

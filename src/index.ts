@@ -16,6 +16,9 @@ export * from './utilities/generation.utilities';
 export * from './utilities/logging.utilities';
 export * from './utilities/type.utilities';
 
+export * from './zod-bulk/zod-bulk.schemas';
+export * from './zod-bulk/zod-bulk.types';
+
 export * from './zod-jwt/zod-jwt.schemas';
 export * from './zod-jwt/zod-jwt.types';
 

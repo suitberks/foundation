@@ -13,10 +13,10 @@ const zodSearchQuerySchema = z.string().trim().min(1).optional();
 
 /**
  * Makes every supplied filter optional while requiring one defined value.
- * The wrapper itself stays optional because searches may omit filtering.
+ * Top-level optionality is added later for both composition modes equally.
  */
 const createZodSearchWhereSchema = <TShape extends z.ZodRawShape>(filters: z.ZodObject<TShape>) =>
-  zodAtLeastOne(filters.partial()).optional();
+  zodAtLeastOne(filters.partial());
 
 /**
  * Empty schema shape used when a search feature is explicitly disabled.
@@ -25,11 +25,26 @@ const createZodSearchWhereSchema = <TShape extends z.ZodRawShape>(filters: z.Zod
 type ZodDisabledSearchShape = Record<never, never>;
 
 /**
- * Schema-level shape assembled from filter fields and literal feature flags.
+ * Resolves the schema used by `where` from the selected composition mode.
+ * Prepared schemas remain untouched, including their effects and output.
+ */
+type ZodSearchWhereSchema<TShape extends z.ZodRawShape, TWhereSchema extends z.ZodType<Record<string, unknown>>> = [
+  TWhereSchema,
+] extends [never]
+  ? ReturnType<typeof createZodSearchWhereSchema<TShape>>
+  : TWhereSchema;
+
+/**
+ * Schema-level shape assembled from the selected source and feature flags.
  * Keeping Zod schemas here makes runtime composition the contract source.
  */
-type ZodSearchShape<TShape extends z.ZodRawShape, TQueryEnabled extends boolean, TPaginationEnabled extends boolean> = {
-  where: ReturnType<typeof createZodSearchWhereSchema<TShape>>;
+type ZodSearchShape<
+  TShape extends z.ZodRawShape,
+  TWhereSchema extends z.ZodType<Record<string, unknown>>,
+  TQueryEnabled extends boolean,
+  TPaginationEnabled extends boolean,
+> = {
+  where: z.ZodOptional<ZodSearchWhereSchema<TShape, TWhereSchema>>;
 } & (TQueryEnabled extends false ? ZodDisabledSearchShape : { query: typeof zodSearchQuerySchema }) &
   (TPaginationEnabled extends false ? ZodDisabledSearchShape : { pagination: typeof zodPaginationSchema });
 
@@ -40,30 +55,39 @@ type ZodSearchShape<TShape extends z.ZodRawShape, TQueryEnabled extends boolean,
  * Query is optional and non-empty; pagination is required by default.
  * Literal feature flags update both runtime and inferred static shapes.
  *
+ * Pass `filters` for automatic partial and non-empty validation, or use
+ * `whereSchema` to preserve a prepared schema with custom Zod effects.
+ *
  * @example
  * const assetSearchSchema = zodSearchSchema({
  *   filters: assetSchema.pick({ status: true }),
  * });
  *
- * type AssetSearch = z.infer<typeof assetSearchSchema>;
+ * const refinedAssetSearchSchema = zodSearchSchema({
+ *   whereSchema: zodAtLeastOne(assetSchema.pick({ status: true }).partial()),
+ * });
  */
 export const zodSearchSchema = <
-  const TShape extends z.ZodRawShape,
+  const TShape extends z.ZodRawShape = never,
+  const TWhereSchema extends z.ZodType<Record<string, unknown>> = never,
   const TQueryEnabled extends boolean = true,
   const TPaginationEnabled extends boolean = true,
->({
-  filters,
-  queryEnabled,
-  paginationEnabled,
-}: ZodSearchSchemaOptions<TShape, TQueryEnabled, TPaginationEnabled>) => {
+>(
+  options: ZodSearchSchemaOptions<TShape, TWhereSchema, TQueryEnabled, TPaginationEnabled>
+) => {
+  // The mutually exclusive options guarantee one source, while this runtime branch resolves it.
+  // Optionality belongs to the search contract and is therefore applied after source selection.
+
+  const whereSchema = options.filters !== undefined ? createZodSearchWhereSchema(options.filters) : options.whereSchema;
+
   // TypeScript cannot connect generic conditional types with the matching runtime branches.
-  // This schema-level assertion preserves literal flags without asserting the parsed output.
+  // This schema-level assertion preserves both source inference and literal feature flags.
 
   const shape = {
-    where: createZodSearchWhereSchema(filters),
-    ...(queryEnabled !== false ? { query: zodSearchQuerySchema } : {}),
-    ...(paginationEnabled !== false ? { pagination: zodPaginationSchema } : {}),
-  } as ZodSearchShape<TShape, TQueryEnabled, TPaginationEnabled>;
+    where: whereSchema.optional(),
+    ...(options.queryEnabled !== false ? { query: zodSearchQuerySchema } : {}),
+    ...(options.paginationEnabled !== false ? { pagination: zodPaginationSchema } : {}),
+  } as ZodSearchShape<TShape, TWhereSchema, TQueryEnabled, TPaginationEnabled>;
 
   return z.object(shape).strict();
 };
