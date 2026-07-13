@@ -286,5 +286,6 @@ The package exports all public APIs from a single entrypoint:
 bun install
 bun run lint
 bun run typecheck
+bun run test
 bun run build
 ```
