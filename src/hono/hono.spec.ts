@@ -80,7 +80,7 @@ describe('respond', () => {
 describe('fileRespond', () => {
   it('returns the requested binary content with attachment and custom content-type headers', async () => {
     const app = new Hono();
-    const content = new TextEncoder().encode('identifier,name\nasset-1,Foundation').buffer;
+    const content = new TextEncoder().encode('identifier,name\nasset-1,Foundation');
 
     app.get('/assets.csv', (c) =>
       fileRespond(c, {
@@ -98,12 +98,12 @@ describe('fileRespond', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="assets.csv"');
     expect(response.headers.get('content-type')).toBe('text/csv; charset=utf-8');
-    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(content));
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(content);
   });
 
   it('uses the binary content type by default and preserves arbitrary bytes', async () => {
     const app = new Hono();
-    const content = new Uint8Array([0, 1, 127, 128, 255]).buffer;
+    const content = new Uint8Array([0, 1, 127, 128, 255]);
 
     app.get('/archive.bin', (c) =>
       fileRespond(c, {
@@ -120,7 +120,7 @@ describe('fileRespond', () => {
     expect(response.status).toBe(201);
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="archive.bin"');
     expect(response.headers.get('content-type')).toBe('application/octet-stream');
-    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(content));
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(content);
   });
 });
 

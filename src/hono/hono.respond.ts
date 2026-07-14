@@ -20,7 +20,7 @@ export function respond<T extends object = Record<string, never>, S extends Succ
  */
 export function fileRespond<S extends SuccessStatusCode>(
   c: Context,
-  options: { status: S; content: ArrayBuffer; filename: string; contentType?: string }
+  options: { status: S; content: Uint8Array<ArrayBuffer>; filename: string; contentType?: string }
 ): Response {
   c.header('Content-Disposition', `attachment; filename="${options.filename}"`);
   c.header('Content-Type', options.contentType ?? 'application/octet-stream');
