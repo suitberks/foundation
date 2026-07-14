@@ -288,4 +288,6 @@ bun run lint
 bun run test
 bun run typecheck
 bun run build
+
+just quality-assurance
 ```
