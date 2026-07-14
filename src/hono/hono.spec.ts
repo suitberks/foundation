@@ -7,7 +7,7 @@ import { log } from '@/utilities/logging.utilities';
 
 import { onHandlerError } from './hono.execution';
 import { honoLoggingHandler } from './hono.logging';
-import { respond } from './hono.respond';
+import { fileRespond, respond } from './hono.respond';
 
 /**
  * Reads a JSON response while keeping each test explicit about the public payload it expects.
@@ -70,6 +70,57 @@ describe('respond', () => {
       status: 202,
       data: {},
     });
+  });
+});
+
+// =================================================================================================
+// FILE DOWNLOAD RESPONSES
+// =================================================================================================
+
+describe('fileRespond', () => {
+  it('returns the requested binary content with attachment and custom content-type headers', async () => {
+    const app = new Hono();
+    const content = new TextEncoder().encode('identifier,name\nasset-1,Foundation').buffer;
+
+    app.get('/assets.csv', (c) =>
+      fileRespond(c, {
+        status: 200,
+        content,
+        filename: 'assets.csv',
+        contentType: 'text/csv; charset=utf-8',
+      })
+    );
+
+    const response = await app.request('/assets.csv');
+
+    // Headers describe a downloadable attachment, while the body remains byte-for-byte identical to the source buffer.
+    // Reading through the Web Response API verifies the real Hono integration instead of a mocked Context interaction.
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toBe('attachment; filename="assets.csv"');
+    expect(response.headers.get('content-type')).toBe('text/csv; charset=utf-8');
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(content));
+  });
+
+  it('uses the binary content type by default and preserves arbitrary bytes', async () => {
+    const app = new Hono();
+    const content = new Uint8Array([0, 1, 127, 128, 255]).buffer;
+
+    app.get('/archive.bin', (c) =>
+      fileRespond(c, {
+        status: 201,
+        content,
+        filename: 'archive.bin',
+      })
+    );
+
+    const response = await app.request('/archive.bin');
+
+    // The fallback media type must remain deterministic for unknown formats and generated binary exports.
+    // Non-text bytes guard against accidental encoding, JSON serialization, or UTF-8 conversion in the response path.
+    expect(response.status).toBe(201);
+    expect(response.headers.get('content-disposition')).toBe('attachment; filename="archive.bin"');
+    expect(response.headers.get('content-type')).toBe('application/octet-stream');
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array(content));
   });
 });
 

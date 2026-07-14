@@ -13,3 +13,17 @@ export function respond<T extends object = Record<string, never>, S extends Succ
 ): Response & TypedResponse<APISuccess<T> | APIError, S, 'json'> {
   return c.json(success({ status: options.status, data: (options.data ?? {}) as T }), options.status) as never;
 }
+
+/**
+ * Responds with a file download, setting the appropriate headers for content disposition and type.
+ * Supports specifying a filename and optional content type, defaulting to 'application/octet-stream'.
+ */
+export function fileRespond<S extends SuccessStatusCode>(
+  c: Context,
+  options: { status: S; content: ArrayBuffer; filename: string; contentType?: string }
+): Response {
+  c.header('Content-Disposition', `attachment; filename="${options.filename}"`);
+  c.header('Content-Type', options.contentType ?? 'application/octet-stream');
+
+  return c.body(options.content, options.status);
+}
