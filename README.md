@@ -71,7 +71,7 @@ Independent modules should remain independent instead of introducing artificial 
 7. A reusable abstraction belongs to the lowest layer that can own it without knowing its consumers.
 
 A dependency that appears only in generated declarations is still a real dependency and must be reviewed.
-For example, a generic Zod type importing `Simplify` from Drizzle would violate the hierarchy even at runtime zero.
+For example, a generic Zod type importing `Simplify` from Drizzle would violate the hierarchy even with no runtime cost.
 
 ### Responsibility boundaries
 
