@@ -10,6 +10,14 @@ import { getColoredHTTPStatus, log } from '@/utilities/logging.utilities';
 export const honoLoggingHandler: MiddlewareHandler = async (c, next) => {
   const requestUrl = new URL(c.req.url);
   const searchParams = requestUrl.searchParams.toString();
+  const body = c.req.header('content-type')?.includes('multipart/form-data')
+    ? // If the request is multipart/form-data, we avoid reading the body
+      // to prevent consuming the stream, and instead log a placeholder.
+      '[multipart]'
+    : // Otherwise, we read the request body as text and normalize whitespace.
+      (await c.req.raw.clone().text()).replaceAll(/\s+/g, ' ').trim();
+
+  const bodyPreview = body.length > 100 ? `${body.slice(0, 50)}…${body.slice(-50)}` : body;
 
   // Measuring request processing time ----------------------
 
@@ -24,6 +32,10 @@ export const honoLoggingHandler: MiddlewareHandler = async (c, next) => {
   const coloredTime = dim(`${duration}ms`.padStart(6));
   const coloredPath = white(c.req.path.padEnd(44));
   const coloredSearchParams = searchParams ? dim(` (${searchParams})`) : '';
+  const coloredBody = bodyPreview ? dim(` ${bodyPreview}`) : '';
 
-  log.info(`${coloredMethod} ${coloredStatus} ${coloredTime} ${coloredPath}${coloredSearchParams}`, 'hono');
+  log.info(
+    `${coloredMethod} ${coloredStatus} ${coloredTime} ${coloredPath}${coloredSearchParams}${coloredBody}`,
+    'hono'
+  );
 };

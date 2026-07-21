@@ -197,4 +197,61 @@ describe('honoLoggingHandler', () => {
     expect(message).toContain('/search');
     expect(message).toContain('(term=foundation&limit=2)');
   });
+
+  it('logs a request body without consuming it before the route handler', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+    const body = '{\n  "name":   "Foundation"\n}';
+
+    app.use('*', honoLoggingHandler);
+    app.post('/echo', async (c) => c.text(await c.req.text()));
+
+    const response = await app.request('/echo', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body,
+    });
+
+    expect(await response.text()).toBe(body);
+    expect(infoLog).toHaveBeenCalledTimes(1);
+    expect(infoLog.mock.calls[0]?.[0]).toContain('{ "name": "Foundation" }');
+    expect(infoLog.mock.calls[0]?.[0]).not.toContain('\n');
+  });
+
+  it('shortens long request bodies while preserving their beginning and end', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+    const body = `${'a'.repeat(51)}${'b'.repeat(50)}`;
+
+    app.use('*', honoLoggingHandler);
+    app.post('/long-body', (c) => c.body(null, 204));
+
+    await app.request('/long-body', { method: 'POST', body });
+
+    const message = infoLog.mock.calls[0]?.[0];
+    expect(message).toContain(`${'a'.repeat(50)}…${'b'.repeat(50)}`);
+    expect(message).not.toContain(body);
+  });
+
+  it('logs a placeholder instead of reading multipart form data', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+
+    app.use('*', honoLoggingHandler);
+    app.post('/upload', async (c) => {
+      const formData = await c.req.formData();
+      const name = formData.get('name');
+      if (typeof name !== 'string') throw new Error('Expected the multipart name field to be text');
+      return c.text(name);
+    });
+
+    const formData = new FormData();
+    formData.set('name', 'Foundation');
+    const response = await app.request('/upload', { method: 'POST', body: formData });
+
+    expect(await response.text()).toBe('Foundation');
+    expect(infoLog).toHaveBeenCalledTimes(1);
+    expect(infoLog.mock.calls[0]?.[0]).toContain('[multipart]');
+    expect(infoLog.mock.calls[0]?.[0]).not.toContain('Foundation');
+  });
 });
