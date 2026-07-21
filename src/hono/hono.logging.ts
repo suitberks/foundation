@@ -17,7 +17,7 @@ export const honoLoggingHandler: MiddlewareHandler = async (c, next) => {
     : // Otherwise, we read the request body as text and normalize whitespace.
       (await c.req.raw.clone().text()).replaceAll(/\s+/g, ' ').trim();
 
-  const bodyPreview = body.length > 50 ? `${body.slice(0, 25)}…${body.slice(-25)}` : body;
+  const bodyPreview = body.length > 80 ? `${body.slice(0, 40)}…${body.slice(-40)}` : body;
 
   // Measuring request processing time ----------------------
 

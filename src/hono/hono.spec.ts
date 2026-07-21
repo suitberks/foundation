@@ -221,7 +221,7 @@ describe('honoLoggingHandler', () => {
   it('shortens long request bodies while preserving their beginning and end', async () => {
     const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
     const app = new Hono();
-    const body = `${'a'.repeat(26)}${'b'.repeat(25)}`;
+    const body = `${'a'.repeat(41)}${'b'.repeat(40)}`;
 
     app.use('*', honoLoggingHandler);
     app.post('/long-body', (c) => c.body(null, 204));
@@ -229,7 +229,7 @@ describe('honoLoggingHandler', () => {
     await app.request('/long-body', { method: 'POST', body });
 
     const message = infoLog.mock.calls[0]?.[0];
-    expect(message).toContain(`${'a'.repeat(25)}…${'b'.repeat(25)}`);
+    expect(message).toContain(`${'a'.repeat(40)}…${'b'.repeat(40)}`);
     expect(message).not.toContain(body);
   });
 
