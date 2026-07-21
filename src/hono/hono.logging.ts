@@ -31,6 +31,7 @@ export const honoLoggingHandler: MiddlewareHandler = async (c, next) => {
   const coloredStatus = getColoredHTTPStatus(c.res.status)(String(c.res.status).padEnd(4));
   const coloredTime = dim(`${duration}ms`.padStart(6));
   const coloredPath = white(c.req.path.padEnd(44));
+
   const coloredSearchParams = searchParams ? dim(` (${searchParams})`) : '';
   const coloredBody = bodyPreview ? dim(` ${bodyPreview}`) : '';
 
