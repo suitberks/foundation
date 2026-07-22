@@ -17,27 +17,31 @@ import {
   success,
 } from '@/index';
 
-// =================================================================================================
+// =====================================================================================================================
 // COMPILE-TIME PUBLIC TYPE CONTRACTS
-// =================================================================================================
+// =====================================================================================================================
 
 /**
  * Compares public types in both assignability directions for exactness.
  * Compile-time assertions use it to detect widened contract branches.
  */
-type Equal<TLeft, TRight> =
-  (<TValue>() => TValue extends TLeft ? 1 : 2) extends <TValue>() => TValue extends TRight ? 1 : 2 ? true : false;
+type IsExact<Actual, Expected> =
+  (<Value>() => Value extends Actual ? 1 : 2) extends <Value>() => Value extends Expected ? 1 : 2
+    ? (<Value>() => Value extends Expected ? 1 : 2) extends <Value>() => Value extends Actual ? 1 : 2
+      ? true
+      : false
+    : false;
 
 /** Constrains one compile-time proposition to `true`. */
-type Expect<TValue extends true> = TValue;
+type Assert<Condition extends true> = Condition;
 
 type ExampleContract = APISuccess<{ id: string }> | APIError;
-type _SuccessStatusContract = Expect<Equal<SuccessStatusCode, 200 | 201 | 202 | 307>>;
-type _ExceptionStatusContract = Expect<Equal<ExceptionStatusCode, 400 | 401 | 403 | 404 | 405 | 409 | 500>>;
-type _ContractDataExtraction = Expect<Equal<APIContractData<ExampleContract>, { id: string }>>;
-type _ContractErrorExtraction = Expect<Equal<APIContractError<ExampleContract>, APIError>>;
-type _FetchResultContract = Expect<
-  Equal<FetchResult<{ id: string }>, { error: null; data: { id: string } } | { error: string; data: null }>
+type _SuccessStatusContract = Assert<IsExact<SuccessStatusCode, 200 | 201 | 202 | 307>>;
+type _ExceptionStatusContract = Assert<IsExact<ExceptionStatusCode, 400 | 401 | 403 | 404 | 405 | 409 | 500>>;
+type _ContractDataExtraction = Assert<IsExact<APIContractData<ExampleContract>, { id: string }>>;
+type _ContractErrorExtraction = Assert<IsExact<APIContractError<ExampleContract>, APIError>>;
+type _FetchResultContract = Assert<
+  IsExact<FetchResult<{ id: string }>, { error: null; data: { id: string } } | { error: string; data: null }>
 >;
 
 /**
@@ -62,9 +66,9 @@ async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
   throw new Error('Expected the promise to reject');
 }
 
-// =================================================================================================
+// =====================================================================================================================
 // STATUS CONSTANTS AND RESPONSE FACTORIES
-// =================================================================================================
+// =====================================================================================================================
 
 describe('HTTP status constants', () => {
   test('publishes the complete supported success and exception status sets', () => {
@@ -91,9 +95,9 @@ describe('HTTP response factories', () => {
   });
 });
 
-// =================================================================================================
+// =====================================================================================================================
 // SAFE RESULT RESOLUTION
-// =================================================================================================
+// =====================================================================================================================
 
 describe('fetchSafely', () => {
   test('unwraps successful contract data and invokes the fetcher once', async () => {
@@ -126,9 +130,9 @@ describe('fetchSafely', () => {
   });
 });
 
-// =================================================================================================
+// =====================================================================================================================
 // THROWING RESULT RESOLUTION
-// =================================================================================================
+// =====================================================================================================================
 
 describe('fetchAndThrow', () => {
   test('returns successful contract data unchanged', async () => {

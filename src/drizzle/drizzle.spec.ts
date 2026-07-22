@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { SQLiteSyncDialect, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-import { sqlWhere } from '../index';
+import { sqlWhere } from '@/index';
 
 // =====================================================================================================================
-// Shared SQL representation — compile through Drizzle's public SQLite dialect instead of inspecting SQL internals.
+// SHARED SQL REPRESENTATION
 // =====================================================================================================================
 
 const usersTable = sqliteTable('users', {
@@ -25,7 +25,7 @@ function compileWhere(where: Record<string, unknown>): { sql: string; params: un
 }
 
 // =====================================================================================================================
-// Defined conditions — keys become qualified columns, while values remain safely parameterized by Drizzle.
+// DEFINED SQL CONDITIONS
 // =====================================================================================================================
 
 describe('sqlWhere defined conditions', () => {
@@ -52,7 +52,7 @@ describe('sqlWhere defined conditions', () => {
 });
 
 // =====================================================================================================================
-// Undefined and empty input — undefined means “omit this condition”, but an empty result must never create a broad query.
+// OMITTED AND EMPTY SQL CONDITIONS
 // =====================================================================================================================
 
 describe('sqlWhere omitted conditions', () => {
