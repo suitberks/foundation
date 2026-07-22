@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { z } from 'zod';
 
-import { ZodJWTService } from '../index';
+import { ZodJWTService } from '@/index';
 
 // =====================================================================================================================
-// Shared JWT setup — separate typed services let tests create payloads that intentionally fail the validation schema.
+// SHARED JWT SETUP
 // =====================================================================================================================
 
 const SECRET = 'correct-horse-battery-staple';
@@ -42,7 +42,7 @@ async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
 }
 
 // =====================================================================================================================
-// Signing — expiration settings and algorithm selection should be observable through subsequent public operations.
+// JWT SIGNING
 // =====================================================================================================================
 
 describe('ZodJWTService.sign', () => {
@@ -81,7 +81,7 @@ describe('ZodJWTService.sign', () => {
 });
 
 // =====================================================================================================================
-// Decoding — decoding does not authenticate, but an attached schema still parses and sanitizes the payload.
+// JWT DECODING
 // =====================================================================================================================
 
 describe('ZodJWTService.decode', () => {
@@ -124,7 +124,7 @@ describe('ZodJWTService.decode', () => {
 });
 
 // =====================================================================================================================
-// Verification — signature, expiry, and schema failures all reject rather than returning an unauthenticated payload.
+// JWT VERIFICATION
 // =====================================================================================================================
 
 describe('ZodJWTService.verifyOrThrow', () => {
