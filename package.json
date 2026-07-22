@@ -2,6 +2,7 @@
   "name": "@kalutskii/foundation",
   "version": "0.7.8",
   "description": "Typescript collection of most common utilities, schemas and functions among private projects.",
+  "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
@@ -14,7 +15,9 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "bun test"
   },
   "exports": {
@@ -27,7 +30,6 @@
     "dist"
   ],
   "peerDependencies": {
-    "@hono/zod-validator": "^0.8.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "drizzle-orm": "^1.0.0-beta.22",
