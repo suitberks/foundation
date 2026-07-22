@@ -30,7 +30,7 @@ export const parseQueryValue = (value: unknown): unknown => {
  * numbers or booleans. This helper converts only clear primitive values, allowing
  * regular schemas like `z.number()` and `z.boolean()` to validate query input directly.
  *
- * ```typescript
+ * @example
  * const schema = asQuery(z.object({
  *   page: z.number().int().positive(),
  *   isActive: z.boolean(),
@@ -38,6 +38,5 @@ export const parseQueryValue = (value: unknown): unknown => {
  *
  * schema.parse({ page: '2', isActive: 'true' });
  * // { page: 2, isActive: true }
- * ```
  */
 export const asQuery = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(parseQueryValue, schema);
