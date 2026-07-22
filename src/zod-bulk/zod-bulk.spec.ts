@@ -8,13 +8,21 @@ import {
   zodBulkSelectionSchema,
 } from '@/index';
 
+// =====================================================================================================================
+// COMPILE-TIME CONTRACT SUPPORT
+// =====================================================================================================================
+
 /**
  * Shared compile-time helpers keep inferred public contracts visible beside runtime checks.
  * They intentionally disappear from emitted JavaScript and add no test-only runtime paths.
  */
-type Equal<Left, Right> =
-  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2 ? true : false;
-type Expect<Value extends true> = Value;
+type IsExact<Actual, Expected> =
+  (<Value>() => Value extends Actual ? 1 : 2) extends <Value>() => Value extends Expected ? 1 : 2
+    ? (<Value>() => Value extends Expected ? 1 : 2) extends <Value>() => Value extends Actual ? 1 : 2
+      ? true
+      : false
+    : false;
+type Assert<Condition extends true> = Condition;
 
 const stringSelectionSchema = zodBulkSelectionSchema({ identifierSchema: z.string().min(1) });
 const coercedSelectionSchema = zodBulkSelectionSchema({ identifierSchema: z.coerce.number().int().positive() });
@@ -29,7 +37,9 @@ const canonicalSelectionSchema = zodBulkSelectionSchema({
     .transform((identifier): `asset:${number}` => `asset:${Number(identifier.slice('asset-'.length))}`),
 });
 
-// Runtime contracts ------------------------------------------------------------
+// =====================================================================================================================
+// RUNTIME CONTRACTS
+// =====================================================================================================================
 
 describe('zodBulkSelectionSchema runtime contracts', () => {
   test('parses include and exclude branches without leaking fields between them', () => {
@@ -119,38 +129,41 @@ describe('zodBulkSelectionSchema runtime contracts', () => {
   });
 });
 
-// -----------------------------------------------------------------------------
-// Compile-time contracts -------------------------------------------------------
+// =====================================================================================================================
+// COMPILE-TIME CONTRACTS
+// =====================================================================================================================
 
 /**
  * Public aliases must remain exact discriminated unions for safe exhaustive handler branches.
  * Factory inference must also retain transformed outputs instead of widening them to primitives.
  */
-type _StringSelectionIsExact = Expect<
-  Equal<
+type _StringSelectionIsExact = Assert<
+  IsExact<
     z.infer<typeof stringSelectionSchema>,
     { mode: 'include'; identifiers: string[] } | { mode: 'exclude'; excludedIdentifiers: string[] }
   >
 >;
-type _StringSelectionMatchesPublicAlias = Expect<
-  Equal<z.infer<typeof stringSelectionSchema>, ZodBulkSelection<string>>
+type _StringSelectionMatchesPublicAlias = Assert<
+  IsExact<z.infer<typeof stringSelectionSchema>, ZodBulkSelection<string>>
 >;
-type _CoercedSelectionIsExact = Expect<
-  Equal<
+type _CoercedSelectionIsExact = Assert<
+  IsExact<
     z.infer<typeof coercedSelectionSchema>,
     { mode: 'include'; identifiers: number[] } | { mode: 'exclude'; excludedIdentifiers: number[] }
   >
 >;
-type _CanonicalSelectionIsExact = Expect<
-  Equal<
+type _CanonicalSelectionIsExact = Assert<
+  IsExact<
     z.infer<typeof canonicalSelectionSchema>,
     | { mode: 'include'; identifiers: `asset:${number}`[] }
     | { mode: 'exclude'; excludedIdentifiers: `asset:${number}`[] }
   >
 >;
-type _IncludeAliasIsExact = Expect<Equal<ZodBulkIncludeSelection<number>, { mode: 'include'; identifiers: number[] }>>;
-type _ExcludeAliasIsExact = Expect<
-  Equal<ZodBulkExcludeSelection<number>, { mode: 'exclude'; excludedIdentifiers: number[] }>
+type _IncludeAliasIsExact = Assert<
+  IsExact<ZodBulkIncludeSelection<number>, { mode: 'include'; identifiers: number[] }>
+>;
+type _ExcludeAliasIsExact = Assert<
+  IsExact<ZodBulkExcludeSelection<number>, { mode: 'exclude'; excludedIdentifiers: number[] }>
 >;
 
 // @ts-expect-error Include selections cannot carry the exclude-branch payload.
@@ -161,5 +174,3 @@ const _invalidExcludeSelection: ZodBulkExcludeSelection<string> = { mode: 'exclu
 
 // @ts-expect-error Identifier schemas must produce a public string-or-number identifier.
 const _invalidIdentifierSchema = zodBulkSelectionSchema({ identifierSchema: z.boolean() });
-
-// -----------------------------------------------------------------------------

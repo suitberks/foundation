@@ -15,7 +15,7 @@ const DEFAULT_ERROR_MESSAGE = 'Selection identifiers must be provided.';
  *   identifierSchema: z.string().min(1),
  * });
  */
-export const zodBulkSelectionSchema = <const TIdentifierSchema extends z.ZodType<string | number>>({
+export function zodBulkSelectionSchema<const TIdentifierSchema extends z.ZodType<string | number>>({
   identifierSchema,
 }: {
   /**
@@ -23,7 +23,7 @@ export const zodBulkSelectionSchema = <const TIdentifierSchema extends z.ZodType
    * Its transforms and exact inferred output are preserved in both branches.
    */
   identifierSchema: TIdentifierSchema;
-}) => {
+}) {
   // Selection identifiers represent mathematical sets, so duplicate values are invalid.
   // Validation happens after identifier parsing to catch equal coerced or transformed values.
 
@@ -37,4 +37,4 @@ export const zodBulkSelectionSchema = <const TIdentifierSchema extends z.ZodType
     z.object({ mode: z.literal('include'), identifiers: identifiersSchema }).strict(),
     z.object({ mode: z.literal('exclude'), excludedIdentifiers: identifiersSchema }).strict(),
   ]);
-};
+}
