@@ -1,18 +1,17 @@
 import { and, eq } from 'drizzle-orm';
 import type { AnyColumn, SQL } from 'drizzle-orm';
 
-// Default error message for when no defined conditions are provided to the `sqlWhere` function.
+// Shared error message keeps empty `WHERE` failures consistent across callers and tests;
+// The guard prevents accidentally executing a query without any defined conditions;
+
 const AT_LEAST_ONE_DEFINED_CONDITION_ERROR = 'sqlWhere requires at least one defined condition.';
 
 /**
- * Builds a Drizzle SQL `where` condition from a plain object.
+ * Builds a Drizzle `WHERE` clause by combining defined object entries with `and`.
+ * Expects the supplied keys to be validated against the table beforehand.
  *
- * Maps each `where` entry to `eq(table[key], value)` and combines them with `and`.
- * Assumes that `where` was already validated and contains only existing table fields.
- *
- * ```typescript
+ * @example
  * await db.update(usersTable).set(values).where(sqlWhere(usersTable, { id: 1 })).returning();
- * ```
  */
 export function sqlWhere(table: unknown, where: Record<string, unknown>): SQL {
   const columns = table as Record<string, AnyColumn>;
