@@ -3,13 +3,13 @@ import { HTTPException } from 'hono/http-exception';
 import { red } from 'kleur/colors';
 
 import { failure } from '@/http/http.factory';
-import type { APIError, ExceptionStatusCode } from '@/http/http.schemas';
+import type { APIError, ExceptionStatusCode } from '@/http/http.types';
 import { generateRandomString } from '@/utilities/generation.utilities';
 import { log } from '@/utilities/logging.utilities';
 
 function proceedUnhandledError(error: unknown): APIError {
-  // Handles unrecognized errors by logging them with a unique ID and
-  // returning a generic 500 response with the error ID for reference.
+  // Unexpected failures receive a correlation ID shared by logs and the response;
+  // Internal error details remain server-side while callers get a generic message;
 
   const errorId = generateRandomString(6);
   const errorMessage = error instanceof Error ? (error.stack ?? error.message) : JSON.stringify(error);
@@ -19,8 +19,8 @@ function proceedUnhandledError(error: unknown): APIError {
 }
 
 /**
- * Global error handler for Hono framework. Catches all exceptions thrown in route handlers and middlewares.
- * Distinguishes between expected HTTPExceptions (mapped to their status codes) and unexpected errors (500).
+ * Converts expected `HTTPException` values into shared API error envelopes.
+ * Unexpected failures are logged and represented by a traceable generic response.
  */
 export const onHandlerError: ErrorHandler = (error, c) => {
   let response: APIError;

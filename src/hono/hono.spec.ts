@@ -1,13 +1,8 @@
-import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
-import type { APIError, APISuccess } from '@/http/http.schemas';
-import { log } from '@/utilities/logging.utilities';
-
-import { onHandlerError } from './hono.execution';
-import { honoLoggingHandler } from './hono.logging';
-import { fileRespond, respond } from './hono.respond';
+import { type APIError, type APISuccess, fileRespond, honoLoggingHandler, log, onHandlerError, respond } from '@/index';
 
 /**
  * Reads a JSON response while keeping each test explicit about the public payload it expects.
@@ -41,7 +36,7 @@ afterEach(() => {
 // =================================================================================================
 
 describe('respond', () => {
-  it('returns the requested status and wraps data in the API success envelope', async () => {
+  test('returns the requested status and wraps data in the API success envelope', async () => {
     const app = new Hono();
 
     app.post('/users', (c) => respond(c, { status: 201, data: { id: 'user-1' } }));
@@ -57,7 +52,7 @@ describe('respond', () => {
     });
   });
 
-  it('uses an empty object when optional response data is omitted', async () => {
+  test('uses an empty object when optional response data is omitted', async () => {
     const app = new Hono();
 
     app.get('/accepted', (c) => respond(c, { status: 202 }));
@@ -78,7 +73,7 @@ describe('respond', () => {
 // =================================================================================================
 
 describe('fileRespond', () => {
-  it('returns the requested binary content with attachment and custom content-type headers', async () => {
+  test('returns the requested binary content with attachment and custom content-type headers', async () => {
     const app = new Hono();
     const content = new TextEncoder().encode('identifier,name\nasset-1,Foundation');
 
@@ -101,7 +96,7 @@ describe('fileRespond', () => {
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(content);
   });
 
-  it('uses the binary content type by default and preserves arbitrary bytes', async () => {
+  test('uses the binary content type by default and preserves arbitrary bytes', async () => {
     const app = new Hono();
     const content = new Uint8Array([0, 1, 127, 128, 255]);
 
@@ -129,7 +124,7 @@ describe('fileRespond', () => {
 // =================================================================================================
 
 describe('onHandlerError', () => {
-  it('preserves expected client HTTP exceptions without logging them as unhandled', async () => {
+  test('preserves expected client HTTP exceptions without logging them as unhandled', async () => {
     const errorLog = spyOn(log, 'error').mockImplementation(() => undefined);
     const app = createThrowingApp(new HTTPException(404, { message: 'Record not found' }));
 
@@ -144,7 +139,7 @@ describe('onHandlerError', () => {
     expect(errorLog).not.toHaveBeenCalled();
   });
 
-  it('returns a traceable generic 500 response and logs the matching generated error id', async () => {
+  test('returns a traceable generic 500 response and logs the matching generated error id', async () => {
     const errorLog = spyOn(log, 'error').mockImplementation(() => undefined);
     const app = createThrowingApp(new Error('Database unavailable'));
 
@@ -171,7 +166,7 @@ describe('onHandlerError', () => {
 // =================================================================================================
 
 describe('honoLoggingHandler', () => {
-  it('continues the request and logs stable method, status, path, and query details', async () => {
+  test('continues the request and logs stable method, status, path, and query details', async () => {
     const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
     const app = new Hono();
 
@@ -198,7 +193,7 @@ describe('honoLoggingHandler', () => {
     expect(message).toContain('(term=foundation&limit=2)');
   });
 
-  it('logs a request body without consuming it before the route handler', async () => {
+  test('logs a request body without consuming it before the route handler', async () => {
     const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
     const app = new Hono();
     const body = '{\n  "name":   "Foundation"\n}';
@@ -218,7 +213,7 @@ describe('honoLoggingHandler', () => {
     expect(infoLog.mock.calls[0]?.[0]).not.toContain('\n');
   });
 
-  it('shortens long request bodies while preserving their beginning and end', async () => {
+  test('shortens long request bodies while preserving their beginning and end', async () => {
     const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
     const app = new Hono();
     const body = `${'a'.repeat(41)}${'b'.repeat(40)}`;
@@ -233,7 +228,7 @@ describe('honoLoggingHandler', () => {
     expect(message).not.toContain(body);
   });
 
-  it('logs a placeholder instead of reading multipart form data', async () => {
+  test('logs a placeholder instead of reading multipart form data', async () => {
     const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
     const app = new Hono();
 
