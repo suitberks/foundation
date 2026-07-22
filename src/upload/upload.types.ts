@@ -7,6 +7,36 @@ import type { FileFormat, UploadValidationError } from './upload.enums';
 export type FileFormatConfig = (typeof fileFormatsConfig)[FileFormat];
 
 /**
+ * Shared upload policy consumed by browser controls and backend validation.
+ * One preset keeps format, size, capacity, and fallback rules synchronized.
+ */
+export type UploadPreset<TFormats extends readonly FileFormat[] = readonly FileFormat[]> = Readonly<{
+  /**
+   * Supported formats accepted by every consumer of the preset.
+   * Const inference preserves the supplied format tuple without widening.
+   */
+  formats: TFormats;
+
+  /**
+   * Maximum accepted size of one uploaded file measured in bytes.
+   * Schema and client validation can share this exact numeric boundary.
+   */
+  maxFileSize: number;
+
+  /**
+   * Optional maximum number of files retained by one upload collection.
+   * Single-file controls can set this value to `1` for shared capacity rules.
+   */
+  maxFilesCount?: number;
+
+  /**
+   * Allows extensions to compensate for absent or unreliable MIME metadata.
+   * The fallback remains disabled when this option is omitted.
+   */
+  extensionFallback?: boolean;
+}>;
+
+/**
  * Constraints used to validate an incoming collection of browser files.
  * Existing and incoming counts are combined when enforcing capacity.
  */

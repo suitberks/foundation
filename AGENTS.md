@@ -46,6 +46,7 @@ name and add a responsibility suffix:
 - `*.types.ts` for domain contracts and schema-derived types;
 - `*.services.ts` for stateful service classes;
 - `*.factory.ts` for non-schema value construction;
+- `*.presets.ts` for ready-to-use policies composed from public domain values;
 - `*.resolvers.ts` for result translation and unwrapping;
 - `*.validation.ts` for ordered validation behavior;
 - `*.parsing.ts` for input preprocessing;

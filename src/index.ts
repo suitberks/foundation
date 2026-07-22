@@ -12,6 +12,8 @@ export * from './http/http.types';
 
 export * from './upload/upload.constants';
 export * from './upload/upload.enums';
+export * from './upload/upload.factory';
+export * from './upload/upload.presets';
 export * from './upload/upload.schemas';
 export * from './upload/upload.types';
 export * from './upload/upload.utilities';

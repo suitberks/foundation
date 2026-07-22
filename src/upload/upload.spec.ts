@@ -2,13 +2,18 @@ import { describe, expect, test } from 'bun:test';
 import type { z } from 'zod';
 
 import {
+  DEFAULT_UPLOAD_MAX_FILE_SIZE,
   type FileFormat,
+  type UploadPreset,
   type UploadValidationError,
   createUploadAccept,
+  defineUploadPreset,
+  documentUploadPreset,
   fileFormat,
   fileFormatsArray,
   fileFormatsConfig,
   getFileExtension,
+  imageUploadPreset,
   isFileExtensionSupported,
   isFileFormatSupported,
   isFileMimeTypeSupported,
@@ -52,6 +57,52 @@ type _ValidationErrorContract = Assert<
   >
 >;
 type _ZodUploadOutputContract = Assert<IsExact<z.output<ReturnType<typeof zodUploadFileSchema>>, File>>;
+
+const singleImageUploadPreset = defineUploadPreset({
+  formats: [fileFormat.JPG, fileFormat.PNG, fileFormat.WEBP],
+  maxFileSize: 8 * 1024 * 1024,
+  maxFilesCount: 1,
+});
+
+type _UploadPresetContract = Assert<
+  IsExact<typeof singleImageUploadPreset, UploadPreset<readonly ['jpg', 'png', 'webp']>>
+>;
+type _ImageUploadPresetContract = Assert<
+  IsExact<typeof imageUploadPreset.formats, readonly ['png', 'jpg', 'webp', 'avif', 'heic']>
+>;
+type _DocumentUploadPresetContract = Assert<
+  IsExact<typeof documentUploadPreset.formats, readonly ['pdf', 'rtf', 'txt']>
+>;
+
+// =====================================================================================================================
+// SHARED UPLOAD PRESETS
+// =====================================================================================================================
+
+describe('defineUploadPreset', () => {
+  test('preserves one policy for picker hints and backend file schemas', () => {
+    const schema = zodUploadFileSchema(singleImageUploadPreset);
+    const file = new File(['image'], 'asset.png', { type: 'image/png' });
+
+    expect(createUploadAccept(singleImageUploadPreset.formats)).toBe(
+      'image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
+    );
+    expect(schema.parse(file)).toBe(file);
+    expect(singleImageUploadPreset.maxFilesCount).toBe(1);
+  });
+});
+
+describe('built-in upload presets', () => {
+  test('provides synchronized image and document policies', () => {
+    expect(imageUploadPreset).toEqual({
+      formats: ['png', 'jpg', 'webp', 'avif', 'heic'],
+      maxFileSize: DEFAULT_UPLOAD_MAX_FILE_SIZE,
+    });
+    expect(documentUploadPreset).toEqual({
+      formats: ['pdf', 'rtf', 'txt'],
+      maxFileSize: DEFAULT_UPLOAD_MAX_FILE_SIZE,
+    });
+  });
+});
 
 // =====================================================================================================================
 // FORMAT CATALOG AND FILE METADATA

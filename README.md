@@ -24,7 +24,7 @@ The package contains several deliberately isolated areas:
 | ---------------- | ----------------------------------------------------------------------------------------- |
 | `utilities`      | Framework-independent datetime, enum, execution, generation, logging, and type utilities. |
 | `http`           | Shared HTTP result contracts, factories, status constants, and result resolvers.          |
-| `upload`         | Shared file-format metadata, upload validation, and reusable Zod file schemas.            |
+| `upload`         | Shared upload presets, file-format metadata, validation, and reusable Zod schemas.        |
 | `zod-validation` | Generic Zod parsing, validation, refinement, and related type utilities.                  |
 | `zod-search`     | Reusable search and pagination contracts composed from lower-level Zod primitives.        |
 | `zod-bulk`       | Include/exclude selection contracts shared by frontend and backend bulk operations.       |
@@ -122,6 +122,7 @@ single public API boundary and should export only symbols intentionally supporte
 | `*.services.ts`   | Stateful service classes that coordinate one external capability.         |
 | `*.validation.ts` | Ordered validation behavior returning stable domain error keys.           |
 | `*.factory.ts`    | Functions whose primary responsibility is constructing non-schema values. |
+| `*.presets.ts`    | Ready-to-use policies composed from public domain values.                 |
 | `*.resolvers.ts`  | Functions that unwrap, normalize, or translate an existing result.        |
 | `*.utilities.ts`  | Stateless reusable behavior that has no narrower architectural owner.     |
 | `*.parsing.ts`    | Input parsing and preprocessing before domain validation.                 |
