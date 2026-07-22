@@ -1,8 +1,12 @@
 const DEFAULT_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 /**
- * Creates a random string of the specified length using characters from DEFAULT_CHARACTERS.
- * Example usage: `generateRandomString(5) = 'aZ3fG' / generateRandomString() = 'G5kLm2P9sQ'`
+ * Creates a cryptographically sourced string from the alphanumeric set.
+ * Requested length defaults to `10` characters when omitted.
+ *
+ * @example
+ * generateRandomString(5); // `aZ3fG`
+ * generateRandomString(); // `G5kLm2P9sQ`
  */
 export function generateRandomString(length: number = 10): string {
   const randomValues = crypto.getRandomValues(new Uint32Array(length));

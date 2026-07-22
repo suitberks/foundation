@@ -3,75 +3,71 @@ import { getTimezoneOffset, toZonedTime } from 'date-fns-tz';
 import { ru } from 'date-fns/locale';
 
 /**
- * Returns the current date and time shifted to the specified timezone.
+ * Projects the current instant onto the wall-clock fields of another timezone.
+ * The timezone defaults to `Europe/London` when no option is provided.
  *
- * This is useful when the application needs to display "now" from another
- * region's point of view instead of relying on the server's local timezone.
+ * @example
+ * const londonTime = getZonedTime({ tz: 'Europe/London' });
  */
-export const getZonedTime = ({ tz = 'Europe/London' }: { tz?: string } = {}): Date => {
+export function getZonedTime({ tz = 'Europe/London' }: { tz?: string } = {}): Date {
   return toZonedTime(new Date(), tz);
-};
+}
 
 /**
- * Returns the UTC offset for the specified timezone at the given date.
+ * Formats the UTC offset of a timezone at the supplied date.
+ * An explicit date preserves daylight-saving and historical offset rules.
  *
- * The offset is formatted for display next to dates and times, for example
- * `(+4 UTC)`, `(0 UTC)`, or `(-5 UTC)`. The date is required because timezone
- * offsets may change depending on daylight saving time or historical rules.
+ * @example
+ * getUTCOffset(date, 'Europe/Moscow'); // `(+3 UTC)`
  */
-export const getUTCOffset = (date: Date, tz: string): string => {
+export function getUTCOffset(date: Date, tz: string): string {
   const offset = getTimezoneOffset(tz, date) / (60 * 60 * 1000);
   return `(${offset >= 0 ? '+' : ''}${offset} UTC)`;
-};
+}
 
 /**
- * Returns the current time formatted in the specified timezone.
+ * Formats the current time and UTC offset in the selected timezone.
+ * The timezone defaults to `Europe/London` when no option is provided.
  *
- * The result includes both the local time and its UTC offset, making it suitable
- * for UI labels, logs, bot messages, and other places where the user should see
- * not only the time itself, but also the timezone context behind that value.
- *
- * Format: `HH:mm:ss (+X UTC)`.
+ * @example
+ * getFormattedTime({ tz: 'Europe/Moscow' }); // `03:04:05 (+3 UTC)`
  */
-export const getFormattedTime = ({ tz = 'Europe/London' }: { tz?: string } = {}): string => {
+export function getFormattedTime({ tz = 'Europe/London' }: { tz?: string } = {}): string {
   const zonedTime = getZonedTime({ tz });
   return `${format(zonedTime, 'HH:mm:ss')} ${getUTCOffset(zonedTime, tz)}`;
-};
+}
 
 /**
- * Returns the current date formatted in the specified timezone.
+ * Formats the current date with optional time and UTC offset components.
+ * Time is included by default and uses the selected timezone for display.
  *
- * By default, the result includes date, time, and UTC offset. This is useful for
- * complete timestamps displayed in UI, bot messages, reports, or diagnostics.
- *
- * Format with time: `dd.MM.yyyy HH:mm:ss (+X UTC)`.
- * Format without time: `dd.MM.yyyy`.
+ * @example
+ * getFormattedDate({ tz: 'UTC', withTime: false }); // `02.01.2024`
  */
-export const getFormattedDate = ({
+export function getFormattedDate({
   tz = 'Europe/London',
   withTime = true,
-}: { tz?: string; withTime?: boolean } = {}): string => {
+}: { tz?: string; withTime?: boolean } = {}): string {
   const zonedTime = getZonedTime({ tz });
 
   const pattern = withTime ? 'dd.MM.yyyy HH:mm:ss' : 'dd.MM.yyyy';
   const formatted = format(zonedTime, pattern);
 
   return `${formatted}${withTime ? ` ${getUTCOffset(zonedTime, tz)}` : ''}`;
-};
+}
 
 /**
- * Formats the provided date and time in the specified timezone.
+ * Formats an explicit instant in another timezone using the selected locale.
+ * The result includes localized date text, wall-clock time, and UTC offset.
  *
- * Unlike helpers that always use the current moment, this function accepts an
- * explicit Date value and formats that exact point in time for another timezone.
- *
- * Format: `HH:mm:ss, d MMMM yyyy (+X UTC)`.
+ * @example
+ * formatTime(date, { locale: ru, tz: 'Europe/Moscow' });
  */
-export const formatTime = (
+export function formatTime(
   time: Date,
   { locale = ru, tz = 'Europe/London' }: { locale?: Locale; tz?: string } = {}
-): string => {
+): string {
   const zonedTime = toZonedTime(time, tz);
 
   return `${format(zonedTime, 'HH:mm:ss, d MMMM yyyy', { locale })} ${getUTCOffset(zonedTime, tz)}`;
-};
+}
