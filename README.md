@@ -113,21 +113,23 @@ single public API boundary and should export only symbols intentionally supporte
 
 ## File responsibilities
 
-| Suffix            | Expected content                                                              |
-| ----------------- | ----------------------------------------------------------------------------- |
-| `*.constants.ts`  | Immutable values and literal collections without behavior.                    |
-| `*.schemas.ts`    | Runtime Zod schemas and factories whose result is a schema.                   |
-| `*.types.ts`      | Type aliases, interfaces, generic contracts, and schema-derived output types. |
-| `*.validation.ts` | Ordered validation behavior returning stable domain error keys.               |
-| `*.factory.ts`    | Functions whose primary responsibility is constructing non-schema values.     |
-| `*.resolvers.ts`  | Functions that unwrap, normalize, or translate an existing result.            |
-| `*.utilities.ts`  | Stateless reusable behavior that has no narrower architectural owner.         |
-| `*.parsing.ts`    | Input parsing and preprocessing before domain validation.                     |
-| `*.refiners.ts`   | Refinement logic that narrows or safely composes an existing value.           |
-| `*.execution.ts`  | Framework lifecycle execution and error-boundary behavior.                    |
-| `*.logging.ts`    | Logging formatters, sinks, or middleware behavior.                            |
-| `*.respond.ts`    | Framework response construction and response-specific contracts.              |
-| `*.spec.ts`       | The single colocated runtime and compile-time specification for a module.     |
+| Suffix            | Expected content                                                          |
+| ----------------- | ------------------------------------------------------------------------- |
+| `*.constants.ts`  | Immutable configuration values and metadata without behavior.             |
+| `*.enums.ts`      | Literal collections, derived unions, ergonomic records, and aliases.      |
+| `*.schemas.ts`    | Runtime Zod schemas and factories whose result is a schema.               |
+| `*.types.ts`      | Type aliases, generic contracts, and schema-derived output types.         |
+| `*.services.ts`   | Stateful service classes that coordinate one external capability.         |
+| `*.validation.ts` | Ordered validation behavior returning stable domain error keys.           |
+| `*.factory.ts`    | Functions whose primary responsibility is constructing non-schema values. |
+| `*.resolvers.ts`  | Functions that unwrap, normalize, or translate an existing result.        |
+| `*.utilities.ts`  | Stateless reusable behavior that has no narrower architectural owner.     |
+| `*.parsing.ts`    | Input parsing and preprocessing before domain validation.                 |
+| `*.refiners.ts`   | Refinement logic that narrows or safely composes an existing value.       |
+| `*.execution.ts`  | Framework lifecycle execution and error-boundary behavior.                |
+| `*.logging.ts`    | Logging formatters, sinks, or middleware behavior.                        |
+| `*.respond.ts`    | Framework response construction and response-specific contracts.          |
+| `*.spec.ts`       | The single colocated runtime and compile-time specification for a module. |
 
 Do not place TypeScript-only contracts in a schema file when they can be separated without creating a circular
 responsibility. Do not split tiny files mechanically either: separation must communicate ownership, not line count.

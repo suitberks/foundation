@@ -13,12 +13,12 @@
   },
   "scripts": {
     "build": "tsup",
+    "test": "bun test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts --fix",
     "lint:check": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "bun test"
+    "format:check": "prettier --check ."
   },
   "exports": {
     ".": {
