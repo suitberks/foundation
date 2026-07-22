@@ -9,13 +9,13 @@ import type { ZodSearchSchemaOptions } from './zod-search.types';
  * Optional text query shared by search request contracts.
  * Provided values are trimmed and must contain visible text.
  */
-const zodSearchQuerySchema = z.string().trim().min(1).optional();
+export const zodSearchQuerySchema = z.string().trim().min(1).optional();
 
 /**
  * Makes every supplied filter optional while requiring one defined value.
  * Top-level optionality is added later for both composition modes equally.
  */
-const createZodSearchWhereSchema = <TShape extends z.ZodRawShape>(filters: z.ZodObject<TShape>) =>
+export const createZodSearchWhereSchema = <TShape extends z.ZodRawShape>(filters: z.ZodObject<TShape>) =>
   zodAtLeastOne(filters.partial());
 
 /**

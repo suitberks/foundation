@@ -3,13 +3,21 @@ import { z } from 'zod';
 
 import { type AtLeastOne, zodPaginationSchema, zodSearchSchema } from '@/index';
 
+// =====================================================================================================================
+// COMPILE-TIME CONTRACT SUPPORT
+// =====================================================================================================================
+
 /**
  * Shared compile-time helpers keep inferred public contracts visible beside runtime checks.
  * They intentionally disappear from emitted JavaScript and add no test-only runtime paths.
  */
-type Equal<Left, Right> =
-  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2 ? true : false;
-type Expect<Value extends true> = Value;
+type IsExact<Actual, Expected> =
+  (<Value>() => Value extends Actual ? 1 : 2) extends <Value>() => Value extends Expected ? 1 : 2
+    ? (<Value>() => Value extends Expected ? 1 : 2) extends <Value>() => Value extends Actual ? 1 : 2
+      ? true
+      : false
+    : false;
+type Assert<Condition extends true> = Condition;
 
 const filterFieldsSchema = z.object({
   status: z.enum(['active', 'paused']),
@@ -33,7 +41,9 @@ const flagsDisabledSearchSchema = zodSearchSchema({
   paginationEnabled: false,
 });
 
-// Runtime contracts ------------------------------------------------------------
+// =====================================================================================================================
+// RUNTIME CONTRACTS
+// =====================================================================================================================
 
 describe('zodPaginationSchema runtime contracts', () => {
   test('applies defaults and coerces URL-style pagination values', () => {
@@ -134,8 +144,9 @@ describe('zodSearchSchema flags and strictness runtime contracts', () => {
   });
 });
 
-// -----------------------------------------------------------------------------
-// Compile-time contracts -------------------------------------------------------
+// =====================================================================================================================
+// COMPILE-TIME CONTRACTS
+// =====================================================================================================================
 
 type ExpectedFilterWhere = AtLeastOne<{
   status?: 'active' | 'paused';
@@ -147,9 +158,9 @@ type ExpectedFilterWhere = AtLeastOne<{
  * Exact output assertions protect defaults, optional fields, feature flags, and ZodPipe transforms.
  * Negative assignments also prove unsupported option combinations remain compile-time failures.
  */
-type _PaginationOutputIsExact = Expect<Equal<z.infer<typeof zodPaginationSchema>, { offset: number; limit: number }>>;
-type _FiltersOutputIsExact = Expect<
-  Equal<
+type _PaginationOutputIsExact = Assert<IsExact<z.infer<typeof zodPaginationSchema>, { offset: number; limit: number }>>;
+type _FiltersOutputIsExact = Assert<
+  IsExact<
     z.infer<typeof filtersSearchSchema>,
     {
       where?: ExpectedFilterWhere;
@@ -158,8 +169,8 @@ type _FiltersOutputIsExact = Expect<
     }
   >
 >;
-type _PreparedOutputIsExact = Expect<
-  Equal<
+type _PreparedOutputIsExact = Assert<
+  IsExact<
     z.infer<typeof preparedSearchSchema>,
     {
       where?: { id: number };
@@ -168,8 +179,8 @@ type _PreparedOutputIsExact = Expect<
     }
   >
 >;
-type _DisabledOutputIsExact = Expect<
-  Equal<
+type _DisabledOutputIsExact = Assert<
+  IsExact<
     z.infer<typeof flagsDisabledSearchSchema>,
     {
       where?: AtLeastOne<{ status?: 'active' | 'paused' }>;
@@ -202,5 +213,3 @@ const _assertInvalidSearchOptions = () => {
   // @ts-expect-error Automatic filters and a prepared whereSchema are mutually exclusive.
   zodSearchSchema({ filters: filterFieldsSchema, whereSchema: preparedWhereSchema });
 };
-
-// -----------------------------------------------------------------------------
