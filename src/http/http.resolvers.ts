@@ -1,9 +1,8 @@
-import type { APIContractData, APIContractResult, FetchResult } from './http.schemas';
+import type { APIContractData, APIContractResult, FetchResult } from './http.types';
 
 /**
- * Resolves an APIContractResult fetcher into a FetchResult discriminated union.
- * Does not throw errors, instead returning them as property of the FetchResult.
- * Example usage: const result = await fetchSafely(() => api.fetchUser(userId));
+ * Converts an API contract envelope into a mutually exclusive safe result.
+ * Only `APIError` values are normalized; rejected fetchers still reject.
  */
 export async function fetchSafely<TResult extends APIContractResult<unknown>>(
   fetcher: () => Promise<TResult>
@@ -15,8 +14,8 @@ export async function fetchSafely<TResult extends APIContractResult<unknown>>(
 }
 
 /**
- * Resolves an APIContractResult, throwing an error if the result is an APIError.
- * Example usage: const data = await fetchAndThrow(() => api.fetchUser(userId));
+ * Returns successful API data and throws for an `APIError` envelope.
+ * Rejected fetchers propagate their original error without replacement.
  */
 export async function fetchAndThrow<TResult extends APIContractResult<unknown>>(
   fetcher: () => Promise<TResult>

@@ -1,25 +1,35 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
-import { EXCEPTION_STATUS_CODES, SUCCESS_STATUS_CODES } from './http.constants';
-import { failure, success } from './http.factory';
-import { fetchAndThrow, fetchSafely } from './http.resolvers';
-import type {
-  APIContractData,
-  APIContractError,
-  APIContractResult,
-  APIError,
-  APISuccess,
-  ExceptionStatusCode,
-  FetchResult,
-  SuccessStatusCode,
-} from './http.schemas';
+import {
+  type APIContractData,
+  type APIContractError,
+  type APIContractResult,
+  type APIError,
+  type APISuccess,
+  EXCEPTION_STATUS_CODES,
+  type ExceptionStatusCode,
+  type FetchResult,
+  SUCCESS_STATUS_CODES,
+  type SuccessStatusCode,
+  failure,
+  fetchAndThrow,
+  fetchSafely,
+  success,
+} from '@/index';
 
 // =================================================================================================
 // COMPILE-TIME PUBLIC TYPE CONTRACTS
 // =================================================================================================
 
-type Equal<TLeft, TRight> = (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2 ? true : false;
-type Expect<T extends true> = T;
+/**
+ * Compares public types in both assignability directions for exactness.
+ * Compile-time assertions use it to detect widened contract branches.
+ */
+type Equal<TLeft, TRight> =
+  (<TValue>() => TValue extends TLeft ? 1 : 2) extends <TValue>() => TValue extends TRight ? 1 : 2 ? true : false;
+
+/** Constrains one compile-time proposition to `true`. */
+type Expect<TValue extends true> = TValue;
 
 type ExampleContract = APISuccess<{ id: string }> | APIError;
 type _SuccessStatusContract = Expect<Equal<SuccessStatusCode, 200 | 201 | 202 | 307>>;
@@ -57,14 +67,14 @@ async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
 // =================================================================================================
 
 describe('HTTP status constants', () => {
-  it('publishes the complete supported success and exception status sets', () => {
+  test('publishes the complete supported success and exception status sets', () => {
     expect(SUCCESS_STATUS_CODES).toEqual([200, 201, 202, 307]);
     expect(EXCEPTION_STATUS_CODES).toEqual([400, 401, 403, 404, 405, 409, 500]);
   });
 });
 
 describe('HTTP response factories', () => {
-  it('creates a successful data result without cloning its payload', () => {
+  test('creates a successful data result without cloning its payload', () => {
     const data = { id: 'user-1', roles: ['admin'] };
     const response = success({ status: 201, data });
 
@@ -73,7 +83,7 @@ describe('HTTP response factories', () => {
     expect(describeContractResult(response)).toBe('user-1');
   });
 
-  it('creates an error result with the requested public shape', () => {
+  test('creates an error result with the requested public shape', () => {
     const response = failure({ status: 404, error: 'User not found' });
 
     expect(response).toEqual({ kind: 'error', status: 404, error: 'User not found' });
@@ -86,7 +96,7 @@ describe('HTTP response factories', () => {
 // =================================================================================================
 
 describe('fetchSafely', () => {
-  it('unwraps successful contract data and invokes the fetcher once', async () => {
+  test('unwraps successful contract data and invokes the fetcher once', async () => {
     const data = { id: 'user-1' };
     let invocations = 0;
 
@@ -100,13 +110,13 @@ describe('fetchSafely', () => {
     expect(result.data).toBe(data);
   });
 
-  it('turns a contract error into the mutually exclusive FetchResult error branch', async () => {
+  test('turns a contract error into the mutually exclusive `FetchResult` branch', async () => {
     const result = await fetchSafely(() => Promise.resolve(failure({ status: 409, error: 'Already exists' })));
 
     expect(result).toEqual({ error: 'Already exists', data: null });
   });
 
-  it('does not hide rejections that happen before an API contract result exists', async () => {
+  test('does not hide rejections that happen before an API contract result exists', async () => {
     const transportError = new Error('Connection reset');
 
     // `fetchSafely` normalizes APIError values; transport and programming failures remain observable rejections.
@@ -121,14 +131,14 @@ describe('fetchSafely', () => {
 // =================================================================================================
 
 describe('fetchAndThrow', () => {
-  it('returns successful contract data unchanged', async () => {
+  test('returns successful contract data unchanged', async () => {
     const data = { id: 'user-2' };
     const result = await fetchAndThrow(() => Promise.resolve(success({ status: 202, data })));
 
     expect(result).toBe(data);
   });
 
-  it('throws an Error carrying the contract error message', async () => {
+  test('throws an `Error` carrying the contract error message', async () => {
     const rejection = await captureRejection(
       fetchAndThrow(() => Promise.resolve(failure({ status: 401, error: 'Authentication required' })))
     );
@@ -137,7 +147,7 @@ describe('fetchAndThrow', () => {
     expect((rejection as Error).message).toBe('Authentication required');
   });
 
-  it('preserves an unexpected fetcher rejection instead of wrapping it', async () => {
+  test('preserves an unexpected fetcher rejection instead of wrapping it', async () => {
     const unexpectedError = new TypeError('Invalid response');
     const rejection = await captureRejection(fetchAndThrow(() => Promise.reject(unexpectedError)));
 
