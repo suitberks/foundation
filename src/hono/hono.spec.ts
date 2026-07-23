@@ -266,6 +266,7 @@ describe('honoLoggingHandler', () => {
     expect(infoLog).toHaveBeenCalledTimes(1);
 
     const message = infoLog.mock.calls[0]?.[0];
+
     expect(message).toContain('/secure');
     expect(message).not.toContain('secret-query');
     expect(message).not.toContain('secret-body');
