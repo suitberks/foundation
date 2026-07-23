@@ -2,7 +2,7 @@ import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
-import { type APIError, type APISuccess, fileRespond, honoLoggingHandler, log, onHandlerError, respond } from '@/index';
+import { type APIError, type APISuccess, fileRespond, log, onHandlerError, respond } from '@/index';
 
 /**
  * Reads a JSON response while keeping each test explicit about the public payload it expects.
@@ -158,117 +158,5 @@ describe('onHandlerError', () => {
 
     expect(errorLog).toHaveBeenCalledTimes(1);
     expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('Database unavailable'), errorId);
-  });
-});
-
-// =====================================================================================================================
-// REQUEST LOGGING MIDDLEWARE
-// =====================================================================================================================
-
-describe('honoLoggingHandler', () => {
-  test('continues the request and logs stable method, status, path, and query details', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-
-    app.use('*', honoLoggingHandler());
-    app.get('/search', (c) => respond(c, { status: 200, data: { matched: true } }));
-
-    const response = await app.request('/search?term=foundation&limit=2');
-    const body = await readJson<APISuccess<{ matched: boolean }>>(response);
-
-    expect(response.status).toBe(200);
-    expect(body.data).toEqual({ matched: true });
-    expect(infoLog).toHaveBeenCalledTimes(1);
-
-    const loggedCall = infoLog.mock.calls[0];
-    if (!loggedCall) throw new Error('The request logger did not emit its expected call');
-    const [message, service] = loggedCall;
-
-    // Duration is deliberately checked only by shape because wall-clock measurements are nondeterministic.
-    expect(service).toBe('hono');
-    expect(message).toContain('GET');
-    expect(message).toContain('200');
-    expect(message).toMatch(/\d+ms/);
-    expect(message).toContain('/search');
-    expect(message).toContain('(term=foundation&limit=2)');
-  });
-
-  test('logs a request body without consuming it before the route handler', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-    const body = '{\n  "name":   "Foundation"\n}';
-
-    app.use('*', honoLoggingHandler());
-    app.post('/echo', async (c) => c.text(await c.req.text()));
-
-    const response = await app.request('/echo', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body,
-    });
-
-    expect(await response.text()).toBe(body);
-    expect(infoLog).toHaveBeenCalledTimes(1);
-    expect(infoLog.mock.calls[0]?.[0]).toContain('{ "name": "Foundation" }');
-    expect(infoLog.mock.calls[0]?.[0]).not.toContain('\n');
-  });
-
-  test('shortens long request bodies while preserving their beginning and end', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-    const body = `${'a'.repeat(31)}${'b'.repeat(30)}`;
-
-    app.use('*', honoLoggingHandler());
-    app.post('/long-body', (c) => c.body(null, 204));
-
-    await app.request('/long-body', { method: 'POST', body });
-
-    const message = infoLog.mock.calls[0]?.[0];
-    expect(message).toContain(`${'a'.repeat(30)}…${'b'.repeat(30)}`);
-    expect(message).not.toContain(body);
-  });
-
-  test('logs a placeholder instead of reading multipart form data', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-
-    app.use('*', honoLoggingHandler());
-    app.post('/upload', async (c) => {
-      const formData = await c.req.formData();
-      const name = formData.get('name');
-      if (typeof name !== 'string') throw new Error('Expected the multipart name field to be text');
-      return c.text(name);
-    });
-
-    const formData = new FormData();
-    formData.set('name', 'Foundation');
-    const response = await app.request('/upload', { method: 'POST', body: formData });
-
-    expect(await response.text()).toBe('Foundation');
-    expect(infoLog).toHaveBeenCalledTimes(1);
-    expect(infoLog.mock.calls[0]?.[0]).toContain('[multipart]');
-    expect(infoLog.mock.calls[0]?.[0]).not.toContain('Foundation');
-  });
-
-  test('omits query parameters and body content in secure mode', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-
-    app.use('*', honoLoggingHandler({ secure: true }));
-    app.post('/secure', async (c) => c.text(await c.req.text()));
-
-    const response = await app.request('/secure?token=secret-query', {
-      method: 'POST',
-      body: 'secret-body',
-    });
-
-    expect(await response.text()).toBe('secret-body');
-    expect(infoLog).toHaveBeenCalledTimes(1);
-
-    const message = infoLog.mock.calls[0]?.[0];
-
-    expect(message).toContain('/secure');
-    expect(message).not.toContain('secret-query');
-    expect(message).not.toContain('secret-body');
   });
 });

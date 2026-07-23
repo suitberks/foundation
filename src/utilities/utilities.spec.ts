@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, setSystemTime, test } from 'bun:test';
 import { enUS } from 'date-fns/locale';
-import { green, red, yellow } from 'kleur/colors';
 
 import {
   type MeasuredExecution,
@@ -10,7 +9,6 @@ import {
   createStringEnumRecord,
   formatTime,
   generateRandomString,
-  getColoredHTTPStatus,
   getFormattedDate,
   getFormattedTime,
   getUTCOffset,
@@ -213,33 +211,6 @@ describe('generateRandomString', () => {
   test('rejects negative lengths through the underlying typed-array boundary', () => {
     expect(() => generateRandomString(-1)).toThrow(RangeError);
   });
-});
-
-// =====================================================================================================================
-// HTTP STATUS COLOR SELECTION
-// =====================================================================================================================
-
-describe('getColoredHTTPStatus', () => {
-  test.each([
-    [200, green],
-    [299, green],
-    [400, yellow],
-    [499, yellow],
-    [500, red],
-    [599, red],
-  ] as const)('selects the documented color function for status %i', (status, expectedColor) => {
-    // Function identity avoids coupling the assertion to terminal color-detection behavior in kleur.
-    expect(getColoredHTTPStatus(status)).toBe(expectedColor);
-  });
-
-  test.each([0, 199, 300, 399, 600])(
-    'returns a transparent formatter outside colored ranges for status %i',
-    (status) => {
-      const formatStatus = getColoredHTTPStatus(status);
-
-      expect(formatStatus('status text')).toBe('status text');
-    }
-  );
 });
 
 // =====================================================================================================================
