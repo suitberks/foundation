@@ -45,7 +45,7 @@ type ExampleErrorFactories = {
 };
 type ExampleTypedContract = APISuccess<{ id: string }> | APIError<ErrorCodeOf<ExampleErrorFactories>>;
 type _SuccessStatusContract = Assert<IsExact<SuccessStatusCode, 200 | 201 | 202 | 307>>;
-type _ExceptionStatusContract = Assert<IsExact<ExceptionStatusCode, 400 | 401 | 403 | 404 | 405 | 409 | 500>>;
+type _ExceptionStatusContract = Assert<IsExact<ExceptionStatusCode, 400 | 401 | 403 | 404 | 405 | 409 | 413 | 500>>;
 type _ContractDataExtraction = Assert<IsExact<APIContractData<ExampleContract>, { id: string }>>;
 type _ContractErrorExtraction = Assert<IsExact<APIContractError<ExampleContract>, APIError>>;
 type _ErrorCodeExtraction = Assert<
@@ -93,7 +93,7 @@ async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
 describe('HTTP status constants', () => {
   test('publishes the complete supported success and exception status sets', () => {
     expect(SUCCESS_STATUS_CODES).toEqual([200, 201, 202, 307]);
-    expect(EXCEPTION_STATUS_CODES).toEqual([400, 401, 403, 404, 405, 409, 500]);
+    expect(EXCEPTION_STATUS_CODES).toEqual([400, 401, 403, 404, 405, 409, 413, 500]);
   });
 });
 
@@ -112,6 +112,13 @@ describe('HTTP response factories', () => {
 
     expect(response).toEqual({ kind: 'error', status: 404, error: 'userNotFound' });
     expect(describeContractResult(response)).toBe('userNotFound');
+  });
+
+  test('preserves a payload-too-large status and its machine-readable error code', () => {
+    const response = failure({ status: 413, error: 'formBodyTooLarge' });
+
+    expect(response).toEqual({ kind: 'error', status: 413, error: 'formBodyTooLarge' });
+    expect(response.error).toBe('formBodyTooLarge');
   });
 });
 
@@ -173,6 +180,19 @@ describe('fetchAndThrow', () => {
       message: 'authenticationRequired',
       code: 'authenticationRequired',
       status: 401,
+    });
+  });
+
+  test('throws an `APIRequestError` with the payload-too-large status and unchanged machine code', async () => {
+    const rejection = await captureRejection(
+      fetchAndThrow(() => Promise.resolve(failure({ status: 413, error: 'formBodyTooLarge' })))
+    );
+
+    expect(rejection).toBeInstanceOf(APIRequestError);
+    expect(rejection).toMatchObject({
+      message: 'formBodyTooLarge',
+      code: 'formBodyTooLarge',
+      status: 413,
     });
   });
 
