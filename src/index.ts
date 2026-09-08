@@ -11,6 +11,7 @@ export * from './hmac/hmac.types';
 export * from './hmac/hmac.utilities';
 
 export * from './http/http.constants';
+export * from './http/http.errors';
 export * from './http/http.factory';
 export * from './http/http.resolvers';
 export * from './http/http.types';

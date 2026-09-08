@@ -10,8 +10,14 @@ export function success<T = unknown>({ status, data }: { status: SuccessStatusCo
 
 /**
  * Creates a failed API envelope with one supported exception status.
- * The supplied message remains unchanged for downstream presentation.
+ * The supplied error code remains unchanged for downstream resolution.
  */
-export function failure({ status, error }: { status: ExceptionStatusCode; error: string }): APIError {
+export function failure<const TErrorCode extends string>({
+  status,
+  error,
+}: {
+  status: ExceptionStatusCode;
+  error: TErrorCode;
+}): APIError<TErrorCode> {
   return { kind: 'error', status, error };
 }

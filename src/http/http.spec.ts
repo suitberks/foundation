@@ -3,11 +3,14 @@ import { describe, expect, test } from 'bun:test';
 import {
   type APIContractData,
   type APIContractError,
+  type APIContractErrorCode,
   type APIContractResult,
   type APIError,
+  APIRequestError,
   type APISuccess,
   EXCEPTION_STATUS_CODES,
   type ExceptionStatusCode,
+  type ErrorCodeOf,
   type FetchResult,
   SUCCESS_STATUS_CODES,
   type SuccessStatusCode,
@@ -36,12 +39,29 @@ type IsExact<Actual, Expected> =
 type Assert<Condition extends true> = Condition;
 
 type ExampleContract = APISuccess<{ id: string }> | APIError;
+type ExampleErrorFactories = {
+  productNotFound: () => Error;
+  productAlreadyExists: () => Error;
+};
+type ExampleTypedContract = APISuccess<{ id: string }> | APIError<ErrorCodeOf<ExampleErrorFactories>>;
 type _SuccessStatusContract = Assert<IsExact<SuccessStatusCode, 200 | 201 | 202 | 307>>;
 type _ExceptionStatusContract = Assert<IsExact<ExceptionStatusCode, 400 | 401 | 403 | 404 | 405 | 409 | 500>>;
 type _ContractDataExtraction = Assert<IsExact<APIContractData<ExampleContract>, { id: string }>>;
 type _ContractErrorExtraction = Assert<IsExact<APIContractError<ExampleContract>, APIError>>;
+type _ErrorCodeExtraction = Assert<
+  IsExact<ErrorCodeOf<ExampleErrorFactories>, 'productNotFound' | 'productAlreadyExists'>
+>;
+type _ContractErrorCodeExtraction = Assert<
+  IsExact<APIContractErrorCode<ExampleTypedContract>, 'productNotFound' | 'productAlreadyExists'>
+>;
 type _FetchResultContract = Assert<
   IsExact<FetchResult<{ id: string }>, { error: null; data: { id: string } } | { error: string; data: null }>
+>;
+type _TypedFetchResultContract = Assert<
+  IsExact<
+    FetchResult<{ id: string }, ErrorCodeOf<ExampleErrorFactories>>,
+    { error: null; data: { id: string } } | { error: 'productNotFound' | 'productAlreadyExists'; data: null }
+  >
 >;
 
 /**
@@ -88,10 +108,10 @@ describe('HTTP response factories', () => {
   });
 
   test('creates an error result with the requested public shape', () => {
-    const response = failure({ status: 404, error: 'User not found' });
+    const response = failure({ status: 404, error: 'userNotFound' });
 
-    expect(response).toEqual({ kind: 'error', status: 404, error: 'User not found' });
-    expect(describeContractResult(response)).toBe('User not found');
+    expect(response).toEqual({ kind: 'error', status: 404, error: 'userNotFound' });
+    expect(describeContractResult(response)).toBe('userNotFound');
   });
 });
 
@@ -142,13 +162,18 @@ describe('fetchAndThrow', () => {
     expect(result).toBe(data);
   });
 
-  test('throws an `Error` carrying the contract error message', async () => {
+  test('throws an `APIRequestError` carrying the contract error code and status', async () => {
     const rejection = await captureRejection(
-      fetchAndThrow(() => Promise.resolve(failure({ status: 401, error: 'Authentication required' })))
+      fetchAndThrow(() => Promise.resolve(failure({ status: 401, error: 'authenticationRequired' })))
     );
 
-    expect(rejection).toBeInstanceOf(Error);
-    expect((rejection as Error).message).toBe('Authentication required');
+    expect(rejection).toBeInstanceOf(APIRequestError);
+    expect(rejection).toMatchObject({
+      name: 'APIRequestError',
+      message: 'authenticationRequired',
+      code: 'authenticationRequired',
+      status: 401,
+    });
   });
 
   test('preserves an unexpected fetcher rejection instead of wrapping it', async () => {
