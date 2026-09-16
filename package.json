@@ -1,6 +1,6 @@
 {
   "name": "@kalutskii/foundation",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Shared TypeScript foundations for reusable contracts, validation, framework adapters and utilities.",
   "license": "MIT",
   "repository": {
