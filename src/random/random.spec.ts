@@ -4,13 +4,25 @@ import {
   DEFAULT_RANDOM_STRING_LENGTH,
   RANDOM_ALPHANUMERIC_CHARACTERS,
   RANDOM_BYTE_BATCH_SIZE,
+  type RandomErrorCode,
   generateRandomString,
   randomErrors,
 } from '@/index';
 
-// =====================================================================================================================
-// RANDOM POLICIES
-// =====================================================================================================================
+// == CompileTimeContracts =============================================
+
+type IsExact<TActual, TExpected> =
+  (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
+    ? (<TValue>() => TValue extends TExpected ? 1 : 2) extends <TValue>() => TValue extends TActual ? 1 : 2
+      ? true
+      : false
+    : false;
+
+type Assert<TCondition extends true> = TCondition;
+
+type _RandomErrorCodeContract = Assert<IsExact<RandomErrorCode, 'invalidRandomStringLength'>>;
+
+// == RandomPolicies ===================================================
 
 describe('random policies', () => {
   test('publishes the default alphabet, output length, and Web Crypto batch boundary', () => {
@@ -24,9 +36,7 @@ describe('random policies', () => {
   });
 });
 
-// =====================================================================================================================
-// RANDOM STRING GENERATION
-// =====================================================================================================================
+// == RandomStringGeneration ===========================================
 
 describe('generateRandomString', () => {
   test('uses the documented default length and alphanumeric collection', () => {

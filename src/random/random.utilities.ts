@@ -1,6 +1,7 @@
 import {
   DEFAULT_RANDOM_STRING_LENGTH,
   RANDOM_ALPHANUMERIC_CHARACTERS,
+  RANDOM_BYTE_ACCEPTANCE_BOUNDARY,
   RANDOM_BYTE_BATCH_SIZE,
 } from './random.constants';
 import { assertRandomStringLength } from './random.validation';
@@ -17,8 +18,6 @@ export function generateRandomString(length: number = DEFAULT_RANDOM_STRING_LENG
   assertRandomStringLength(length);
 
   let result = '';
-  const acceptanceBoundary =
-    Math.floor(256 / RANDOM_ALPHANUMERIC_CHARACTERS.length) * RANDOM_ALPHANUMERIC_CHARACTERS.length;
 
   while (result.length < length) {
     // ↓ Bound each Web Crypto request while leaving room for rejected bytes.
@@ -30,7 +29,7 @@ export function generateRandomString(length: number = DEFAULT_RANDOM_STRING_LENG
     // ↓ Ignore the incomplete modulo range so every character stays equiprobable.
 
     for (const randomByte of randomBytes) {
-      if (randomByte >= acceptanceBoundary) continue;
+      if (randomByte >= RANDOM_BYTE_ACCEPTANCE_BOUNDARY) continue;
 
       result += RANDOM_ALPHANUMERIC_CHARACTERS.charAt(randomByte % RANDOM_ALPHANUMERIC_CHARACTERS.length);
       if (result.length === length) break;

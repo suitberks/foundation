@@ -15,3 +15,10 @@ export const DEFAULT_RANDOM_STRING_LENGTH = 10;
  * The boundary follows the platform limit enforced by `crypto.getRandomValues`.
  */
 export const RANDOM_BYTE_BATCH_SIZE = 65_536;
+
+/**
+ * Exclusive byte boundary retaining complete ranges of the output alphabet.
+ * Bytes at or above this value are rejected to prevent modulo distribution bias.
+ */
+export const RANDOM_BYTE_ACCEPTANCE_BOUNDARY =
+  Math.floor(256 / RANDOM_ALPHANUMERIC_CHARACTERS.length) * RANDOM_ALPHANUMERIC_CHARACTERS.length;
