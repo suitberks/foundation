@@ -16,9 +16,7 @@ export async function safeExecute<TData, TErrorResult = never>(
   } catch (error) {
     if (onError) return await onError(error);
 
-    // Without a fallback, the original failure remains observable to the caller;
-    // Preserving its identity avoids hiding stack traces and domain error details;
-
+    // Preserve the original failure, stack trace, and domain details.
     throw error;
   }
 }
