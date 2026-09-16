@@ -1,26 +1,57 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
-import { type APIError, type APISuccess, fileRespond, log, onHandlerError, respond } from '@/index';
+import {
+  type APIError,
+  type APISuccess,
+  type HonoErrorCode,
+  type HonoErrorHandlerOptions,
+  type HonoFileRespondOptions,
+  type HonoRespondOptions,
+  createHonoErrorHandler,
+  fileRespond,
+  honoErrors,
+  respond,
+} from '@/index';
 
-/**
- * Reads a JSON response while keeping each test explicit about the public payload it expects.
- * The cast is isolated here because the Web Response API exposes parsed JSON without domain typing.
- */
-async function readJson<T>(response: Response): Promise<T> {
-  return (await response.json()) as T;
+// These tests cover Hono response envelopes, file downloads, and global error handling behavior;
+// They preserve exact public contracts, binary content, stable failures, and reporting boundaries;
+
+// == CompileTimeContracts ==============================================
+
+type IsExact<TActual, TExpected> =
+  (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
+    ? (<TValue>() => TValue extends TExpected ? 1 : 2) extends <TValue>() => TValue extends TActual ? 1 : 2
+      ? true
+      : false
+    : false;
+
+type Assert<TCondition extends true> = TCondition;
+
+type _HonoErrorCodeContract = Assert<IsExact<HonoErrorCode, 'internalServerError'>>;
+type _HonoRespondOptionsContract = Assert<
+  IsExact<HonoRespondOptions<{ id: string }, 201>, { status: 201; data?: { id: string } }>
+>;
+type _HonoFileRespondOptionsContract = Assert<
+  IsExact<
+    HonoFileRespondOptions<200>,
+    { status: 200; content: Uint8Array<ArrayBuffer>; filename: string; contentType?: string }
+  >
+>;
+type _HonoErrorHandlerOptionsContract = Assert<
+  IsExact<HonoErrorHandlerOptions, { onUnexpectedError: (error: unknown, context: Context) => void }>
+>;
+
+async function readJSON<TData>(response: Response): Promise<TData> {
+  return (await response.json()) as TData;
 }
 
-/**
- * Creates the smallest real Hono application that exercises the registered global error handler.
- * A fresh app per assertion prevents routes and middleware state from leaking between tests.
- */
-function createThrowingApp(error: unknown): Hono {
+function createThrowingApp(error: unknown, options: HonoErrorHandlerOptions): Hono {
   const app = new Hono();
 
-  app.onError(onHandlerError);
+  app.onError(createHonoErrorHandler(options));
   app.get('/error', () => {
     throw error;
   });
@@ -28,25 +59,19 @@ function createThrowingApp(error: unknown): Hono {
   return app;
 }
 
-afterEach(() => {
-  mock.restore();
-});
-
-// =====================================================================================================================
-// TYPED JSON RESPONSES THROUGH REAL HONO REQUESTS
-// =====================================================================================================================
+// == JSONResponses ======================================================
 
 describe('respond', () => {
   test('returns the requested status and wraps data in the API success envelope', async () => {
     const app = new Hono();
 
-    app.post('/users', (c) => respond(c, { status: 201, data: { id: 'user-1' } }));
+    app.post('/users', (context) => respond(context, { status: 201, data: { id: 'user-1' } }));
 
     const response = await app.request('/users', { method: 'POST' });
 
     expect(response.status).toBe(201);
     expect(response.headers.get('content-type')).toContain('application/json');
-    expect(await readJson<APISuccess<{ id: string }>>(response)).toEqual({
+    expect(await readJSON<APISuccess<{ id: string }>>(response)).toEqual({
       kind: 'data',
       status: 201,
       data: { id: 'user-1' },
@@ -56,12 +81,12 @@ describe('respond', () => {
   test('uses an empty object when optional response data is omitted', async () => {
     const app = new Hono();
 
-    app.get('/accepted', (c) => respond(c, { status: 202 }));
+    app.get('/accepted', (context) => respond(context, { status: 202 }));
 
     const response = await app.request('/accepted');
 
     expect(response.status).toBe(202);
-    expect(await readJson<APISuccess<Record<string, never>>>(response)).toEqual({
+    expect(await readJSON<APISuccess<Record<string, never>>>(response)).toEqual({
       kind: 'data',
       status: 202,
       data: {},
@@ -69,17 +94,15 @@ describe('respond', () => {
   });
 });
 
-// =====================================================================================================================
-// FILE DOWNLOAD RESPONSES
-// =====================================================================================================================
+// == FileResponses ======================================================
 
 describe('fileRespond', () => {
-  test('returns the requested binary content with attachment and custom content-type headers', async () => {
+  test('returns binary content with attachment and custom content type headers', async () => {
     const app = new Hono();
     const content = new TextEncoder().encode('identifier,name\nasset-1,Foundation');
 
-    app.get('/assets.csv', (c) =>
-      fileRespond(c, {
+    app.get('/assets.csv', (context) =>
+      fileRespond(context, {
         status: 200,
         content,
         filename: 'assets.csv',
@@ -89,8 +112,6 @@ describe('fileRespond', () => {
 
     const response = await app.request('/assets.csv');
 
-    // Headers describe a downloadable attachment, while the body remains byte-for-byte identical to the source buffer.
-    // Reading through the Web Response API verifies the real Hono integration instead of a mocked Context interaction.
     expect(response.status).toBe(200);
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="assets.csv"');
     expect(response.headers.get('content-type')).toBe('text/csv; charset=utf-8');
@@ -101,8 +122,8 @@ describe('fileRespond', () => {
     const app = new Hono();
     const content = new Uint8Array([0, 1, 127, 128, 255]);
 
-    app.get('/archive.bin', (c) =>
-      fileRespond(c, {
+    app.get('/archive.bin', (context) =>
+      fileRespond(context, {
         status: 201,
         content,
         filename: 'archive.bin',
@@ -111,8 +132,6 @@ describe('fileRespond', () => {
 
     const response = await app.request('/archive.bin');
 
-    // The fallback media type must remain deterministic for unknown formats and generated binary exports.
-    // Non-text bytes guard against accidental encoding, JSON serialization, or UTF-8 conversion in the response path.
     expect(response.status).toBe(201);
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="archive.bin"');
     expect(response.headers.get('content-type')).toBe('application/octet-stream');
@@ -120,44 +139,102 @@ describe('fileRespond', () => {
   });
 });
 
-// =====================================================================================================================
-// GLOBAL ERROR HANDLING
-// =====================================================================================================================
+// == ErrorHandling ======================================================
 
-describe('onHandlerError', () => {
-  test('preserves expected client HTTP exceptions without logging them as unhandled', async () => {
-    const errorLog = spyOn(log, 'error').mockImplementation(() => undefined);
-    const app = createThrowingApp(new HTTPException(404, { message: 'Record not found' }));
+describe('honoErrors', () => {
+  test('creates a stable machine-readable internal server failure', () => {
+    const error = honoErrors.internalServerError();
+
+    expect(error).toBeInstanceOf(HTTPException);
+    expect(error.status).toBe(500);
+    expect(error.message).toBe('internalServerError');
+  });
+});
+
+describe('createHonoErrorHandler', () => {
+  test('preserves expected client exceptions without reporting them as unexpected', async () => {
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(new HTTPException(404, { message: 'recordNotFound' }), {
+      onUnexpectedError: (error) => reportedErrors.push(error),
+    });
 
     const response = await app.request('/error');
 
     expect(response.status).toBe(404);
-    expect(await readJson<APIError>(response)).toEqual({
+    expect(await readJSON<APIError>(response)).toEqual({
       kind: 'error',
       status: 404,
-      error: 'Record not found',
+      error: 'recordNotFound',
     });
-    expect(errorLog).not.toHaveBeenCalled();
+    expect(reportedErrors).toEqual([]);
   });
 
-  test('returns a traceable generic 500 response and logs the matching generated error id', async () => {
-    const errorLog = spyOn(log, 'error').mockImplementation(() => undefined);
-    const app = createThrowingApp(new Error('Database unavailable'));
+  test('reports unexpected failures with request context and returns a stable fallback', async () => {
+    const failure = new Error('databaseUnavailable');
+    const reported: Array<{ error: unknown; pathname: string }> = [];
+    const app = createThrowingApp(failure, {
+      onUnexpectedError: (error, context) => reported.push({ error, pathname: new URL(context.req.url).pathname }),
+    });
 
     const response = await app.request('/error');
-    const body = await readJson<APIError>(response);
-    const errorMatch = /^Internal server error \| ([A-Za-z0-9]{6})$/.exec(body.error);
 
     expect(response.status).toBe(500);
-    expect(body.kind).toBe('error');
-    expect(body.status).toBe(500);
-    expect(errorMatch).not.toBeNull();
+    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+      kind: 'error',
+      status: 500,
+      error: 'internalServerError',
+    });
+    expect(reported).toEqual([{ error: failure, pathname: '/error' }]);
+  });
 
-    // The random value itself is intentionally not fixed; only its format and correlation are deterministic.
-    if (!errorMatch) throw new Error('The 500 response did not contain a valid error id');
-    const errorId = errorMatch[1]!;
+  test('hides server-side HTTP exceptions behind the same stable fallback', async () => {
+    const error = new HTTPException(500, { message: 'databaseConnectionFailed' });
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(error, {
+      onUnexpectedError: (reportedError) => reportedErrors.push(reportedError),
+    });
 
-    expect(errorLog).toHaveBeenCalledTimes(1);
-    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('Database unavailable'), errorId);
+    const response = await app.request('/error');
+
+    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+      kind: 'error',
+      status: 500,
+      error: 'internalServerError',
+    });
+    expect(reportedErrors).toEqual([error]);
+  });
+
+  test('rejects human-readable exception messages from the public error envelope', async () => {
+    const error = new HTTPException(404, { message: 'Record not found' });
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(error, {
+      onUnexpectedError: (reportedError) => reportedErrors.push(reportedError),
+    });
+
+    const response = await app.request('/error');
+
+    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+      kind: 'error',
+      status: 500,
+      error: 'internalServerError',
+    });
+    expect(reportedErrors).toEqual([error]);
+  });
+
+  test('rejects exception statuses outside the shared API envelope', async () => {
+    const error = new HTTPException(418, { message: 'teapotDetected' });
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(error, {
+      onUnexpectedError: (reportedError) => reportedErrors.push(reportedError),
+    });
+
+    const response = await app.request('/error');
+
+    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+      kind: 'error',
+      status: 500,
+      error: 'internalServerError',
+    });
+    expect(reportedErrors).toEqual([error]);
   });
 });
