@@ -1,4 +1,4 @@
-// Oxfmt configuration – formatting and import sorting rules;
+// Oxfmt configuration – formatting and import sorting rules.
 // More details: https://oxc.rs/docs/guide/usage/formatter.html;
 
 {
