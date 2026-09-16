@@ -3,6 +3,8 @@ import { describe, expect, test } from 'bun:test';
 import {
   type ReplaceDotsWithUnderscores,
   type ReplaceHyphensWithUnderscores,
+  type SeparateCamelCase,
+  type StringEnumKey,
   type StringEnumRecord,
   createStringEnumRecord,
 } from '@/index';
@@ -26,6 +28,8 @@ type _ReplaceHyphensContract = Assert<
   IsExact<ReplaceHyphensWithUnderscores<'foundation-enum-deep-value'>, 'foundation_enum_deep_value'>
 >;
 type _ReplaceHyphensWithoutHyphensContract = Assert<IsExact<ReplaceHyphensWithUnderscores<'unchanged'>, 'unchanged'>>;
+type _SeparateCamelCaseContract = Assert<IsExact<SeparateCamelCase<'waitingForReview'>, 'waiting_For_Review'>>;
+type _StringEnumKeyContract = Assert<IsExact<StringEnumKey<'waitingForReview'>, 'WAITING_FOR_REVIEW'>>;
 type _StringEnumRecordContract = Assert<
   IsExact<
     StringEnumRecord<readonly ['user.active', 'pending-review']>,

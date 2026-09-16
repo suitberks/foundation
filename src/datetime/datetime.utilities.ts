@@ -73,10 +73,8 @@ export function getFormattedDate({
  * @example
  * formatTime(date, { locale: ru, tz: 'Europe/Moscow' });
  */
-export function formatTime(
-  time: Date,
-  { locale = ru, tz = DEFAULT_DATETIME_TIMEZONE }: FormatTimeOptions = {}
-): string {
+export function formatTime(time: Date, options: FormatTimeOptions = {}): string {
+  const { locale = ru, tz = DEFAULT_DATETIME_TIMEZONE } = options;
   const zonedTime = toZonedTime(time, tz);
 
   return `${format(zonedTime, DATETIME_LOCALIZED_PATTERN, { locale })} ${getUTCOffset(time, tz)}`;

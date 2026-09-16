@@ -20,10 +20,11 @@ export type ReplaceHyphensWithUnderscores<TValue extends string> = TValue extend
   ? `${ReplaceHyphensWithUnderscores<THead>}_${ReplaceHyphensWithUnderscores<TTail>}`
   : TValue;
 
-// These helpers separate lowercase-to-uppercase boundaries while preserving acronym runs;
-// Separator characters reset the boundary so dotted and hyphenated values remain stable;
-
-type SeparateCamelCase<
+/**
+ * Inserts underscores at lowercase-to-uppercase boundaries in a string literal.
+ * Existing separators reset boundary tracking while consecutive capitals remain grouped.
+ */
+export type SeparateCamelCase<
   TValue extends string,
   TPreviousWasLowercase extends boolean = false,
 > = TValue extends `${infer TCharacter}${infer TRest}`
@@ -36,13 +37,17 @@ type SeparateCamelCase<
         : `${TCharacter}${SeparateCamelCase<TRest>}`
   : TValue;
 
-type StringEnumKey<TValue extends string> = Uppercase<
+/**
+ * Converts one supported string literal into its uppercase enum-record key.
+ * CamelCase boundaries, dots, and hyphens consistently become underscores.
+ */
+export type StringEnumKey<TValue extends string> = Uppercase<
   ReplaceHyphensWithUnderscores<ReplaceDotsWithUnderscores<SeparateCamelCase<TValue>>>
 >;
 
 /**
- * Maps string literals to immutable uppercase enum-like keys.
- * CamelCase boundaries, dots, and hyphens become underscores while values remain unchanged.
+ * Maps a readonly string-literal collection into an immutable enum-like record.
+ * Normalized uppercase keys retain their original source literals as record values.
  *
  * @example
  * type Statuses = StringEnumRecord<readonly ['review.pending', 'published']>;
