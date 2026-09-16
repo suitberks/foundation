@@ -53,8 +53,10 @@ export async function retryExecution<TData>(
         // Reject the retry if the attempt limit is reached or the retry filter returns false.
         isMaxAttempts === false && shouldRetry ? (await shouldRetry(error, attempt)) === false : false;
 
-      // Preserve the latest failure when no further attempt is allowed.
-      if (isMaxAttempts || isRetryRejected) throw error;
+      // ↓ Preserve the latest failure when no further attempt is allowed.
+
+      const isRetryUnavailable = isMaxAttempts || isRetryRejected;
+      if (isRetryUnavailable) throw error;
 
       signal?.throwIfAborted();
 

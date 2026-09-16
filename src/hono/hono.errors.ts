@@ -5,6 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 
 export const honoErrors = {
   internalServerError: () => new HTTPException(500, { message: 'internalServerError' }),
+  invalidRequestId: () => new TypeError('invalidRequestId'),
 };
 
 // ↓ Inferred literal union of error codes from `honoErrors`;

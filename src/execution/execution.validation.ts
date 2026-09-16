@@ -6,7 +6,9 @@ import type { RetryExecutionOptions } from './execution.types';
  * Dynamic delay values remain validated after their resolver completes.
  */
 export function validateRetryExecutionOptions(options: RetryExecutionOptions, maxAttempts: number): void {
-  if (Number.isInteger(maxAttempts) === false || maxAttempts < 1) {
+  const isInvalidMaxAttempts = Number.isInteger(maxAttempts) === false || maxAttempts < 1;
+
+  if (isInvalidMaxAttempts) {
     throw executionErrors.invalidMaxAttempts();
   }
 
@@ -20,7 +22,9 @@ export function validateRetryExecutionOptions(options: RetryExecutionOptions, ma
  * Only finite non-negative millisecond durations are accepted.
  */
 export function validateRetryDelay(delayMilliseconds: number): void {
-  if (Number.isFinite(delayMilliseconds) === false || delayMilliseconds < 0) {
+  const isInvalidRetryDelay = Number.isFinite(delayMilliseconds) === false || delayMilliseconds < 0;
+
+  if (isInvalidRetryDelay) {
     throw executionErrors.invalidRetryDelay();
   }
 }
@@ -30,7 +34,9 @@ export function validateRetryDelay(delayMilliseconds: number): void {
  * Only finite non-negative millisecond durations are accepted.
  */
 export function validateExecutionTimeout(timeoutMilliseconds: number): void {
-  if (Number.isFinite(timeoutMilliseconds) === false || timeoutMilliseconds < 0) {
+  const isInvalidExecutionTimeout = Number.isFinite(timeoutMilliseconds) === false || timeoutMilliseconds < 0;
+
+  if (isInvalidExecutionTimeout) {
     throw executionErrors.invalidTimeout();
   }
 }

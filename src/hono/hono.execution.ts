@@ -6,6 +6,7 @@ import { createErrorResponse, isErrorResponseStatus, isResponseErrorCode } from 
 import type { ErrorResponse, ErrorResponseStatus } from '@/response';
 
 import { honoErrors } from './hono.errors';
+import { getHonoRequestId } from './hono.request-id';
 import type { HonoErrorHandlerOptions } from './hono.types';
 
 /**
@@ -14,7 +15,11 @@ import type { HonoErrorHandlerOptions } from './hono.types';
  */
 function isExpectedHTTPException(error: unknown): error is HTTPException & { status: ErrorResponseStatus } {
   // Exclude unknown failures and server-side exceptions before inspecting public fields.
-  if (!(error instanceof HTTPException) || error.status >= 500) return false;
+  const isHTTPException = error instanceof HTTPException;
+  if (!isHTTPException) return false;
+
+  const isServerError = error.status >= 500;
+  if (isServerError) return false;
 
   // ↓ Enforce the closed status catalog and machine-readable error-code format together.
 
@@ -37,7 +42,7 @@ export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorH
       return context.json(response, response.status as ContentfulStatusCode);
     }
 
-    options.onUnexpectedError(error, context);
+    options.onUnexpectedError(error, context, getHonoRequestId(context));
 
     const fallback = honoErrors.internalServerError();
 
