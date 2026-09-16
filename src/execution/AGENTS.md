@@ -227,7 +227,7 @@ construct, even when its body only throws one error:
 ```ts
 // ↓ Reject malformed signatures before passing them to the native decoder.
 
-if (signature.length % 2 !== 0 || !HEX_SIGNATURE_PATTERN.test(signature)) {
+if (signature.length % 2 !== 0 || HEX_SIGNATURE_PATTERN.test(signature) === false) {
   throw hmacErrors.invalidHexSignature();
 }
 ```
@@ -269,6 +269,11 @@ with a separate arrow.
 Prefer early returns when they expose terminal states and reduce nesting. Keep
 assertions narrow and adjacent to the compiler limitation they solve. Explain
 why an assertion is safe only when the reason is not visible from its expression.
+
+Do not use the unary `!` operator. Compare negative boolean predicates with
+`=== false`, use explicit nullish comparisons, and keep positive checks direct.
+Names must describe the resulting boolean state rather than forcing a reader to
+mentally negate the underlying expression.
 
 Use an authoritative dependency API instead of casting an entire foreign object
 to an unrelated record. If the JavaScript standard library erases known keys or
