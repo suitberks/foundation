@@ -1,27 +1,38 @@
-import { and, eq } from 'drizzle-orm';
-import type { AnyColumn, SQL } from 'drizzle-orm';
+import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
+import type { AnyColumn, SQL, Table } from 'drizzle-orm';
 
-// Shared error message keeps empty `WHERE` failures consistent across callers and tests;
-// The guard prevents accidentally executing a query without any defined conditions;
-
-const AT_LEAST_ONE_DEFINED_CONDITION_ERROR = 'sqlWhere requires at least one defined condition.';
+import { drizzleErrors } from './drizzle.errors';
+import type { SQLWhereConditions } from './drizzle.types';
 
 /**
  * Builds a Drizzle `WHERE` clause by combining defined object entries with `and`.
- * Expects the supplied keys to be validated against the table beforehand.
+ * Keys and values follow the table model while empty conditions remain forbidden.
  *
  * @example
  * await db.update(usersTable).set(values).where(sqlWhere(usersTable, { id: 1 })).returning();
  */
-export function sqlWhere(table: unknown, where: Record<string, unknown>): SQL {
-  const columns = table as Record<string, AnyColumn>;
-  const conditions = Object.entries(where)
+export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereConditions<NoInfer<TTable>>): SQL {
+  const columns = getTableColumns(table);
+
+  // Restore the key-column relation erased by `Object.entries` and generic indexed access.
+  const entries = Object.entries(where) as Array<[keyof typeof columns, unknown]>;
+
+  const conditions = entries
     .filter(([, value]) => value !== undefined)
-    .map(([key, value]) => eq(columns[key]!, value));
+    .map(([key, value]) => {
+      const column = columns[key] as AnyColumn | undefined;
+
+      // Reject runtime keys that entered outside the statically typed boundary.
+      if (column === undefined) throw drizzleErrors.whereColumnNotFound();
+
+      // Preserve SQL null semantics instead of emitting an ineffective `= NULL` comparison.
+      return value === null ? isNull(column) : eq(column, value);
+    });
 
   if (conditions.length === 0) {
-    throw new Error(AT_LEAST_ONE_DEFINED_CONDITION_ERROR);
+    throw drizzleErrors.whereConditionsRequired();
   }
 
+  // Drizzle returns `undefined` only for the empty condition collection rejected above.
   return and(...conditions)!;
 }
