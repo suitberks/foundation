@@ -14,9 +14,10 @@ import type { HonoErrorHandlerOptions } from './hono.types';
  * Both status membership and camelCase error-code syntax must satisfy the contract.
  */
 function isExpectedHTTPException(error: unknown): error is HTTPException & { status: ErrorResponseStatus } {
-  // Exclude unknown failures and server-side exceptions before inspecting public fields.
+  // ↓ Exclude unknown failures and server-side exceptions before inspecting public fields.
+
   const isHTTPException = error instanceof HTTPException;
-  if (!isHTTPException) return false;
+  if (isHTTPException === false) return false;
 
   const isServerError = error.status >= 500;
   if (isServerError) return false;
