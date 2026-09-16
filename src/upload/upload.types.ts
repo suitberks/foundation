@@ -1,4 +1,4 @@
-import type { Simplify } from '@/type.utilities';
+import type { Simplify } from '@/type';
 
 import type { UploadValidationError } from './upload.enums';
 
