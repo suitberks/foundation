@@ -20,8 +20,6 @@ import {
 
 // == CompileTimeContracts ==============================================
 
-// Compares two types in both directions, rather than accepting ordinary assignability.
-// This keeps public type regressions visible to the regular project typecheck.
 type IsExact<Actual, Expected> =
   (<Value>() => Value extends Actual ? 1 : 2) extends <Value>() => Value extends Expected ? 1 : 2
     ? (<Value>() => Value extends Expected ? 1 : 2) extends <Value>() => Value extends Actual ? 1 : 2
@@ -29,8 +27,6 @@ type IsExact<Actual, Expected> =
       : false
     : false;
 
-// Produces a compiler error when a type-level proposition is not exactly true.
-// The underscore-prefixed aliases below are intentionally consumed only by TypeScript.
 type Assert<Condition extends true> = Condition;
 
 type _MeasuredExecutionContract = Assert<
