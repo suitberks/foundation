@@ -410,8 +410,10 @@ describe('measureExecutionTime', () => {
       return payload;
     });
 
-    // Timing itself is host-dependent; its stable contract is an integer millisecond duration.
     expect(measured.result).toBe(payload);
+
+    // ↓ Timing itself is host-dependent; its stable contract is an integer millisecond duration.
+
     expect(Number.isInteger(measured.executionTime)).toBe(true);
     expect(measured.executionTime).toBeGreaterThanOrEqual(0);
   });

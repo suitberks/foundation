@@ -187,8 +187,10 @@ Inside functions, comments explain only non-obvious ordering, typing, cleanup,
 cancellation, resource ownership, or safety. Every inline comment ends with a
 period.
 
-When an inline comment introduces a multi-line block, prefix it with `↓` and
-leave exactly one blank line between the comment and that block:
+Choose comment geometry from its semantic target, not from comment length or
+the visual length of the following expression. A comment targeting an entire
+multi-line control-flow block or a sequence of operations uses `↓` and exactly
+one blank line before that block:
 
 ```ts
 // ↓ Release every timer and cross-signal listener after settlement.
@@ -197,12 +199,44 @@ clearTimeout(timeout);
 signal.removeEventListener('abort', onAbort);
 ```
 
-When an inline comment explains one specific line, omit the arrow and keep it
-directly adjacent without a blank line:
+A multi-line `if`, loop, `try`, or similar construct counts as a block when the
+comment explains the construct as a whole. Place the arrow directly before the
+construct, even when its body only throws one error:
+
+```ts
+// ↓ Reject malformed signatures before passing them to the native decoder.
+
+if (signature.length % 2 !== 0 || !HEX_SIGNATURE_PATTERN.test(signature)) {
+  throw hmacErrors.invalidHexSignature();
+}
+```
+
+When a comment explains one specific statement, omit the arrow and keep it
+directly adjacent without a blank line. This includes one-line guards and single
+declarations whose expressions happen to wrap across several visual lines:
 
 ```ts
 // Preserve the original failure and its stack trace.
 throw error;
+
+// Preserve an explicitly disabled retry policy.
+if (maxAttempts === 0) return;
+```
+
+If one compiler limitation or safety invariant motivates several declarations,
+checks, or operations, the comment targets their complete sequence and therefore
+uses the block form. Do not classify it from the first statement alone.
+
+When only one decision inside a larger construct needs explanation, place the
+comment at that decision instead of describing the entire outer construct:
+
+```ts
+try {
+  return decodeSignature(signature);
+} catch {
+  // Treat malformed external signatures as failed verification.
+  return false;
+}
 ```
 
 Prefer one concise line. Use a rectangular multi-line reasoning block only when
