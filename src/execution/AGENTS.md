@@ -1,79 +1,139 @@
-# Execution module conventions
+# Foundation migration conventions
 
-These instructions apply recursively inside `src/execution`. They define the
-first migrated Foundation module and intentionally override conflicting style
-rules from the repository-level `AGENTS.md` within this directory only.
+This file is the temporary universal style guide for modules migrated to the
+new Foundation conventions. It lives in `src/execution` because execution was
+the first migrated module, not because the rules are execution-specific.
 
-The conventions remain local while the migration is evaluated. Apply the same
-model to other modules only when they are migrated deliberately. Once every
-module follows it, move the stable rules into the repository guide and remove
-this file.
+The repository-level `AGENTS.md` intentionally remains unchanged during the
+migration. Apply this guide deliberately when migrating each module. After all
+modules conform, move the stable rules into the root guide and remove this file.
 
-## Module responsibilities
+Do not create another `AGENTS.md` in every migrated directory. This document is
+the single migration reference until it replaces the repository-level guide.
 
-Keep execution concerns separated by responsibility:
+## Migration boundaries
 
-- `execution.constants.ts` owns exported execution policy defaults;
-- `execution.errors.ts` owns error factories and their derived code union;
-- `execution.measurements.ts` owns timed execution results and behavior;
-- `execution.retry.ts` owns retry orchestration and cancellable waiting;
-- `execution.timeout.ts` owns timeout and caller-signal composition;
-- `execution.types.ts` owns shared public execution contracts;
-- `execution.utilities.ts` owns general outcome-handling utilities;
-- `execution.validation.ts` owns ordered policy validation behavior;
-- `execution.spec.ts` owns runtime and compile-time public contracts;
-- `index.ts` aggregates the module APIs intended for the package root.
+Migrate one coherent module at a time. Read its implementation, specification,
+exports, dependency direction, and real consumers before changing its public
+surface or adding utilities. Preserve unrelated code and public behavior unless
+the migration explicitly corrects a verified safety or correctness problem.
 
-Do not merge distinct responsibilities merely to reduce the file count. Do not
-split tiny implementation details into separate files when they cannot be used
-independently from the operation that owns their state.
+Do not manufacture APIs to make a module look complete. A new public primitive
+must encode a repeated invariant, remove unsafe machinery, protect a dangerous
+boundary, or serve an observed consumer. Prefer leaving a small module small.
 
-## Public boundaries
+When a migration reveals a behavior change, document and test the exact reason.
+Examples include correcting SQL null semantics, rejecting an unsafe runtime key,
+or preventing a callback whose result can no longer affect execution.
 
-Export reusable execution primitives when they form a meaningful standalone
-contract. A reusable timer such as `waitForRetry`, a policy default, an error
-registry, or a domain type must not remain an undocumented private declaration.
+## Architecture and files
 
-Keep invocation-bound callbacks local. Abort listeners and promise rejectors
-that close over the state of one `executeWithTimeout` call are implementation
-details rather than reusable APIs and must not be exported artificially.
+Each module owns one coherent domain. Split files by responsibility rather than
+line count, and avoid vague owners such as `common`, `shared`, `helpers`, or
+`misc`. Use the established responsibility suffixes consistently:
 
-The local `index.ts` is the execution module barrel. It exports the APIs meant
-to reach the package root through `src/index.ts`; validation internals remain
-available across execution files without becoming package APIs automatically.
+- `*.constants.ts` for immutable configuration and meaningful defaults;
+- `*.enums.ts` for literal collections, unions, records, and aliases;
+- `*.errors.ts` for complete error registries and derived code unions;
+- `*.types.ts` for reusable domain and public contracts;
+- `*.schemas.ts` for runtime schemas and schema factories;
+- `*.validation.ts` for ordered validation behavior;
+- `*.parsing.ts` for input preprocessing and normalization;
+- `*.refiners.ts` for refinement, narrowing, and condition construction;
+- `*.utilities.ts` for cohesive stateless reusable behavior;
+- `*.services.ts` for stateful service classes;
+- `*.spec.ts` for the module's runtime and compile-time specification;
+- `index.ts` for the migrated module's public barrel.
+
+Create a separate file when a distinct responsibility exists. Do not extract a
+tiny function mechanically when it cannot be understood, reused, or tested
+outside the operation whose invocation state it closes over.
+
+Dependencies continue flowing from specialized adapters toward generic modules.
+Runtime and type-only imports follow the same direction. A generic module must
+not import its framework consumer or application-specific translation layer.
+
+## Public boundaries and barrels
+
+Every migrated module owns one local `index.ts`. Export all intended package APIs
+from that barrel and expose the barrel once through `src/index.ts`. Do not make
+the root index repeat the module's internal file layout.
+
+Export a helper when it forms a meaningful standalone contract. Do not leave a
+reusable timer, policy default, error registry, schema factory, or public domain
+type undocumented and private merely because its first caller is nearby.
+
+Keep invocation-bound callbacks private. Listeners, promise rejectors, and small
+closures that depend on one function call's local state are implementation
+details and must not be exported artificially.
+
+Private validation may remain accessible between files in one module without
+being exported from its barrel. Barrel inclusion is the explicit package API
+decision, not a mechanical list of every declaration in the directory.
+
+## Naming and declarations
+
+Use PascalCase for exported types and classes, precise camelCase verbs for
+functions, and `UPPER_SNAKE_CASE` for immutable configuration. Predicates begin
+with `is`, `has`, or `can` when those words describe their result accurately.
+
+Generic parameters use `T` plus a meaningful noun: `TData`, `TTable`, `TShape`,
+or `TIdentifier`. Avoid opaque names when the domain provides a useful one.
+
+Declare named reusable behavior with `function`. Keep configured instances,
+schema values, registries, framework-typed handlers, and literal collections as
+`const` where value identity is the relevant abstraction.
+
+Use `type` aliases for public contracts. Derive types from their runtime source
+or authoritative dependency model whenever possible instead of reproducing the
+same keys and values manually.
+
+## Imports
+
+Order imports as external dependencies, cross-module `@/` imports, then relative
+same-module imports. Separate groups with one blank line. Use `import type` for
+type-only dependencies and combine imports only when the result remains clear.
+
+Do not hide dependency cycles behind barrel imports. Internal files may import
+their same-module owners directly; consumers and specifications use the public
+package boundary when verifying the exported contract.
 
 ## Errors
 
-Project-owned errors expose stable camelCase codes, never human-readable text.
-Application layers own translated or displayable messages. Each error factory
-belongs to the module registry in `execution.errors.ts`, including its concrete
-error class and any standard platform error name.
+Project-owned thrown and validation errors expose stable camelCase codes, never
+human-readable messages. Applications own translated or displayable copy. An
+error registry contains complete factories, not only a parallel code catalog.
 
-Every error registry starts with this exact two-line header. Replace only
-`{Entity}` and preserve its wording and punctuation:
+Every registry starts with this exact two-line header. Replace only `{Entity}`
+while preserving the wording and punctuation:
 
 ```ts
 // Specific errors describing failure scenarios for `{Entity}`-related operations;
 // Used by the owning module to communicate stable and machine-readable failures;
 ```
 
-Derive the public code union from registry keys instead of repeating literals.
-Place this exact zone comment above it, replacing only `{entity}`:
+Registry keys and emitted error messages use the same camelCase code. Factories
+also own the concrete error class, status, standard platform name, and structured
+metadata when those are part of the module contract.
+
+Derive the public error-code union directly from the registry keys. Never repeat
+its literals manually. Place this exact zone comment above the alias, replacing
+only `{entity}` with the camelCase registry owner:
 
 ```ts
 // ↓ Inferred literal union of error codes from `{entity}Errors`;
 ```
 
-Factory keys and emitted error messages use the same camelCase code. Never add
-sentences, punctuation, prefixes, or implementation details to those messages.
-Do not create a separate code-only object when the registry can remain the one
-source of truth for both codes and error construction.
+Do not add sentences, punctuation, prefixes, or implementation details to error
+messages. Do not embed translated validation text inside low-level predicates or
+schemas. Preserve external dependency errors only when they are intentionally
+part of the public contract; otherwise translate them at the owning boundary.
 
 ## Constants
 
-Important exported constants require a meaningful two-line rectangular JSDoc.
-The first line states the policy represented by the constant; the second line
-explains its boundary, default behavior, or interpretation.
+Important exported constants require a meaningful rectangular two-line JSDoc.
+The first line states the represented policy; the second explains its boundary,
+default behavior, units, or interpretation.
 
 ```ts
 /**
@@ -83,34 +143,52 @@ explains its boundary, default behavior, or interpretation.
 export const DEFAULT_RETRY_MAX_ATTEMPTS = 3;
 ```
 
-Simple constants that need only a short clarification use a trailing left-arrow
-comment. Do not inflate them into JSDoc blocks or place the comment above them:
+Simple constants needing only a short clarification use a trailing left-arrow
+comment. Do not inflate them into JSDoc or move the comment above the declaration:
 
 ```ts
 export const EXAMPLE_NON_IMPORTANT = 5; // ← Short contextual explanation.
 ```
 
+Do not comment a constant whose name and literal already communicate everything.
+
 ## JSDoc
 
-Give every non-obvious exported function, type, and important constant a
-meaningful two-line JSDoc. Keep its lines visually balanced and describe real
-behavior, guarantees, defaults, cancellation, or failure semantics.
+Document non-obvious exported functions, types, services, schemas, adapters, and
+important constants. Use at least two meaningful description lines of similar
+visual length. The first states responsibility; the second records behavior, a
+guarantee, default, failure mode, unit, or safety boundary.
 
-Do not write one-line JSDoc. Do not document syntax already visible from a
-signature. Keep `@example` only when a concrete composition materially improves
-understanding, and never wrap an example in a fenced Markdown block.
+Do not write one-line JSDoc. Do not narrate a signature, repeat a symbol name, or
+add ceremonial documentation to trivial derived aliases. Use grouped ordinary
+comments when several adjacent helpers form one inseparable internal contract.
 
-Specifications are the exception: `execution.spec.ts` contains no JSDoc.
-Test-local helpers use ordinary `//` comments even when they describe types or
-functions that would require JSDoc in production code.
+Document meaningful public option properties when their units, defaults,
+interaction, or cancellation semantics are not obvious from the property type.
 
-## Inline comments
+Use `@example` only when concrete composition materially improves understanding.
+Never wrap JSDoc examples in fenced Markdown blocks.
 
-Inline comments inside functions explain only non-obvious ordering, ownership,
-cancellation, cleanup, or safety behavior. Every such comment ends with a period.
+Specifications contain no JSDoc. Test-local functions, tables, fixtures, and
+compile-time helpers either use a short ordinary comment when genuinely needed
+or remain uncommented when their names and placement are already sufficient.
 
-When a comment describes a multi-line block, prefix it with `↓` and leave one
-blank line between the comment and the block it introduces:
+## Ordinary comments
+
+Write comments in English and describe current enforced behavior. Wrap exact
+identifiers, keys, types, literals, and expressions in backticks. Do not use
+comments as prose decoration or narrate straightforward syntax.
+
+Outside functions, use balanced two-line comments for real context, invariants,
+or ownership. Keep adjacent lines visually close without adding filler or
+weakening their meaning.
+
+Inside functions, comments explain only non-obvious ordering, typing, cleanup,
+cancellation, resource ownership, or safety. Every inline comment ends with a
+period.
+
+When an inline comment introduces a multi-line block, prefix it with `↓` and
+leave exactly one blank line between the comment and that block:
 
 ```ts
 // ↓ Release every timer and cross-signal listener after settlement.
@@ -119,68 +197,102 @@ clearTimeout(timeout);
 signal.removeEventListener('abort', onAbort);
 ```
 
-When a comment describes one specific line, omit the arrow and keep it directly
-adjacent to that line without an intervening blank line:
+When an inline comment explains one specific line, omit the arrow and keep it
+directly adjacent without a blank line:
 
 ```ts
 // Preserve the original failure and its stack trace.
 throw error;
 ```
 
-Prefer one concise inline comment. Use a visually rectangular multi-line block
-only when the reasoning cannot remain accurate and clear in a single line. Do
-not add arrows independently to every line of a multi-line comment.
+Prefer one concise line. Use a rectangular multi-line reasoning block only when
+one line cannot remain accurate and clear. Do not prefix every line of one block
+with a separate arrow.
 
-## Implementation
+## Implementation and safety
 
-Use named function declarations for reusable behavior. Keep callbacks as local
-closures only when they depend on state belonging to one invocation. Prefer
-early returns where they make terminal states immediately visible.
+Prefer early returns when they expose terminal states and reduce nesting. Keep
+assertions narrow and adjacent to the compiler limitation they solve. Explain
+why an assertion is safe only when the reason is not visible from its expression.
 
-Validate static policies before starting the supplied operation. Validate
-dynamically resolved policies before allocating their resources. Preserve the
-original operation failure when retry exhaustion or filtering stops execution.
+Use an authoritative dependency API instead of casting an entire foreign object
+to an unrelated record. If the JavaScript standard library erases known keys or
+entries, restore only the narrow relation the type system lost.
 
-Cancellation must preserve the caller's exact reason. Pre-aborted signals must
-prevent operations from starting. Timers and listeners must be removed on every
-settlement path so completed work cannot retain resources or be aborted later.
+Validate static policy before starting work. Validate dynamically resolved
+policy before allocating its resource. Reject invalid runtime data even when
+TypeScript normally prevents it, because JavaScript and explicit assertions can
+cross public package boundaries.
 
-Avoid human-readable validation errors, unsafe casts, hidden promise rejections,
-and unreachable fallback throws. Keep assertions adjacent to the compiler gap
-they solve and explain the safety boundary when it is not self-evident.
+Preserve original failures when a wrapper has no explicit translation contract.
+Avoid hidden promise rejections, unreachable fallback throws, unsafe non-null
+assertions, and cleanup paths that depend on only successful completion.
+
+Cancellation preserves the caller's exact reason. Pre-aborted signals prevent
+work from starting. Timers and listeners are released on every settlement path
+so completed work cannot retain resources or be aborted afterwards.
+
+For database helpers, preserve SQL semantics rather than merely satisfying the
+builder types. Empty mutation predicates must fail closed, `undefined` may mean
+omitted, falsy values remain defined, and `null` uses the database's null-aware
+operator rather than ordinary equality.
 
 ## Specifications
 
-The colocated `execution.spec.ts` verifies the public package surface through
-`@/index`. It uses `test` from `bun:test`, deterministic runtime assertions, and
-local `IsExact` and `Assert` helpers for exact compile-time contracts.
+Each migrated module owns one colocated `<module>.spec.ts` combining runtime and
+compile-time public contracts. Import tested APIs through `@/index`, use `test`
+from `bun:test`, and assert deterministic public behavior rather than internals.
 
-Use the concise execution-spec layout:
+Start with one balanced two-line description of the specification. Organize real
+behavioral groups with concise balanced dividers:
 
 ```ts
-// These tests describe the public execution behavior covered by this specification;
-// They preserve exact types and observable semantics across sync and async operations;
+// These tests describe the public behavior covered by this module specification;
+// They preserve exact types and observable semantics across supported operations;
 
 // == CompileTimeContracts ==============================================
 ```
 
-Use ordinary `//` comments rather than JSDoc anywhere in the specification.
-Keep section dividers balanced and reserve them for real behavioral groups.
-Test exported defaults and helpers directly instead of relying only on indirect
-coverage through larger orchestration functions.
+Specifications use ordinary `//` comments only and contain no JSDoc. Do not add
+explanatory comments above conventional `IsExact` and `Assert` helpers; their
+names and compile-time-contract section already communicate their purpose.
 
-Cover exact generic inference, success and failure preservation, invalid static
-and dynamic policies, retry exhaustion, filtering, cancellation, timeout races,
-pre-aborted signals, cleanup-sensitive behavior, and synchronous/asynchronous
-measurement without testing private implementation details.
+Use local `IsExact` and `Assert` aliases for exact public type contracts. Use
+`@ts-expect-error` for intentionally rejected calls and keep such expressions in
+an uninvoked named function so they remain compile-time-only without constant
+conditions or runtime side effects.
+
+Test stable error codes, strictness, defaults, coercion, transforms, failure
+behavior, generic inference, safety boundaries, and every exported helper whose
+contract is not already exhausted by another assertion. Prefer stable public
+dependency output over private implementation inspection.
+
+Do not add integration infrastructure, database mocks, or broad fixtures to a
+unit specification. Persistence semantics belong to a separate real-database
+integration contour when the module genuinely requires one.
+
+## Module migration checklist
+
+For each module migration:
+
+1. Read the root guide, this migration guide, implementation, spec, and exports.
+2. Search real consumers before changing types, behavior, or adding utilities.
+3. Separate coherent responsibilities without mechanically multiplying files.
+4. Introduce one module barrel and update the root export to reference it once.
+5. Replace project-owned textual errors with a typed local error registry.
+6. Derive public types from authoritative runtime or dependency sources.
+7. Add narrow runtime guards where static callers can bypass type safety.
+8. Rewrite comments and JSDoc only inside the module being migrated.
+9. Keep its spec colocated, public-facing, deterministic, and free of JSDoc.
+10. Inspect generated declarations and the final diff for accidental expansion.
 
 ## Verification
 
-Run focused verification during implementation and the complete package checks
-before considering an execution-module change complete:
+Run focused checks while implementing, followed by complete package quality
+assurance before declaring a migrated module finished:
 
 ```bash
-bun test src/execution/execution.spec.ts
+bun test src/<module>/<module>.spec.ts
 bun run typecheck
 bun run lint
 bun run format:check
@@ -189,6 +301,6 @@ bun run build
 git diff --check
 ```
 
-Inspect generated declarations after public API changes. An exported execution
-symbol is incomplete until `src/execution/index.ts`, `src/index.ts`, runtime
-tests, compile-time contracts, and declaration generation agree about it.
+An exported symbol is incomplete until the module barrel, package root, runtime
+tests, compile-time contracts, real consumers, and generated declarations agree
+about its public shape and behavior.
