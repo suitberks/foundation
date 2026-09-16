@@ -1,4 +1,4 @@
-import type { Simplify } from '@/utilities/type.utilities';
+import type { Simplify } from '@/type';
 
 // Values with no traversable payload structure are serialized directly to strings;
 // `Date` is included explicitly because its object shape must not become mapped fields;

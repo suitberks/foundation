@@ -6,7 +6,7 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
 
   // Files and directories ignored by Oxlint.
-  "ignorePatterns": ["out/**", "build/**", "dist/**", "coverage/**", "node_modules/**"],
+  "ignorePatterns": ["out/**", "build/**", "dist/**", "coverage/**", "node_modules/**", "tmp/**"],
 
   // Built-in rule ecosystems used by this project.
   "plugins": ["eslint", "typescript", "oxc"],

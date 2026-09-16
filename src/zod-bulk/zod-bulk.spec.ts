@@ -83,7 +83,9 @@ describe('zodBulkSelectionSchema runtime contracts', () => {
     expect(duplicateInclude.success).toBe(false);
     expect(duplicateExclude.success).toBe(false);
 
-    if (!duplicateInclude.success && !duplicateExclude.success) {
+    const areDuplicateSelectionsRejected = !duplicateInclude.success && !duplicateExclude.success;
+
+    if (areDuplicateSelectionsRejected) {
       expect(duplicateInclude.error.issues[0]).toMatchObject({
         message: 'Selection identifiers must be provided.',
         path: ['identifiers'],

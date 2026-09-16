@@ -67,7 +67,8 @@ export function stringifyPayloadValues<TValue>(value: TValue): StringifiedPayloa
   }
 
   // Nullish values remain distinct so transport adapters can omit or encode them explicitly.
-  if (value === null || value === undefined) return value as StringifiedPayload<TValue>;
+  const isNullishValue = value === null || value === undefined;
+  if (isNullishValue) return value as StringifiedPayload<TValue>;
 
   return String(value) as StringifiedPayload<TValue>;
 }

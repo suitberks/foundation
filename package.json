@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "test": "bun test",
+    "test": "bun test src",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "lint:check": "oxlint --fix",

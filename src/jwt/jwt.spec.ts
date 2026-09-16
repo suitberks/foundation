@@ -39,7 +39,7 @@ async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
     return error;
   }
 
-  expect.unreachable();
+  return expect.unreachable();
 }
 
 // == CompileTimeContracts ==============================================
@@ -94,7 +94,7 @@ describe('JWT defaults and validation', () => {
     );
 
     expect(await captureRejection(rawJWT.sign({}, SECRET, { expiresInSeconds: 0.5 }))).toEqual(
-      jwtErrors.invalidExpirationSeconds(),
+      jwtErrors.invalidExpirationSeconds()
     );
   });
 });

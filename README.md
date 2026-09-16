@@ -20,18 +20,23 @@ npm install @kalutskii/foundation
 
 The package contains several deliberately isolated areas:
 
-| Module           | Responsibility                                                                            |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| `utilities`      | Framework-independent datetime, enum, execution, generation, logging, and type utilities. |
-| `http`           | Shared HTTP result contracts, factories, status constants, and result resolvers.          |
-| `upload`         | Shared upload presets, file-format metadata, validation, and reusable Zod schemas.        |
-| `zod-validation` | Generic Zod parsing, validation, refinement, and related type utilities.                  |
-| `zod-search`     | Reusable search and pagination contracts composed from lower-level Zod primitives.        |
-| `zod-bulk`       | Include/exclude selection contracts shared by frontend and backend bulk operations.       |
-| `hono`           | Hono-specific response, file response, error handling, and request logging adapters.      |
-| `hmac`           | Web Crypto HMAC signing, verification, algorithms, and signature encoding.                |
-| `drizzle`        | Drizzle-specific SQL composition that must not leak into generic contract modules.        |
-| `zod-jwt`        | JWT service integration with optional Zod validation of decoded payloads.                 |
+| Module           | Responsibility                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `base64`         | Runtime-independent conversion between binary byte arrays and Base64 text.               |
+| `datetime`       | Timezone projection, UTC offsets, and localized date and time formatting.                |
+| `random`         | Cryptographically sourced random strings with explicit generation policies.              |
+| `string-enum`    | Literal-preserving immutable records with normalized uppercase keys.                     |
+| `type`           | Framework-independent utility types for readable public contracts.                       |
+| `logging`        | Scoped terminal logging, injectable sinks, and structural sensitive-value redaction.     |
+| `response`       | Shared response envelopes, status catalogs, factories, validation, and result resolvers. |
+| `upload`         | Generic upload policies, format matching, validation, and reusable Zod schemas.          |
+| `zod-validation` | Generic Zod parsing, validation, refinement, and related type utilities.                 |
+| `zod-search`     | Reusable search and pagination contracts composed from lower-level Zod primitives.       |
+| `zod-bulk`       | Include/exclude selection contracts shared by frontend and backend bulk operations.      |
+| `hono`           | Hono response, error, request logging, and correlation identifier adapters.              |
+| `hmac`           | Web Crypto HMAC signing, verification, algorithms, and signature encoding.               |
+| `jwt`            | Symmetric JWT signing, verification, decoding, and optional payload schema validation.   |
+| `drizzle`        | Drizzle-specific SQL composition that must not leak into generic contract modules.       |
 
 The root `src/index.ts` is the only public package entrypoint. Internal file paths are implementation details
 and should not be imported directly by consumers of `@kalutskii/foundation`.
@@ -44,7 +49,7 @@ Dependencies must flow from specialized components toward smaller and more gener
 
 ```text
 Framework adapters
-  hono / drizzle / zod-jwt
+  hono / drizzle / jwt
             │
             ▼
 Contract composition
@@ -52,11 +57,11 @@ Contract composition
             │
             ▼
 Contract primitives
-  http / zod-validation
+  response / logging / zod-validation
             │
             ▼
-Generic utilities
-  utilities
+Generic foundations
+  base64 / datetime / random / string-enum / type
 ```
 
 This diagram defines direction, not a requirement for every module to depend on the layer below it.
@@ -87,14 +92,19 @@ Otherwise, create a dedicated module instead of growing an unrelated file with a
 
 ```text
 src/
+├── base64/
+├── datetime/
 ├── drizzle/
 ├── hmac/
 ├── hono/
-├── http/
+├── jwt/
+├── logging/
+├── random/
+├── response/
+├── string-enum/
+├── type/
 ├── upload/
-├── utilities/
 ├── zod-bulk/
-├── zod-jwt/
 ├── zod-search/
 ├── zod-validation/
 └── index.ts
@@ -110,8 +120,8 @@ zod-search/
 └── zod-search.spec.ts
 ```
 
-Do not add folder barrels unless the package exposes a real subpath for that module. The root barrel remains the
-single public API boundary and should export only symbols intentionally supported across package versions.
+Every migrated module owns a local barrel that selects its supported exports. The root barrel exposes each module
+through that local entry and remains the only public package boundary available to package consumers.
 
 ## File responsibilities
 
@@ -142,7 +152,7 @@ responsibility. Do not split tiny files mechanically either: separation must com
 ### Files and directories
 
 - Module directories use kebab case: `zod-search`, `zod-validation`.
-- Source files repeat the module name and add a responsibility suffix: `http.resolvers.ts`.
+- Source files repeat the module name and add a responsibility suffix: `response.resolvers.ts`.
 - Specifications use the module name and `.spec.ts`: `hono.spec.ts`, `zod-bulk.spec.ts`.
 - Avoid names that describe implementation history, temporary state, or vague grouping.
 
