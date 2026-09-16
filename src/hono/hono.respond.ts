@@ -1,7 +1,7 @@
 import type { Context, TypedResponse } from 'hono';
 
-import { success } from '@/http/http.factory';
-import type { APISuccess, SuccessStatusCode } from '@/http/http.types';
+import { createSuccessResponse } from '@/response';
+import type { SuccessResponse, SuccessResponseStatus } from '@/response';
 
 import type { HonoFileRespondOptions, HonoRespondOptions } from './hono.types';
 
@@ -11,22 +11,23 @@ import type { HonoFileRespondOptions, HonoRespondOptions } from './hono.types';
  */
 export function respond<
   TData extends object = Record<string, never>,
-  TStatus extends SuccessStatusCode = SuccessStatusCode,
+  TStatus extends SuccessResponseStatus = SuccessResponseStatus,
 >(
   c: Context,
   options: HonoRespondOptions<TData, TStatus>
-): Response & TypedResponse<APISuccess<TData>, TStatus, 'json'> {
-  const response = success({ status: options.status, data: (options.data ?? {}) as TData });
+): Response & TypedResponse<SuccessResponse<TData>, TStatus, 'json'> {
+  const response = createSuccessResponse(options.status, (options.data ?? {}) as TData);
 
   // Hono cannot preserve an unconstrained generic object through its recursive `JSONParsed` type.
-  return c.json(response, options.status) as unknown as Response & TypedResponse<APISuccess<TData>, TStatus, 'json'>;
+  return c.json(response, options.status) as unknown as Response &
+    TypedResponse<SuccessResponse<TData>, TStatus, 'json'>;
 }
 
 /**
  * Responds with downloadable binary content and its attachment headers.
  * Unknown/undefined content types default to `application/octet-stream`.
  */
-export function fileRespond<TStatus extends SuccessStatusCode>(
+export function fileRespond<TStatus extends SuccessResponseStatus>(
   c: Context,
   options: HonoFileRespondOptions<TStatus>
 ): Response {

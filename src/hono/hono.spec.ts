@@ -4,12 +4,12 @@ import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
 import {
-  type APIError,
-  type APISuccess,
+  type ErrorResponse,
   type HonoErrorCode,
   type HonoErrorHandlerOptions,
   type HonoFileRespondOptions,
   type HonoRespondOptions,
+  type SuccessResponse,
   createHonoErrorHandler,
   fileRespond,
   honoErrors,
@@ -71,8 +71,8 @@ describe('respond', () => {
 
     expect(response.status).toBe(201);
     expect(response.headers.get('content-type')).toContain('application/json');
-    expect(await readJSON<APISuccess<{ id: string }>>(response)).toEqual({
-      kind: 'data',
+    expect(await readJSON<SuccessResponse<{ id: string }>>(response)).toEqual({
+      kind: 'success',
       status: 201,
       data: { id: 'user-1' },
     });
@@ -86,8 +86,8 @@ describe('respond', () => {
     const response = await app.request('/accepted');
 
     expect(response.status).toBe(202);
-    expect(await readJSON<APISuccess<Record<string, never>>>(response)).toEqual({
-      kind: 'data',
+    expect(await readJSON<SuccessResponse<Record<string, never>>>(response)).toEqual({
+      kind: 'success',
       status: 202,
       data: {},
     });
@@ -161,7 +161,7 @@ describe('createHonoErrorHandler', () => {
     const response = await app.request('/error');
 
     expect(response.status).toBe(404);
-    expect(await readJSON<APIError>(response)).toEqual({
+    expect(await readJSON<ErrorResponse>(response)).toEqual({
       kind: 'error',
       status: 404,
       error: 'recordNotFound',
@@ -179,7 +179,7 @@ describe('createHonoErrorHandler', () => {
     const response = await app.request('/error');
 
     expect(response.status).toBe(500);
-    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+    expect(await readJSON<ErrorResponse<HonoErrorCode>>(response)).toEqual({
       kind: 'error',
       status: 500,
       error: 'internalServerError',
@@ -196,7 +196,7 @@ describe('createHonoErrorHandler', () => {
 
     const response = await app.request('/error');
 
-    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+    expect(await readJSON<ErrorResponse<HonoErrorCode>>(response)).toEqual({
       kind: 'error',
       status: 500,
       error: 'internalServerError',
@@ -213,7 +213,7 @@ describe('createHonoErrorHandler', () => {
 
     const response = await app.request('/error');
 
-    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+    expect(await readJSON<ErrorResponse<HonoErrorCode>>(response)).toEqual({
       kind: 'error',
       status: 500,
       error: 'internalServerError',
@@ -230,7 +230,7 @@ describe('createHonoErrorHandler', () => {
 
     const response = await app.request('/error');
 
-    expect(await readJSON<APIError<HonoErrorCode>>(response)).toEqual({
+    expect(await readJSON<ErrorResponse<HonoErrorCode>>(response)).toEqual({
       kind: 'error',
       status: 500,
       error: 'internalServerError',

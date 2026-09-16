@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 
-import type { SuccessStatusCode } from '@/http/http.types';
+import type { SuccessResponseStatus } from '@/response';
 
 /**
  * Options controlling the application-owned side effect for unexpected Hono failures.
@@ -18,7 +18,7 @@ export type HonoErrorHandlerOptions = {
  * Options for a typed JSON response wrapped in the shared API success envelope.
  * The status generic preserves the literal code inferred by the route contract.
  */
-export type HonoRespondOptions<TData extends object, TStatus extends SuccessStatusCode> = {
+export type HonoRespondOptions<TData extends object, TStatus extends SuccessResponseStatus> = {
   status: TStatus;
   data?: TData;
 };
@@ -27,7 +27,7 @@ export type HonoRespondOptions<TData extends object, TStatus extends SuccessStat
  * Options for a downloadable binary response with attachment metadata.
  * The content type remains optional and falls back to a generic binary type.
  */
-export type HonoFileRespondOptions<TStatus extends SuccessStatusCode> = {
+export type HonoFileRespondOptions<TStatus extends SuccessResponseStatus> = {
   status: TStatus;
   content: Uint8Array<ArrayBuffer>;
   filename: string;
