@@ -1,6 +1,6 @@
 import { dim, red, white } from 'kleur/colors';
 
-import { getFormattedTime } from '@/utilities/datetime.utilities';
+import { getFormattedTime } from '@/datetime/datetime.utilities';
 
 import { logLevelColors } from './logging.constants';
 import type { LogLevel } from './logging.enums';

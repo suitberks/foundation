@@ -47,6 +47,6 @@ describe('generateRandomString', () => {
     'rejects invalid output length %p with one stable error',
     (length) => {
       expect(() => generateRandomString(length)).toThrow('invalidRandomStringLength');
-    },
+    }
   );
 });
