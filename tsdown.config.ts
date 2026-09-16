@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown';
 
-// Tsdown configuration for building the package.
+// Tsdown builds the public root entry as one ESM bundle with generated declarations;
 // More details: https://tsdown.dev/options;
 
 const tsdownConfig = defineConfig({
@@ -8,10 +8,10 @@ const tsdownConfig = defineConfig({
   format: ['esm'],
   target: 'esnext',
 
-  dts: true, // Generates TypeScript declaration files
-  clean: true, // Clean output directory before each build
-  unbundle: false, // Bundle all dependencies into the output files
-  fixedExtension: false, // Preserve package-compatible `.js` and `.d.ts` extensions
+  dts: true,
+  clean: true,
+  unbundle: false,
+  fixedExtension: false,
 });
 
 export default tsdownConfig;

@@ -1,11 +1,11 @@
 {
   "name": "@kalutskii/foundation",
   "version": "2.0.5",
-  "description": "Typescript collection of most common utilities, schemas and functions among private projects.",
+  "description": "Shared TypeScript foundations for reusable contracts, validation, framework adapters and utilities.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kalutskii/foundation.git"
+    "url": "git+https://github.com/suitberks/foundation.git"
   },
   "files": [
     "dist"

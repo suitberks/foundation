@@ -1,192 +1,431 @@
 # Foundation conventions
 
-These instructions apply recursively across the repository.
+These instructions apply recursively across the repository. Use `README.md`
+for the current package architecture, module inventory, and development commands.
+Treat this file as the operational style guide for every new or modified source.
 
-Use `README.md` for the complete package architecture and development commands.
-Treat this file as the operational style guide for new and modified source code.
+Keep each change narrow and preserve unrelated local work. Do not rename,
+reformat, split, or redocument adjacent code merely because its file was touched.
+Preserve public behavior unless the task explicitly authorizes a contract change.
 
-Keep every change narrow. Do not rename, reformat, split, or redocument
-unrelated code merely because its file was touched. Preserve public behavior
-unless the task explicitly authorizes a contract change.
+## Change boundaries
 
-## Architecture
+Change one coherent module at a time. Read its implementation, specification,
+exports, dependency direction, and real consumers before changing its public
+surface or adding utilities. Preserve unrelated code and public behavior unless
+the task explicitly corrects a verified safety or correctness problem.
 
-Keep dependencies flowing from specialized modules toward generic foundations:
+Do not manufacture APIs to make a module look complete. A new public primitive
+must encode a repeated invariant, remove unsafe machinery, protect a dangerous
+boundary, or serve an observed consumer. Prefer leaving a small module small.
 
-```text
-hono / drizzle / zod-jwt
-            ↓
-zod-search / zod-bulk / upload
-            ↓
-http / zod-validation
-            ↓
-utilities
-```
+When a change introduces a behavior difference, document and test the exact reason.
+Examples include correcting SQL null semantics, rejecting an unsafe runtime key,
+or preventing a callback whose result can no longer affect execution.
 
-Runtime and type-only imports follow the same direction. Generic utilities
-must not depend on framework adapters, and contract modules must not import
-their consumers back.
+## Architecture and files
 
-Each module owns one coherent domain. Create another file when a distinct
-responsibility exists, not because a file crossed an arbitrary line count.
-Avoid vague owners such as `common`, `helpers`, `shared`, or `misc`.
+Each module owns one coherent domain. Split files by responsibility rather than
+line count, and avoid vague owners such as `common`, `shared`, `helpers`, or
+`misc`. Use the established responsibility suffixes consistently:
 
-The root `src/index.ts` is the only public package boundary. Do not add module
-barrels without a real package subpath. Export every intended public API from
-the root index and keep private implementation symbols unexported.
-
-## Files and naming
-
-Use lowercase kebab-case for module directories. Source files repeat the module
-name and add a responsibility suffix:
-
-- `*.constants.ts` for immutable runtime collections;
-- `*.enums.ts` for literal collections, derived unions, records, and aliases;
-- `*.schemas.ts` for Zod schemas and schema factories;
-- `*.types.ts` for domain contracts and schema-derived types;
-- `*.services.ts` for stateful service classes;
+- `*.constants.ts` for immutable configuration and meaningful defaults;
+- `*.enums.ts` for literal collections, unions, records, and aliases;
+- `*.errors.ts` for complete error registries and derived code unions;
+- `*.types.ts` for reusable domain and public contracts;
+- `*.schemas.ts` for runtime schemas and schema factories;
 - `*.factory.ts` for non-schema value construction;
-- `*.presets.ts` for ready-to-use policies composed from public domain values;
+- `*.presets.ts` for ready-to-use policies composed from public values;
 - `*.resolvers.ts` for result translation and unwrapping;
 - `*.validation.ts` for ordered validation behavior;
-- `*.parsing.ts` for input preprocessing;
-- `*.refiners.ts` for refinement and narrowing;
-- `*.utilities.ts` for stateless reusable behavior;
+- `*.parsing.ts` for input preprocessing and normalization;
+- `*.refiners.ts` for refinement, narrowing, and condition construction;
+- `*.utilities.ts` for cohesive stateless reusable behavior;
+- `*.services.ts` for stateful service classes;
+- `*.measurements.ts` for execution timing contracts and measurement behavior;
+- `*.retry.ts` and `*.timeout.ts` for bounded execution policies;
 - `*.execution.ts`, `*.logging.ts`, and `*.respond.ts` for framework concerns;
-- `*.spec.ts` for the module's runtime and compile-time specification.
+- `*.request-id.ts` and `*.security.ts` for their narrow cross-cutting concerns;
+- `*.spec.ts` for the module's runtime and compile-time specification;
+- `index.ts` for the module's public barrel.
 
-Use PascalCase for exported types and classes. Use precise camelCase verbs for
-functions and predicates beginning with `is`, `has`, or `can`. Use
-`UPPER_SNAKE_CASE` for immutable configuration and literal collections.
+Create a separate file when a distinct responsibility exists. Do not extract a
+tiny function mechanically when it cannot be understood, reused, or tested
+outside the operation whose invocation state it closes over.
 
-Generic parameters use a `T` prefix and a meaningful noun, such as `TData`,
-`TShape`, or `TIdentifier`. Avoid opaque names such as `A`, `B`, or `K` when a
-domain name is available.
+Dependencies continue flowing from specialized adapters toward generic modules.
+Runtime and type-only imports follow the same direction. A generic module must
+not import its framework consumer or application-specific translation layer.
 
-Enum families follow one colocated model: literal array, derived union, record,
-and concise alias. Keep the derived union in `*.enums.ts` beside its runtime
-source. When one file owns several enum families, compact named dividers may
-separate them without implying a broader file architecture.
+Keep the repository dependency hierarchy aligned with the current package architecture:
 
-## Types and implementation
-
-Use `type` aliases for public contracts. Keep domain types in `*.types.ts` when
-that separation communicates ownership. Small utility types that exist only to
-describe one cohesive utility may remain beside its implementation; do not
-create a tiny type file mechanically.
-
-Simple inline option objects are acceptable when they are local and readable.
-Name substantial or independently reusable option contracts with an `Options`
-suffix. Name result wrappers with a `Result` suffix when that is their role.
-
-Derive public Zod outputs with `z.infer` or `z.output` instead of manually
-duplicating runtime schemas. Preserve transforms, coercion, defaults, strictness,
-and literal feature flags in both runtime behavior and emitted declarations.
-
-Declare named behavior with `function`, including exported utilities, schema
-factories, and meaningful private helpers. Keep schema values, framework-typed
-handler values, configured instances, and public method collections as `const`
-when their value identity is the relevant abstraction.
-
-Prefer early returns when they reduce nesting. Keep type assertions narrow and
-adjacent to the compiler limitation they solve. Explain why an assertion is
-safe when its correctness is not visible from the expression itself.
-
-Imports follow this order:
-
-1. external dependencies;
-2. cross-module imports through `@/`;
-3. same-module relative imports.
-
-Use `import type` for type-only dependencies and separate import groups with a
-blank line.
-
-## Comments
-
-Write comments in English. Keep them accurate and grounded in current runtime
-behavior; never document an intended guarantee that the implementation does
-not enforce.
-
-Wrap exact identifiers, types, keys, literal values, and code expressions in
-backticks. Do not use backticks for ordinary prose, library names, or emphasis.
-
-Do not add ceremonial file headers. Enum collection files may use one balanced
-two-line family header when it explains the shared literal model. Elsewhere,
-add comments only for context, invariants, ordering, safety boundaries, or
-non-obvious decisions; do not narrate straightforward syntax.
-
-Compose consecutive comments as a visually rectangular two-line block:
-
-```ts
-// TypeScript cannot connect the generic conditional type with this runtime branch;
-// The assertion preserves literal inference without replacing the parsed output;
+```text
+Framework adapters
+  hono / drizzle / jwt
+            ↓
+Contract composition
+  upload
+            ↓
+Contract primitives
+  response / logging / zod
+            ↓
+Generic foundations
+  base64 / datetime / object / random / string-enum / type
 ```
 
-Keep adjacent lines close in length without adding filler or weakening the
-meaning. Leave a blank line after a reasoning block when it introduces the next
-logical phase.
+Independent modules may skip layers, but dependencies must never point upward.
 
-Group tightly related type helpers under one balanced two-line block comment
-when individual JSDoc would only repeat their names. Give independent public
-contracts their own JSDoc.
+## Public boundaries and barrels
 
-Use wide three-line sections only for real navigation in long files and specs:
+Every module owns one local `index.ts`. Export all intended package APIs
+from that barrel and expose the barrel once through `src/index.ts`. Do not make
+the root index repeat the module's internal file layout.
+
+Export a helper when it forms a meaningful standalone contract. Do not leave a
+reusable timer, policy default, error registry, schema factory, or public domain
+type undocumented and private merely because its first caller is nearby.
+
+Keep invocation-bound callbacks private. Listeners, promise rejectors, and small
+closures that depend on one function call's local state are implementation
+details and must not be exported artificially.
+
+Private validation may remain accessible between files in one module without
+being exported from its barrel. Barrel inclusion is the explicit package API
+decision, not a mechanical list of every declaration in the directory.
+
+## Naming and declarations
+
+Use PascalCase for exported types and classes, precise camelCase verbs for
+functions, and `UPPER_SNAKE_CASE` for immutable configuration. Predicates begin
+with `is`, `has`, or `can` when those words describe their result accurately.
+
+Generic parameters use `T` plus a meaningful noun: `TData`, `TTable`, `TShape`,
+or `TIdentifier`. Avoid opaque names when the domain provides a useful one.
+
+Declare named reusable behavior with `function`. Keep configured instances,
+schema values, registries, framework-typed handlers, and literal collections as
+`const` where value identity is the relevant abstraction.
+
+Keep function signatures readable. When a defaulted options object has several
+properties or makes the declaration visually dense, accept a named `options`
+parameter and destructure it at the beginning of the function body. Keep inline
+parameter destructuring only while the complete signature remains effortless to
+scan.
+
+Order declarations dependency-first within each file. Place foundational types,
+constants, predicates, and low-level helpers before the declarations that consume
+them. For independent declarations, preserve the clearest public reading order;
+do not replace semantic grouping with mechanical alphabetical sorting.
+
+Apply the same ordering to type contracts. Declare primitive and foundational
+contracts before composed, conditional, or result types that reference them.
+Inside classes, keep the public API before private implementation details unless
+moving a private member materially clarifies a non-obvious dependency.
+
+Use `type` aliases for public contracts. Derive types from their runtime source
+or authoritative dependency model whenever possible instead of reproducing the
+same keys and values manually.
+
+Shared type-level transformations belong to the generic `type` module. Export
+every meaningful stage used to compose a public utility, document non-obvious
+types with balanced two-line JSDoc, and add a compact `@example` when the
+resulting shape is easier to understand from one concrete alias.
+
+## Zod contracts
+
+Treat runtime schemas as the source of truth and derive public outputs with
+`z.infer` or `z.output`. Preserve coercion, transforms, defaults, strictness,
+and input/output differences in both runtime behavior and emitted declarations.
+
+Accept `z.ZodObject<TShape>` when object methods or exact keys are required.
+Do not widen an object schema merely to simplify a generic signature. Public
+boundary objects should usually remain strict so stale or misspelled fields fail
+instead of disappearing silently.
+
+## Imports
+
+Order imports as external dependencies, cross-module `@/` imports, then relative
+same-module imports. Separate groups with one blank line. Use `import type` for
+type-only dependencies and combine imports only when the result remains clear.
+
+Cross-module imports target the owning local barrel, such as `@/type`, and never
+reach into implementation files such as `@/type/type.utilities`. Files within
+one module import their siblings through relative paths. Specifications import
+the supported package contract exclusively through `@/index`.
+
+Do not hide dependency cycles behind barrel imports. Resolve a cycle by restoring
+the correct responsibility boundary rather than bypassing the barrel with a deep
+path or routing internal production code through the package root.
+
+## Errors
+
+Project-owned thrown and validation errors expose stable camelCase codes, never
+human-readable messages. Applications own translated or displayable copy. An
+error registry contains complete factories, not only a parallel code catalog.
+
+Every registry starts with this exact two-line header. Replace only `{Entity}`
+while preserving the wording and punctuation:
 
 ```ts
-// =====================================================================================================================
-// COMPILE-TIME CONTRACTS
-// =====================================================================================================================
+// Specific errors describing failure scenarios for `{Entity}`-related operations;
+// Used by the owning module to communicate stable and machine-readable failures;
 ```
 
-Keep section widths consistent and names uppercase. Do not add sections to
-short files merely to manufacture structure.
+Registry keys and emitted error messages use the same camelCase code. Factories
+also own the concrete error class, status, standard platform name, and structured
+metadata when those are part of the module contract.
 
-## JSDoc
+Derive the public error-code union directly from the registry keys. Never repeat
+its literals manually. Place this exact zone comment above the alias, replacing
+only `{entity}` with the camelCase registry owner:
 
-Document exported symbols whose behavior is not obvious from their signature.
-Public schema factories, services, adapters, configuration types, result types,
-and their meaningful public option keys require JSDoc.
+```ts
+// ↓ Inferred literal union of error codes from `{entity}Errors`;
+```
 
-Use at least two meaningful description lines of similar visual length. The
-first line states responsibility; the second records behavior, a guarantee,
-default, or important constraint.
+Do not add sentences, punctuation, prefixes, or implementation details to error
+messages. Do not embed translated validation text inside low-level predicates or
+schemas. Preserve external dependency errors only when they are intentionally
+part of the public contract; otherwise translate them at the owning boundary.
+
+## Constants
+
+Important constants require a meaningful rectangular two-line JSDoc regardless
+of whether the module barrel exposes them. The first line states the represented
+policy; the second explains its boundary, default behavior, units, or
+interpretation.
 
 ```ts
 /**
- * Options for a typed JSON response wrapped in the shared API success envelope.
- * The status generic preserves the literal code inferred by the route contract.
+ * Default total attempt count applied when no explicit retry limit is provided.
+ * The value includes the initial operation and every subsequent retry attempt.
  */
+export const DEFAULT_RETRY_MAX_ATTEMPTS = 3;
 ```
 
-Use additional paragraphs only for distinct ideas. Write examples with
-`@example`; never wrap JSDoc examples in fenced Markdown blocks. Keep an example
-when composition is genuinely easier to understand from a concrete call.
+Simple constants needing only a short clarification use a trailing left-arrow
+comment. Do not inflate them into JSDoc or move the comment above the declaration:
 
-Do not add one-line JSDoc to every trivial helper or derived alias. A precise
-shared block comment is better when several adjacent types form one contract.
+```ts
+export const EXAMPLE_NON_IMPORTANT = 5; // ← Short contextual explanation.
+```
+
+Do not comment a constant whose name and literal already communicate everything.
+
+## Enums
+
+Every enum collection file starts with this exact two-line header.
+Replace only `{Entity}` with the owning module entity while preserving wording:
+
+```ts
+// `{Entity}` enums define supported literal collections and synchronized public aliases;
+// Derived unions and records preserve one authoritative source for every enum family;
+```
+
+Keep each enum family colocated as its readonly literal array, derived union,
+immutable record, and concise alias. Introduce the record pair with this exact
+comment, replacing only `{Entity}` with the concrete enum family entity:
+
+```ts
+// ↓ Descriptive and concise aliases share one immutable `{Entity}` record;
+```
+
+Use a compact named divider when one file owns several enum families. Do not
+repeat family values manually in unions, records, aliases, or documentation.
+
+## JSDoc
+
+Document non-obvious exported functions, types, services, schemas, adapters, and
+important constants. Use at least two meaningful description lines of similar
+visual length. The first states responsibility; the second records behavior, a
+guarantee, default, failure mode, unit, or safety boundary.
+
+Do not write one-line JSDoc. Do not narrate a signature, repeat a symbol name, or
+add ceremonial documentation to trivial derived aliases. Use grouped ordinary
+comments when several adjacent helpers form one inseparable internal contract.
+
+Document meaningful public option properties when their units, defaults,
+interaction, or cancellation semantics are not obvious from the property type.
+
+Use `@example` only when concrete composition materially improves understanding.
+Never wrap JSDoc examples in fenced Markdown blocks.
+
+Specifications contain no JSDoc. Test-local functions, tables, fixtures, and
+compile-time helpers either use a short ordinary comment when genuinely needed
+or remain uncommented when their names and placement are already sufficient.
+
+## Ordinary comments
+
+Write comments in English and describe current enforced behavior. Wrap exact
+identifiers, keys, types, literals, and expressions in backticks. Do not use
+comments as prose decoration or narrate straightforward syntax.
+
+Outside functions, use balanced two-line comments for real context, invariants,
+or ownership. Keep adjacent lines visually close without adding filler or
+weakening their meaning.
+
+Inside functions, comments explain only non-obvious ordering, typing, cleanup,
+cancellation, resource ownership, or safety. Every inline comment ends with a
+period.
+
+Choose comment geometry from its semantic target, not from comment length or
+the visual length of the following expression. A comment targeting an entire
+multi-line control-flow block or a sequence of operations uses `↓` and exactly
+one blank line before that block:
+
+```ts
+// ↓ Release every timer and cross-signal listener after settlement.
+
+clearTimeout(timeout);
+signal.removeEventListener('abort', onAbort);
+```
+
+A multi-line `if`, loop, `try`, or similar construct counts as a block when the
+comment explains the construct as a whole. Place the arrow directly before the
+construct, even when its body only throws one error:
+
+```ts
+// ↓ Reject malformed signatures before passing them to the native decoder.
+
+if (signature.length % 2 !== 0 || HEX_SIGNATURE_PATTERN.test(signature) === false) {
+  throw hmacErrors.invalidHexSignature();
+}
+```
+
+When a comment explains one specific statement, omit the arrow and keep it
+directly adjacent without a blank line. This includes one-line guards and single
+declarations whose expressions happen to wrap across several visual lines:
+
+```ts
+// Preserve the original failure and its stack trace.
+throw error;
+
+// Preserve an explicitly disabled retry policy.
+if (maxAttempts === 0) return;
+```
+
+If one compiler limitation or safety invariant motivates several declarations,
+checks, or operations, the comment targets their complete sequence and therefore
+uses the block form. Do not classify it from the first statement alone.
+
+When only one decision inside a larger construct needs explanation, place the
+comment at that decision instead of describing the entire outer construct:
+
+```ts
+try {
+  return decodeSignature(signature);
+} catch {
+  // Treat malformed external signatures as failed verification.
+  return false;
+}
+```
+
+Prefer one concise line. Use a rectangular multi-line reasoning block only when
+one line cannot remain accurate and clear. Do not prefix every line of one block
+with a separate arrow.
+
+## Implementation and safety
+
+Prefer early returns when they expose terminal states and reduce nesting. Keep
+assertions narrow and adjacent to the compiler limitation they solve. Explain
+why an assertion is safe only when the reason is not visible from its expression.
+
+Do not use the unary `!` operator. Compare negative boolean predicates with
+`=== false`, use explicit nullish comparisons, and keep positive checks direct.
+Names must describe the resulting boolean state rather than forcing a reader to
+mentally negate the underlying expression.
+
+Use an authoritative dependency API instead of casting an entire foreign object
+to an unrelated record. If the JavaScript standard library erases known keys or
+entries, restore only the narrow relation the type system lost.
+
+Extract a dense or multi-clause boolean expression into a positively named local
+constant before using it for control flow. The name must state the resulting
+condition, not merely repeat one operand or force the reader to negate the
+expression mentally.
+
+Validate static policy before starting work. Validate dynamically resolved
+policy before allocating its resource. Reject invalid runtime data even when
+TypeScript normally prevents it, because JavaScript and explicit assertions can
+cross public package boundaries.
+
+Preserve original failures when a wrapper has no explicit translation contract.
+Avoid hidden promise rejections, unreachable fallback throws, unsafe non-null
+assertions, and cleanup paths that depend on only successful completion.
+
+Cancellation preserves the caller's exact reason. Pre-aborted signals prevent
+work from starting. Timers and listeners are released on every settlement path
+so completed work cannot retain resources or be aborted afterwards.
+
+For database helpers, preserve SQL semantics rather than merely satisfying the
+builder types. Empty mutation predicates must fail closed, `undefined` may mean
+omitted, falsy values remain defined, and `null` uses the database's null-aware
+operator rather than ordinary equality.
 
 ## Specifications
 
-Each module owns one colocated `<module>.spec.ts`. Keep runtime and compile-time
-contracts together rather than creating separate fixtures or type-test files.
+Each module owns one colocated `<module>.spec.ts` combining runtime and
+compile-time public contracts. Import tested APIs through `@/index`, use `test`
+from `bun:test`, and assert deterministic public behavior rather than internals.
 
-Specifications use:
+Start with one balanced two-line description of the specification. Organize real
+behavioral groups with concise balanced dividers:
 
-- `test` from `bun:test`, never `it`;
-- public imports through `@/index`;
-- wide uppercase section dividers;
-- local `IsExact` and `Assert` helpers for exact type contracts;
-- `@ts-expect-error` for intentionally rejected public shapes;
-- deterministic assertions against public behavior.
+```ts
+// These tests describe the public behavior covered by this module specification;
+// They preserve exact types and observable semantics across supported operations;
 
-Cover strictness, defaults, coercion, transforms, failure behavior, and exact
-generic inference where they are part of the contract. Test dependency output
-through stable public APIs instead of private internals.
+// == CompileTimeContracts ==============================================
+```
+
+Specifications use ordinary `//` comments only and contain no JSDoc. Do not add
+explanatory comments above conventional `IsExact` and `Assert` helpers; their
+names and compile-time-contract section already communicate their purpose.
+
+Use local `IsExact` and `Assert` aliases for exact public type contracts. Use
+`@ts-expect-error` for intentionally rejected calls and keep such expressions in
+an uninvoked named function so they remain compile-time-only without constant
+conditions or runtime side effects.
+
+Test stable error codes, strictness, defaults, coercion, transforms, failure
+behavior, generic inference, safety boundaries, and every exported helper whose
+contract is not already exhausted by another assertion. Prefer stable public
+dependency output over private implementation inspection.
+
+Do not add integration infrastructure, database mocks, or broad fixtures to a
+unit specification. Persistence semantics belong to a separate real-database
+integration contour when the module genuinely requires one.
+
+## Repository hygiene
+
+Keep registry tokens, environment files, and local credentials outside version
+control. A local `.npmrc` may hold publishing authentication only while it remains
+ignored; never copy its contents into source, documentation, logs, or fixtures.
+
+Preserve unrelated working-tree changes and inspect `git status` before and after
+repository-wide tools. Generated output and temporary migration snapshots remain
+outside source compilation and package publication.
+
+## Module change checklist
+
+For each module change:
+
+1. Read this guide, the implementation, specification, exports, and relevant consumers.
+2. Search real consumers before changing types, behavior, or adding utilities.
+3. Separate coherent responsibilities without mechanically multiplying files.
+4. Introduce one module barrel and update the root export to reference it once.
+5. Replace project-owned textual errors with a typed local error registry.
+6. Derive public types from authoritative runtime or dependency sources.
+7. Add narrow runtime guards where static callers can bypass type safety.
+8. Rewrite comments and JSDoc only inside the module being changed.
+9. Keep its spec colocated, public-facing, deterministic, and free of JSDoc.
+10. Replace cross-module deep imports with imports from the owning local barrel.
+11. Inspect generated declarations and the final diff for accidental expansion.
 
 ## Verification
 
-Run focused checks while implementing, then complete quality assurance before
-finishing a module-wide change:
+Run focused checks while implementing, followed by complete package quality
+assurance before declaring a module finished:
 
 ```bash
 bun test src/<module>/<module>.spec.ts
@@ -198,6 +437,6 @@ bun run build
 git diff --check
 ```
 
-Inspect the final diff and preserve unrelated user changes. A change to public
-generics, schemas, transforms, or exports is incomplete until generated
-declarations build successfully and `src/index.ts` exposes the intended API.
+An exported symbol is incomplete until the module barrel, package root, runtime
+tests, compile-time contracts, real consumers, and generated declarations agree
+about its public shape and behavior.

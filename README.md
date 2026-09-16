@@ -20,23 +20,22 @@ npm install @kalutskii/foundation
 
 The package contains several deliberately isolated areas:
 
-| Module           | Responsibility                                                                           |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `base64`         | Runtime-independent conversion between binary byte arrays and Base64 text.               |
-| `datetime`       | Timezone projection, UTC offsets, and localized date and time formatting.                |
-| `random`         | Cryptographically sourced random strings with explicit generation policies.              |
-| `string-enum`    | Literal-preserving immutable records with normalized uppercase keys.                     |
-| `type`           | Framework-independent utility types for readable public contracts.                       |
-| `logging`        | Scoped terminal logging, injectable sinks, and structural sensitive-value redaction.     |
-| `response`       | Shared response envelopes, status catalogs, factories, validation, and result resolvers. |
-| `upload`         | Generic upload policies, format matching, validation, and reusable Zod schemas.          |
-| `zod-validation` | Generic Zod parsing, validation, refinement, and related type utilities.                 |
-| `zod-search`     | Reusable search and pagination contracts composed from lower-level Zod primitives.       |
-| `zod-bulk`       | Include/exclude selection contracts shared by frontend and backend bulk operations.      |
-| `hono`           | Hono response, error, request logging, and correlation identifier adapters.              |
-| `hmac`           | Web Crypto HMAC signing, verification, algorithms, and signature encoding.               |
-| `jwt`            | Symmetric JWT signing, verification, decoding, and optional payload schema validation.   |
-| `drizzle`        | Drizzle-specific SQL composition that must not leak into generic contract modules.       |
+| Module        | Responsibility                                                                           |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| `base64`      | Runtime-independent conversion between binary byte arrays and Base64 text.               |
+| `datetime`    | Timezone projection, UTC offsets, and localized date and time formatting.                |
+| `random`      | Cryptographically sourced random strings with explicit generation policies.              |
+| `string-enum` | Literal-preserving immutable records with normalized uppercase keys.                     |
+| `type`        | Framework-independent utility types for readable public contracts.                       |
+| `logging`     | Scoped terminal logging, injectable sinks, and structural sensitive-value redaction.     |
+| `object`      | Framework-independent recognition and handling of ordinary object records.               |
+| `response`    | Shared response envelopes, status catalogs, factories, validation, and result resolvers. |
+| `upload`      | Generic upload policies, format matching, validation, and reusable Zod schemas.          |
+| `zod`         | Generic Zod refinements with exact inferred output contracts.                            |
+| `hono`        | Hono response, error, request logging, and correlation identifier adapters.              |
+| `hmac`        | Web Crypto HMAC signing, verification, algorithms, and signature encoding.               |
+| `jwt`         | Symmetric JWT signing, verification, decoding, and optional payload schema validation.   |
+| `drizzle`     | Drizzle-specific SQL composition that must not leak into generic contract modules.       |
 
 The root `src/index.ts` is the only public package entrypoint. Internal file paths are implementation details
 and should not be imported directly by consumers of `@kalutskii/foundation`.
@@ -53,15 +52,15 @@ Framework adapters
             │
             ▼
 Contract composition
-  zod-search / zod-bulk / upload
+  upload
             │
             ▼
 Contract primitives
-  response / logging / zod-validation
+  response / logging / zod
             │
             ▼
 Generic foundations
-  base64 / datetime / random / string-enum / type
+  base64 / datetime / object / random / string-enum / type
 ```
 
 This diagram defines direction, not a requirement for every module to depend on the layer below it.
@@ -99,28 +98,27 @@ src/
 ├── hono/
 ├── jwt/
 ├── logging/
+├── object/
 ├── random/
 ├── response/
 ├── string-enum/
 ├── type/
 ├── upload/
-├── zod-bulk/
-├── zod-search/
-├── zod-validation/
+├── zod/
 └── index.ts
 ```
 
 Modules are directories. Files inside them follow the `<module>.<responsibility>.ts` pattern:
 
 ```text
-zod-search/
-├── zod-search.pagination.schemas.ts
-├── zod-search.schemas.ts
-├── zod-search.types.ts
-└── zod-search.spec.ts
+zod/
+├── zod.errors.ts
+├── zod.refiners.ts
+├── zod.spec.ts
+└── index.ts
 ```
 
-Every migrated module owns a local barrel that selects its supported exports. The root barrel exposes each module
+Every module owns a local barrel that selects its supported exports. The root barrel exposes each module
 through that local entry and remains the only public package boundary available to package consumers.
 
 ## File responsibilities
@@ -151,16 +149,16 @@ responsibility. Do not split tiny files mechanically either: separation must com
 
 ### Files and directories
 
-- Module directories use kebab case: `zod-search`, `zod-validation`.
+- Module directories use kebab case: `string-enum`, `base64`.
 - Source files repeat the module name and add a responsibility suffix: `response.resolvers.ts`.
-- Specifications use the module name and `.spec.ts`: `hono.spec.ts`, `zod-bulk.spec.ts`.
+- Specifications use the module name and `.spec.ts`: `hono.spec.ts`, `zod.spec.ts`.
 - Avoid names that describe implementation history, temporary state, or vague grouping.
 
 ### Runtime symbols
 
-- Zod schema values use the `zod<Name>Schema` form: `zodPaginationSchema`.
+- Zod schema values use the `zod<Name>Schema` form: `zodUploadFileSchema`.
 - Schema factories keep the same form when the project already treats them as schema constructors.
-- Functions use an explicit verb describing their effect: `parseQueryValue`, `generateRandomString`.
+- Functions use an explicit verb describing their effect: `normalizeFileExtension`, `generateRandomString`.
 - Predicates begin with `is`, `has`, or `can` and must provide a meaningful type guard when possible.
 - Constants use `UPPER_SNAKE_CASE` when they represent fixed configuration or enumerated values.
 - Boolean options describe capability or state: `queryEnabled`, `paginationEnabled`, `withTime`.
@@ -178,7 +176,7 @@ Prefer a slightly longer precise name over a short generic name that loses domai
 
 ## TypeScript and code style
 
-The project uses strict TypeScript, ESM, Prettier, and type-aware ESLint. Generated declarations are part of the
+The project uses strict TypeScript, ESM, Oxfmt, and type-aware Oxlint. Generated declarations are part of the
 public product, so a solution is incomplete when runtime behavior works but emitted types become broad or unstable.
 
 ### Imports
@@ -219,7 +217,7 @@ to recover later, especially around type-level behavior, validation order, side 
 Use inline comments to explain why code exists, what invariant it protects, or why a simpler-looking alternative is
 incorrect. Avoid comments that merely translate the following statement into English.
 
-Long files and specifications may use wide visual sections:
+Long files may use wide visual sections when they provide genuine navigation:
 
 ```typescript
 // ==========================================================================================
@@ -280,7 +278,7 @@ A module specification should contain:
 - strictness, defaults, coercion, transforms, and error behavior where applicable;
 - compile-time equality checks for exported generic contracts;
 - `@ts-expect-error` assertions for intentionally rejected shapes;
-- wide comment sections separating major responsibilities;
+- compact comment sections separating major responsibilities;
 - tests through public APIs instead of unstable dependency internals.
 
 Compile-time assertions should use local helper types inside the specification. They must not be exported or moved
@@ -336,10 +334,10 @@ bun run build
 git diff --check
 ```
 
-The `quality-assurance` recipe runs typecheck, lint, formatting, and the complete test suite. Lint and formatting may
-modify files, so always inspect the resulting diff and ensure unrelated user work has not been changed.
+The `quality-assurance` recipe runs typecheck, lint, formatting, and the complete test suite. Always inspect the
+resulting diff because the formatting command may update files that were already modified locally.
 
-The build must succeed because `tsup` generates both runtime ESM and public TypeScript declarations. Review declaration
+The build must succeed because tsdown generates both runtime ESM and public TypeScript declarations. Review declaration
 output whenever a change introduces conditional generics, schema factories, transforms, or new exported type aliases.
 
 ## Adding or changing a module
@@ -352,7 +350,7 @@ Before considering a module change complete:
 4. Add or update the single colocated module specification.
 5. Cover runtime behavior and compile-time inference in that same file.
 6. Add balanced JSDoc to every newly exported public symbol.
-7. Export the intended API from `src/index.ts`; keep private helpers private.
+7. Export the intended API from its module barrel and expose that barrel once from `src/index.ts`.
 8. Run focused tests, typecheck, full quality assurance, and declaration build.
 9. Inspect `git diff`, `git diff --check`, and generated diagnostics.
 10. Update this README only when architecture or development policy changes.
