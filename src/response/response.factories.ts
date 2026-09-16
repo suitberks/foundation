@@ -9,7 +9,9 @@ import { isErrorResponseStatus, isResponseErrorCode, isSuccessResponseStatus } f
  * Generic inference preserves the exact payload type for downstream contracts.
  */
 export function createSuccessResponse<TData>(status: SuccessResponseStatus, data: TData): SuccessResponse<TData> {
-  if (!isSuccessResponseStatus(status)) throw responseErrors.invalidSuccessResponseStatus();
+  if (isSuccessResponseStatus(status) === false) {
+    throw responseErrors.invalidSuccessResponseStatus();
+  }
 
   return { kind: responseKind.SUCCESS, status, data };
 }
@@ -22,8 +24,8 @@ export function createErrorResponse<const TErrorCode extends string>(
   status: ErrorResponseStatus,
   error: TErrorCode
 ): ErrorResponse<TErrorCode> {
-  if (!isErrorResponseStatus(status)) throw responseErrors.invalidErrorResponseStatus();
-  if (!isResponseErrorCode(error)) throw responseErrors.invalidResponseErrorCode();
+  if (isErrorResponseStatus(status) === false) throw responseErrors.invalidErrorResponseStatus();
+  if (isResponseErrorCode(error) === false) throw responseErrors.invalidResponseErrorCode();
 
   return { kind: responseKind.ERROR, status, error };
 }

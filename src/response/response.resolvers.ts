@@ -1,6 +1,6 @@
-import { responseKind } from './response.enums';
 import { ResponseError } from './response.errors';
 import type { ResolvedResponse, ResponseData, ResponseFailureCode, ResponseResult } from './response.types';
+import { isErrorResponse } from './response.validation';
 
 /**
  * Resolves a response envelope into a status-preserving discriminated result.
@@ -11,7 +11,7 @@ export async function resolveResponse<TResult extends ResponseResult<unknown>>(
 ): Promise<ResolvedResponse<ResponseData<TResult>, ResponseFailureCode<TResult>>> {
   const response = await operation();
 
-  if (response.kind === responseKind.ERROR) {
+  if (isErrorResponse(response)) {
     return {
       success: false,
       status: response.status,
@@ -37,7 +37,7 @@ export async function unwrapResponse<TResult extends ResponseResult<unknown>>(
 ): Promise<ResponseData<TResult>> {
   const response = await operation();
 
-  if (response.kind === responseKind.ERROR) {
+  if (isErrorResponse(response)) {
     throw new ResponseError(response.status, response.error);
   }
 

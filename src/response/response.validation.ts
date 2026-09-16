@@ -1,4 +1,6 @@
+import { ERROR_RESPONSE_STATUSES, responseKind, SUCCESS_RESPONSE_STATUSES } from './response.enums';
 import type { ErrorResponseStatus, SuccessResponseStatus } from './response.enums';
+import type { ErrorResponse, ResponseResult, SuccessResponse } from './response.types';
 
 /**
  * Determines whether a value is a stable camelCase response error code.
@@ -9,21 +11,37 @@ export function isResponseErrorCode(value: unknown): value is string {
 }
 
 /**
- * Determines whether a value is a contentful successful response status.
- * Standard and explicitly cast unofficial values must remain within `2xx`.
+ * Determines whether a value belongs to the supported success-status catalog.
+ * Runtime membership mirrors the exact union exposed by `SuccessResponseStatus`.
  */
 export function isSuccessResponseStatus(value: unknown): value is SuccessResponseStatus {
-  if (typeof value !== 'number' || !Number.isInteger(value)) return false;
-
-  return value >= 200 && value <= 299 && value !== 204 && value !== 205;
+  return SUCCESS_RESPONSE_STATUSES.some((status) => status === value);
 }
 
 /**
- * Determines whether a value is a client-side or server-side error response status.
- * Standard and explicitly cast unofficial values must remain within `4xx` or `5xx`.
+ * Determines whether a value belongs to the supported error-status catalog.
+ * Runtime membership mirrors the exact union exposed by `ErrorResponseStatus`.
  */
 export function isErrorResponseStatus(value: unknown): value is ErrorResponseStatus {
-  if (typeof value !== 'number' || !Number.isInteger(value)) return false;
+  return ERROR_RESPONSE_STATUSES.some((status) => status === value);
+}
 
-  return value >= 400 && value <= 599;
+/**
+ * Narrows a response result to its successful branch through the shared discriminator.
+ * Payload and error-code generics remain unchanged for downstream control-flow analysis.
+ */
+export function isSuccessResponse<TData, TErrorCode extends string>(
+  response: ResponseResult<TData, TErrorCode>
+): response is SuccessResponse<TData> {
+  return response.kind === responseKind.SUCCESS;
+}
+
+/**
+ * Narrows a response result to its failed branch through the shared discriminator.
+ * Payload and error-code generics remain unchanged for downstream control-flow analysis.
+ */
+export function isErrorResponse<TData, TErrorCode extends string>(
+  response: ResponseResult<TData, TErrorCode>
+): response is ErrorResponse<TErrorCode> {
+  return response.kind === responseKind.ERROR;
 }

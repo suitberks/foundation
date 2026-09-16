@@ -16,11 +16,12 @@ import {
   SUCCESS_RESPONSE_STATUSES,
   type SuccessResponse,
   type SuccessResponseStatus,
-  type UnofficialStatusCode,
   createErrorResponse,
   createSuccessResponse,
+  isErrorResponse,
   isErrorResponseStatus,
   isResponseErrorCode,
+  isSuccessResponse,
   isSuccessResponseStatus,
   responseKind,
   responseKindsArray,
@@ -49,13 +50,9 @@ type ExampleErrors = {
   productAlreadyExists: () => Error;
 };
 type ExampleResponse = SuccessResponse<{ id: string }> | ErrorResponse<ErrorCodeOf<ExampleErrors>>;
-type _SuccessStatusContract = Assert<
-  IsExact<SuccessResponseStatus, (typeof SUCCESS_RESPONSE_STATUSES)[number] | UnofficialStatusCode>
->;
+type _SuccessStatusContract = Assert<IsExact<SuccessResponseStatus, (typeof SUCCESS_RESPONSE_STATUSES)[number]>>;
 type _ResponseKindContract = Assert<IsExact<ResponseKind, 'success' | 'error'>>;
-type _ErrorStatusContract = Assert<
-  IsExact<ErrorResponseStatus, (typeof ERROR_RESPONSE_STATUSES)[number] | UnofficialStatusCode>
->;
+type _ErrorStatusContract = Assert<IsExact<ErrorResponseStatus, (typeof ERROR_RESPONSE_STATUSES)[number]>>;
 type _ResponseResultContract = Assert<
   IsExact<ResponseResult<{ id: string }, ErrorCodeOf<ExampleErrors>>, ExampleResponse>
 >;
@@ -92,7 +89,7 @@ async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
   throw new Error('expectedRejection');
 }
 
-// == StatusCatalogs =====================================================
+// == StatusCatalogs ====================================================
 
 describe('response kind catalog', () => {
   test('keeps literal values and aliases synchronized', () => {
@@ -106,23 +103,26 @@ describe('response status catalogs', () => {
   test('publishes the complete supported success and error status sets', () => {
     expect(SUCCESS_RESPONSE_STATUSES).toEqual([200, 201, 202, 206]);
     expect(ERROR_RESPONSE_STATUSES).toEqual([
-      400, 401, 403, 404, 405, 406, 408, 409, 410, 413, 414, 415, 422, 429, 440, 498, 500, 501, 502, 503, 504,
+      400, 401, 403, 404, 405, 406, 408, 409, 410, 413, 414, 415, 422, 425, 429, 440, 498, 500, 501, 502, 503, 504,
     ]);
   });
 
   test('narrows only status values owned by the corresponding catalog', () => {
     expect(isSuccessResponseStatus(201)).toBe(true);
-    expect(isSuccessResponseStatus(299)).toBe(true);
+    expect(isSuccessResponseStatus(299)).toBe(false);
     expect(isSuccessResponseStatus(204)).toBe(false);
     expect(isSuccessResponseStatus(404)).toBe(false);
     expect(isErrorResponseStatus(404)).toBe(true);
-    expect(isErrorResponseStatus(520)).toBe(true);
+    expect(isErrorResponseStatus(425)).toBe(true);
+    expect(isErrorResponseStatus(520)).toBe(false);
+    expect(isErrorResponseStatus(440)).toBe(true);
+    expect(isErrorResponseStatus(498)).toBe(true);
     expect(isErrorResponseStatus(200)).toBe(false);
     expect(isErrorResponseStatus('404')).toBe(false);
   });
 });
 
-// == ErrorCodes =========================================================
+// == ErrorCodes ========================================================
 
 describe('response error codes', () => {
   test.each(['productNotFound', 'authenticationRequired', 'formBodyTooLarge'])('accepts %s', (value) => {
@@ -149,7 +149,7 @@ describe('response error codes', () => {
   });
 });
 
-// == ResponseFactories ==================================================
+// == ResponseFactories =================================================
 
 describe('response factories', () => {
   test('creates a successful envelope without cloning its payload', () => {
@@ -179,13 +179,29 @@ describe('response factories', () => {
     );
   });
 
-  test('accepts explicitly cast unofficial statuses within their semantic ranges', () => {
-    expect(createSuccessResponse(299 as UnofficialStatusCode, {})).toMatchObject({ status: 299 });
-    expect(createErrorResponse(520 as UnofficialStatusCode, 'originUnavailable')).toMatchObject({ status: 520 });
+  test('rejects unsupported statuses even when they bypass the static contract', () => {
+    expect(() => createSuccessResponse(299 as SuccessResponseStatus, {})).toThrow('invalidSuccessResponseStatus');
+    expect(() => createErrorResponse(520 as ErrorResponseStatus, 'originUnavailable')).toThrow(
+      'invalidErrorResponseStatus'
+    );
   });
 });
 
-// == ResponseResolution =================================================
+// == ResponseNarrowing =================================================
+
+describe('response guards', () => {
+  test('narrows successful and failed response branches by their shared discriminator', () => {
+    const success: ResponseResult<{ id: string }, 'recordNotFound'> = createSuccessResponse(200, { id: 'record-1' });
+    const failure: ResponseResult<{ id: string }, 'recordNotFound'> = createErrorResponse(404, 'recordNotFound');
+
+    expect(isSuccessResponse(success)).toBe(true);
+    expect(isErrorResponse(success)).toBe(false);
+    expect(isSuccessResponse(failure)).toBe(false);
+    expect(isErrorResponse(failure)).toBe(true);
+  });
+});
+
+// == ResponseResolution ================================================
 
 describe('resolveResponse', () => {
   test('preserves successful data identity and status context', async () => {
@@ -215,7 +231,7 @@ describe('resolveResponse', () => {
   });
 });
 
-// == ResponseUnwrapping =================================================
+// == ResponseUnwrapping ================================================
 
 describe('unwrapResponse', () => {
   test('returns successful response data unchanged', async () => {
