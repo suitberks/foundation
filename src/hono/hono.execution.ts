@@ -1,33 +1,48 @@
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { red } from 'kleur/colors';
 
+import { EXCEPTION_STATUS_CODES } from '@/http/http.constants';
 import { failure } from '@/http/http.factory';
 import type { APIError, ExceptionStatusCode } from '@/http/http.types';
-import { log } from '@/logging/logging.services';
-import { generateRandomString } from '@/utilities/generation.utilities';
 
-function proceedUnhandledError(error: unknown): APIError {
-  // Unexpected failures receive a correlation ID shared by logs and the response;
-  // Internal error details remain server-side while callers get a generic message;
+import { honoErrors } from './hono.errors';
+import type { HonoErrorHandlerOptions } from './hono.types';
 
-  const errorId = generateRandomString(6);
-  const errorMessage = error instanceof Error ? (error.stack ?? error.message) : JSON.stringify(error);
+/**
+ * Identifies client HTTP exceptions safe to expose through the shared API envelope.
+ * Both status membership and camelCase error-code syntax must satisfy the contract.
+ */
+function isExpectedHTTPException(error: unknown): error is HTTPException & { status: ExceptionStatusCode } {
+  // Exclude unknown failures and server-side exceptions before inspecting public fields.
+  if (!(error instanceof HTTPException) || error.status >= 500) return false;
 
-  log.error(`Unhandled error: ${red(errorMessage)}`, errorId);
-  return failure({ status: 500, error: `Internal server error | ${errorId}` });
+  // ↓ Enforce the closed status catalog and machine-readable error-code format together.
+
+  const isSupportedStatus = EXCEPTION_STATUS_CODES.some((status) => status === error.status);
+  const isMachineReadableCode = /^[a-z][A-Za-z0-9]*$/.test(error.message);
+
+  return isSupportedStatus && isMachineReadableCode;
 }
 
 /**
- * Converts expected `HTTPException` values into shared API error envelopes.
- * Unexpected failures are logged and represented by a traceable generic response.
+ * Creates a Hono error handler that preserves expected machine-readable exceptions.
+ * Unexpected failures invoke application reporting before returning a stable fallback.
  */
-export const onHandlerError: ErrorHandler = (error, c) => {
-  let response: APIError;
+export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorHandler {
+  return (error, context) => {
+    if (isExpectedHTTPException(error)) {
+      const response: APIError = failure({ status: error.status, error: error.message });
+      return context.json(response, response.status);
+    }
 
-  if (error instanceof HTTPException && error.status < 500) {
-    response = failure({ status: error.status as ExceptionStatusCode, error: error.message });
-  } else response = proceedUnhandledError(error);
+    options.onUnexpectedError(error, context);
 
-  return c.json(response, response.status);
-};
+    const fallback = honoErrors.internalServerError();
+
+    // Hono's `HTTPException` type erases the literal status supplied to its constructor.
+    const status = fallback.status as 500;
+    const response: APIError = failure({ status, error: fallback.message });
+
+    return context.json(response, response.status);
+  };
+}
