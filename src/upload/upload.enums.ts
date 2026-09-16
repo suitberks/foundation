@@ -1,4 +1,4 @@
-import { createStringEnumRecord } from '@/utilities/enums.utilities';
+import { createStringEnumRecord } from '@/string-enum/string-enum.utilities';
 
 // `Upload` enums define stable validation results shared by every validation adapter;
 // Derived unions and records preserve one authoritative source for the enum family;
