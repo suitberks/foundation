@@ -1,22 +1,21 @@
 import { z } from 'zod';
 
-import { uploadValidationError } from './upload.enums';
-import type { ZodUploadFileSchemaOptions } from './upload.types';
-import { isFileFormatSupported, isFileMimeTypeSupported } from './upload.utilities';
+import type { UploadFileValidationOptions } from './upload.types';
+import { assertUploadFileValidationOptions, validateUploadFile } from './upload.validation';
 
 /**
  * Builds a reusable Zod schema for one uploaded file with format and size.
  * MIME matching is strict unless extension fallback is explicitly enabled.
  */
-export function zodUploadFileSchema(options: ZodUploadFileSchemaOptions) {
-  const { formats, maxFileSize, extensionFallback = false } = options;
+export function zodUploadFileSchema(options: UploadFileValidationOptions) {
+  assertUploadFileValidationOptions(options);
 
-  return z
-    .file()
-    .min(1, uploadValidationError.EMPTY_FILE)
-    .max(maxFileSize, uploadValidationError.FILE_SIZE_EXCEEDED)
-    .refine(
-      (file) => (extensionFallback ? isFileFormatSupported(file, formats) : isFileMimeTypeSupported(file, formats)),
-      uploadValidationError.UNSUPPORTED_FILE_FORMAT
-    );
+  return z.file().superRefine((file, context) => {
+    // ↓ Validates the file against the provided options and adds an issue if invalid.
+
+    const validationError = validateUploadFile(file, options);
+    if (validationError === undefined) return;
+
+    context.addIssue({ code: 'custom', message: validationError });
+  });
 }

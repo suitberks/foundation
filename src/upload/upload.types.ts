@@ -1,109 +1,103 @@
-import type { fileFormatsConfig } from './upload.constants';
-import type { FileFormat, UploadValidationError } from './upload.enums';
+import type { Simplify } from '@/utilities/type.utilities';
 
-// Derived upload types preserve the literal vocabulary owned by runtime collections;
-// Format metadata and validation errors remain synchronized without duplication;
+import type { UploadValidationError } from './upload.enums';
 
-export type FileFormatConfig = (typeof fileFormatsConfig)[FileFormat];
+/**
+ * Transport metadata describing one file format accepted by an upload policy.
+ * MIME types and extension collections remain application-owned literal values.
+ */
+export type UploadFormat = Readonly<{
+  /**
+   * MIME types accepted for files belonging to this format.
+   * Exact values and complete media wildcards such as `image/*` are supported.
+   */
+  mimeTypes: readonly string[];
+
+  /**
+   * File extensions accepted when an upload policy enables extension fallback.
+   * Values may include or omit their dot prefix and are matched case-insensitively.
+   */
+  extensions: readonly string[];
+}>;
+
+/**
+ * Format matching policy shared by predicates and complete file validation.
+ * Extension fallback remains disabled so MIME metadata is authoritative by default.
+ */
+export type UploadFormatValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> =
+  Readonly<{
+    /**
+     * Format definitions accepted by this validation boundary.
+     * Literal tuples remain available to consumers that define narrower policies.
+     */
+    formats: TFormats;
+
+    /**
+     * Allows extensions to compensate for absent or unreliable MIME metadata.
+     * Omission preserves strict MIME validation across every adapter.
+     */
+    extensionFallback?: boolean;
+  }>;
+
+/**
+ * Constraints used to validate one browser file independently of collection capacity.
+ * Empty files remain invalid independently of the configured maximum size boundary.
+ */
+export type UploadFileValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
+  UploadFormatValidationOptions<TFormats> &
+    Readonly<{
+      /**
+       * Maximum accepted size of one uploaded file measured in bytes.
+       * The boundary must be a non-negative integer number of bytes.
+       */
+      maxFileSize: number;
+    }>
+>;
 
 /**
  * Shared upload policy consumed by browser controls and backend validation.
  * One preset keeps format, size, capacity, and fallback rules synchronized.
  */
-export type UploadPreset<TFormats extends readonly FileFormat[] = readonly FileFormat[]> = Readonly<{
-  /**
-   * Supported formats accepted by every consumer of the preset.
-   * Const inference preserves the supplied format tuple without widening.
-   */
-  formats: TFormats;
-
-  /**
-   * Maximum accepted size of one uploaded file measured in bytes.
-   * Schema and client validation can share this exact numeric boundary.
-   */
-  maxFileSize: number;
-
-  /**
-   * Optional maximum number of files retained by one upload collection.
-   * Single-file controls can set this value to `1` for shared capacity rules.
-   */
-  maxFilesCount?: number;
-
-  /**
-   * Allows extensions to compensate for absent or unreliable MIME metadata.
-   * The fallback remains disabled when this option is omitted.
-   */
-  extensionFallback?: boolean;
-}>;
+export type UploadPreset<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
+  UploadFileValidationOptions<TFormats> &
+    Readonly<{
+      /**
+       * Optional maximum number of files retained by one upload collection.
+       * Single-file controls can set this value to `1` for shared capacity rules.
+       */
+      maxFilesCount?: number;
+    }>
+>;
 
 /**
  * Constraints used to validate an incoming collection of browser files.
  * Existing and incoming counts are combined when enforcing capacity.
  */
-export type UploadFilesValidationOptions = Readonly<{
-  /**
-   * Number of files already retained before the incoming batch is validated.
-   * Existing entries reduce the remaining capacity without being revalidated.
-   */
-  currentFilesCount: number;
-
-  /**
-   * Supported formats used to validate every file in the incoming batch.
-   * MIME and extension metadata are resolved through the canonical catalog.
-   */
-  formats: readonly FileFormat[];
-
-  /**
-   * Maximum accepted size of one uploaded file measured in bytes.
-   * Files exceeding this boundary receive the stable size error key.
-   */
-  maxFileSize: number;
-
-  /**
-   * Optional maximum number of retained files after accepting the batch.
-   * Omitting this value leaves collection capacity unrestricted.
-   */
-  maxFilesCount?: number;
-}>;
+export type UploadFilesValidationOptions = Simplify<
+  UploadPreset &
+    Readonly<{
+      /**
+       * Number of files already retained before the incoming batch is validated.
+       * Existing entries reduce the remaining capacity without being revalidated.
+       */
+      currentFilesCount: number;
+    }>
+>;
 
 /**
- * Accepted files and the final rejection encountered in one batch.
+ * Accepted files and the first rejection encountered in one batch.
  * Valid entries remain available when another entry fails validation.
  */
 export type UploadFilesValidationResult = Readonly<{
   /**
    * Valid incoming files that fit the remaining collection capacity.
-   * Accepted file objects preserve their original identity and ordering.
+   * File objects preserve their identity and ordering through a readonly view.
    */
-  acceptedFiles: File[];
+  acceptedFiles: readonly File[];
 
   /**
-   * Final stable rejection encountered while processing the incoming batch.
+   * First stable rejection encountered while processing the incoming batch.
    * The field remains absent when every supplied file is accepted.
    */
   validationError?: UploadValidationError;
-}>;
-
-/**
- * Options used to construct one reusable Zod file schema.
- * Extension fallback is disabled by default to preserve strict MIME checks.
- */
-export type ZodUploadFileSchemaOptions = Readonly<{
-  /**
-   * Supported formats accepted by the generated file schema.
-   * Strict MIME validation uses metadata from the canonical format catalog.
-   */
-  formats: readonly FileFormat[];
-
-  /**
-   * Maximum accepted file size measured in bytes for the generated file schema.
-   * Empty files remain invalid independently of this configured boundary.
-   */
-  maxFileSize: number;
-
-  /**
-   * Allows a supported extension to compensate for missing MIME metadata.
-   * The fallback remains disabled by default to preserve strict validation.
-   */
-  extensionFallback?: boolean;
 }>;

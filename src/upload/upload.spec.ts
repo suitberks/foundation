@@ -3,18 +3,16 @@ import { describe, expect, test } from 'bun:test';
 import type { z } from 'zod';
 
 import {
-  DEFAULT_UPLOAD_MAX_FILE_SIZE,
-  type FileFormat,
+  type UploadFileValidationOptions,
+  type UploadFormat,
+  type UploadFormatValidationOptions,
   type UploadPreset,
+  type UploadErrorCode,
   type UploadValidationError,
   createUploadAccept,
+  defineUploadFormat,
   defineUploadPreset,
-  documentUploadPreset,
-  fileFormat,
-  fileFormatsArray,
-  fileFormatsConfig,
   getFileExtension,
-  imageUploadPreset,
   isFileExtensionSupported,
   isFileFormatSupported,
   isFileMimeTypeSupported,
@@ -22,112 +20,104 @@ import {
   normalizeFileExtension,
   uploadValidationError,
   uploadValidationErrorsArray,
+  uploadErrors,
   validateUploadFile,
   validateUploadFiles,
   zodUploadFileSchema,
 } from '@/index';
 
-// =====================================================================================================================
-// COMPILE-TIME CONTRACT SUPPORT
-// =====================================================================================================================
+// These tests describe generic upload formats, policies, validation, and schema composition;
+// They preserve literal inference and identical validation behavior across every public adapter;
 
-/**
- * Compares public types in both assignability directions for exactness.
- * The assertion protects literal unions derived from exported collections.
- */
-type IsExact<Actual, Expected> =
-  (<Value>() => Value extends Actual ? 1 : 2) extends <Value>() => Value extends Expected ? 1 : 2
-    ? (<Value>() => Value extends Expected ? 1 : 2) extends <Value>() => Value extends Actual ? 1 : 2
+// == CompileTimeContracts ==============================================
+
+type IsExact<TActual, TExpected> =
+  (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
+    ? (<TValue>() => TValue extends TExpected ? 1 : 2) extends <TValue>() => TValue extends TActual ? 1 : 2
       ? true
       : false
     : false;
 
-/**
- * Constrains a compile-time proposition to true and fails typecheck otherwise.
- * Underscore-prefixed aliases document intentional type-only declarations.
- */
-type Assert<Condition extends true> = Condition;
+type Assert<TCondition extends true> = TCondition;
 
-type _FileFormatContract = Assert<
-  IsExact<FileFormat, 'png' | 'jpg' | 'webp' | 'avif' | 'heic' | 'svg' | 'pdf' | 'rtf' | 'txt'>
->;
-type _ValidationErrorContract = Assert<
-  IsExact<
-    UploadValidationError,
-    'empty_file' | 'unsupported_file_format' | 'file_size_exceeded' | 'files_count_exceeded'
-  >
->;
-type _ZodUploadOutputContract = Assert<IsExact<z.output<ReturnType<typeof zodUploadFileSchema>>, File>>;
+const pngFormat = defineUploadFormat({ mimeTypes: ['image/png'], extensions: ['png', '.png'] });
+const pdfFormat = defineUploadFormat({ mimeTypes: ['application/pdf'], extensions: ['pdf'] });
+const imageFormat = defineUploadFormat({ mimeTypes: ['image/*'], extensions: [] });
 
 const singleImageUploadPreset = defineUploadPreset({
-  formats: [fileFormat.JPG, fileFormat.PNG, fileFormat.WEBP],
+  formats: [pngFormat],
   maxFileSize: 8 * 1024 * 1024,
   maxFilesCount: 1,
 });
 
-type _UploadPresetContract = Assert<
-  IsExact<typeof singleImageUploadPreset, UploadPreset<readonly ['jpg', 'png', 'webp']>>
+type _UploadFormatContract = Assert<
+  IsExact<UploadFormat, Readonly<{ mimeTypes: readonly string[]; extensions: readonly string[] }>>
 >;
-type _ImageUploadPresetContract = Assert<
-  IsExact<typeof imageUploadPreset.formats, readonly ['png', 'jpg', 'webp', 'avif', 'heic']>
+type _UploadErrorCodeContract = Assert<
+  IsExact<UploadErrorCode, 'invalidMaxFileSize' | 'invalidMaxFilesCount' | 'invalidCurrentFilesCount'>
 >;
-type _DocumentUploadPresetContract = Assert<
-  IsExact<typeof documentUploadPreset.formats, readonly ['pdf', 'rtf', 'txt']>
+type _ValidationErrorContract = Assert<
+  IsExact<UploadValidationError, 'emptyFile' | 'unsupportedFileFormat' | 'fileSizeExceeded' | 'filesCountExceeded'>
 >;
+type _UploadFormatValidationOptionsContract = Assert<
+  IsExact<UploadFormatValidationOptions, Readonly<{ formats: readonly UploadFormat[]; extensionFallback?: boolean }>>
+>;
+type _UploadFileValidationOptionsContract = Assert<
+  IsExact<
+    UploadFileValidationOptions,
+    Readonly<{
+      formats: readonly UploadFormat[];
+      maxFileSize: number;
+      extensionFallback?: boolean;
+    }>
+  >
+>;
+type _UploadPresetContract = Assert<IsExact<typeof singleImageUploadPreset, UploadPreset<readonly [typeof pngFormat]>>>;
+type _ZodUploadOutputContract = Assert<IsExact<z.output<ReturnType<typeof zodUploadFileSchema>>, File>>;
 
-// =====================================================================================================================
-// SHARED UPLOAD PRESETS
-// =====================================================================================================================
+// == FormatDefinitions =================================================
 
-describe('defineUploadPreset', () => {
-  test('preserves one policy for picker hints and backend file schemas', () => {
-    const schema = zodUploadFileSchema(singleImageUploadPreset);
-    const file = new File(['image'], 'asset.png', { type: 'image/png' });
+describe('upload formats', () => {
+  test('preserves literal format and preset definitions without adding runtime metadata', () => {
+    expect(pngFormat).toEqual({ mimeTypes: ['image/png'], extensions: ['png', '.png'] });
+    expect(singleImageUploadPreset).toEqual({
+      formats: [pngFormat],
+      maxFileSize: 8 * 1024 * 1024,
+      maxFilesCount: 1,
+    });
+  });
 
-    expect(createUploadAccept(singleImageUploadPreset.formats)).toBe(
-      'image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
+  test('publishes synchronized camelCase validation errors', () => {
+    expect(uploadValidationErrorsArray).toEqual([
+      'emptyFile',
+      'unsupportedFileFormat',
+      'fileSizeExceeded',
+      'filesCountExceeded',
+    ]);
+    expect(uploadValidationError).toEqual({
+      EMPTY_FILE: 'emptyFile',
+      UNSUPPORTED_FILE_FORMAT: 'unsupportedFileFormat',
+      FILE_SIZE_EXCEEDED: 'fileSizeExceeded',
+      FILES_COUNT_EXCEEDED: 'filesCountExceeded',
+    });
+  });
+
+  test('rejects invalid preset configuration with stable error codes', () => {
+    expect(() => defineUploadPreset({ formats: [pngFormat], maxFileSize: -1 })).toThrow('invalidMaxFileSize');
+    expect(() => defineUploadPreset({ formats: [pngFormat], maxFileSize: 1, maxFilesCount: 1.5 })).toThrow(
+      'invalidMaxFilesCount'
     );
-    expect(schema.parse(file)).toBe(file);
-    expect(singleImageUploadPreset.maxFilesCount).toBe(1);
+
+    expect(uploadErrors.invalidMaxFileSize().message).toBe('invalidMaxFileSize');
   });
 });
 
-describe('built-in upload presets', () => {
-  test('provides synchronized image and document policies', () => {
-    expect(imageUploadPreset).toEqual({
-      formats: ['png', 'jpg', 'webp', 'avif', 'heic'],
-      maxFileSize: DEFAULT_UPLOAD_MAX_FILE_SIZE,
-    });
-    expect(documentUploadPreset).toEqual({
-      formats: ['pdf', 'rtf', 'txt'],
-      maxFileSize: DEFAULT_UPLOAD_MAX_FILE_SIZE,
-    });
-  });
-});
-
-// =====================================================================================================================
-// FORMAT CATALOG AND FILE METADATA
-// =====================================================================================================================
-
-describe('upload format catalog', () => {
-  test('keeps exported literal collections and aliases synchronized', () => {
-    expect(fileFormatsArray).toContain(fileFormat.PNG);
-    expect(fileFormatsArray).toContain(fileFormat.HEIC);
-    expect(uploadValidationErrorsArray).toContain(uploadValidationError.UNSUPPORTED_FILE_FORMAT);
-  });
-
-  test('provides MIME types and normalized extensions for every format', () => {
-    for (const format of fileFormatsArray) {
-      expect(fileFormatsConfig[format].name.length).toBeGreaterThan(0);
-      expect(fileFormatsConfig[format].mimeTypes.length).toBeGreaterThan(0);
-      expect(fileFormatsConfig[format].extensions.every((extension) => extension.startsWith('.'))).toBe(true);
-    }
-  });
-});
+// == FileMetadata ======================================================
 
 describe('upload metadata utilities', () => {
   test.each([
     ['photo.PNG', '.png'],
+    [' photo.PDF ', '.pdf'],
     ['archive.tar.gz', '.gz'],
     ['without-extension', ''],
     ['.hidden', ''],
@@ -139,58 +129,80 @@ describe('upload metadata utilities', () => {
   test('normalizes extensions without duplicating the dot prefix', () => {
     expect(normalizeFileExtension('PNG')).toBe('.png');
     expect(normalizeFileExtension('.JpEg')).toBe('.jpeg');
+    expect(normalizeFileExtension(' .PDF ')).toBe('.pdf');
+    expect(normalizeFileExtension('')).toBe('');
+    expect(normalizeFileExtension('.')).toBe('');
   });
 
-  test('matches exact MIME types and complete wildcard media groups', () => {
+  test('matches case-insensitive MIME types and complete wildcard media groups', () => {
     expect(matchesMimeType('image/png', 'image/png')).toBe(true);
+    expect(matchesMimeType('IMAGE/PNG', 'image/png')).toBe(true);
     expect(matchesMimeType('image/png', 'image/*')).toBe(true);
+    expect(matchesMimeType('application/pdf', '*/*')).toBe(true);
     expect(matchesMimeType('application/pdf', 'image/*')).toBe(false);
+    expect(matchesMimeType('', '')).toBe(false);
+    expect(matchesMimeType('image/', 'image/*')).toBe(false);
+    expect(matchesMimeType('image/', '*/*')).toBe(false);
   });
 
-  test('builds a stable native accept hint without duplicate values', () => {
-    expect(createUploadAccept([fileFormat.JPG, fileFormat.PNG])).toBe('image/jpeg,.jpg,.jpeg,image/png,.png');
+  test('builds a normalized native accept hint without empty or duplicate values', () => {
+    expect(createUploadAccept([pngFormat, pdfFormat])).toBe('image/png,.png,application/pdf,.pdf');
+    expect(createUploadAccept([{ mimeTypes: [' IMAGE/PNG ', ''], extensions: [' PNG ', ''] }])).toBe('image/png,.png');
   });
 });
 
-// =====================================================================================================================
-// FILE VALIDATION
-// =====================================================================================================================
+// == FormatValidation ==================================================
 
-describe('upload file format predicates', () => {
+describe('upload format predicates', () => {
   const pngWithoutMime = new File(['content'], 'IMAGE.PNG');
   const mismatchedFile = new File(['content'], 'image.png', { type: 'application/pdf' });
+  const arbitraryImage = new File(['content'], 'image.gif', { type: 'image/gif' });
 
-  test('keeps strict MIME and extension checks independently available', () => {
-    expect(isFileMimeTypeSupported(pngWithoutMime, [fileFormat.PNG])).toBe(false);
-    expect(isFileExtensionSupported(pngWithoutMime, [fileFormat.PNG])).toBe(true);
-
-    expect(isFileMimeTypeSupported(mismatchedFile, [fileFormat.PNG])).toBe(false);
-    expect(isFileExtensionSupported(mismatchedFile, [fileFormat.PNG])).toBe(true);
+  test('keeps MIME and extension checks independently available', () => {
+    expect(isFileMimeTypeSupported(pngWithoutMime, [pngFormat])).toBe(false);
+    expect(isFileExtensionSupported(pngWithoutMime, [pngFormat])).toBe(true);
+    expect(isFileMimeTypeSupported(arbitraryImage, [imageFormat])).toBe(true);
+    expect(
+      isFileExtensionSupported(new File(['content'], 'without-extension'), [{ mimeTypes: [], extensions: [''] }])
+    ).toBe(false);
   });
 
-  test('supports permissive client matching by MIME type or extension', () => {
-    expect(isFileFormatSupported(pngWithoutMime, [fileFormat.PNG])).toBe(true);
-    expect(isFileFormatSupported(mismatchedFile, [fileFormat.PNG])).toBe(true);
+  test('uses strict MIME matching unless extension fallback is enabled', () => {
+    expect(isFileFormatSupported(pngWithoutMime, { formats: [pngFormat] })).toBe(false);
+    expect(isFileFormatSupported(pngWithoutMime, { formats: [pngFormat], extensionFallback: true })).toBe(true);
+    expect(isFileFormatSupported(mismatchedFile, { formats: [pngFormat] })).toBe(false);
+    expect(isFileFormatSupported(mismatchedFile, { formats: [pngFormat], extensionFallback: true })).toBe(true);
   });
 });
 
+// == FileValidation ====================================================
+
 describe('validateUploadFile', () => {
-  test('returns stable keys in intrinsic validation order', () => {
-    const emptyFile = new File([], 'empty.png', { type: 'image/png' });
-    const unsupportedFile = new File(['content'], 'document.pdf', { type: 'application/pdf' });
+  const options = { formats: [pngFormat], maxFileSize: 4 };
+
+  test('returns stable errors in intrinsic validation order', () => {
+    const emptyFile = new File([], 'empty.pdf', { type: 'application/pdf' });
+    const unsupportedFile = new File([new Uint8Array(5)], 'document.pdf', { type: 'application/pdf' });
     const oversizedFile = new File([new Uint8Array(5)], 'image.png', { type: 'image/png' });
 
-    expect(validateUploadFile(emptyFile, [fileFormat.PNG], 0)).toBe(uploadValidationError.EMPTY_FILE);
-    expect(validateUploadFile(unsupportedFile, [fileFormat.PNG], 1024)).toBe(
-      uploadValidationError.UNSUPPORTED_FILE_FORMAT
-    );
-    expect(validateUploadFile(oversizedFile, [fileFormat.PNG], 4)).toBe(uploadValidationError.FILE_SIZE_EXCEEDED);
+    expect(validateUploadFile(emptyFile, options)).toBe(uploadValidationError.EMPTY_FILE);
+    expect(validateUploadFile(unsupportedFile, options)).toBe(uploadValidationError.UNSUPPORTED_FILE_FORMAT);
+    expect(validateUploadFile(oversizedFile, options)).toBe(uploadValidationError.FILE_SIZE_EXCEEDED);
   });
 
-  test('accepts a supported file within the configured size', () => {
-    const file = new File(['content'], 'image.png', { type: 'image/png' });
+  test('shares explicit extension fallback with every validation adapter', () => {
+    const file = new File(['data'], 'image.png');
 
-    expect(validateUploadFile(file, [fileFormat.PNG], file.size)).toBeUndefined();
+    expect(validateUploadFile(file, options)).toBe(uploadValidationError.UNSUPPORTED_FILE_FORMAT);
+    expect(validateUploadFile(file, { ...options, extensionFallback: true })).toBeUndefined();
+  });
+
+  test('rejects invalid size policies before inspecting the supplied file', () => {
+    const file = new File(['data'], 'image.png', { type: 'image/png' });
+
+    expect(() => validateUploadFile(file, { formats: [pngFormat], maxFileSize: -1 })).toThrow('invalidMaxFileSize');
+    expect(() => validateUploadFile(file, { formats: [pngFormat], maxFileSize: 1.5 })).toThrow('invalidMaxFileSize');
+    expect(() => zodUploadFileSchema({ formats: [pngFormat], maxFileSize: Infinity })).toThrow('invalidMaxFileSize');
   });
 });
 
@@ -202,8 +214,25 @@ describe('validateUploadFiles', () => {
     expect(
       validateUploadFiles([unsupportedFile, validFile], {
         currentFilesCount: 0,
-        formats: [fileFormat.PNG],
+        formats: [pngFormat],
         maxFileSize: 1024,
+      })
+    ).toEqual({
+      acceptedFiles: [validFile],
+      validationError: uploadValidationError.UNSUPPORTED_FILE_FORMAT,
+    });
+  });
+
+  test('preserves the first rejection while continuing to collect valid files', () => {
+    const unsupportedFile = new File(['document'], 'document.pdf', { type: 'application/pdf' });
+    const oversizedFile = new File([new Uint8Array(5)], 'large.png', { type: 'image/png' });
+    const validFile = new File(['ok'], 'valid.png', { type: 'image/png' });
+
+    expect(
+      validateUploadFiles([unsupportedFile, oversizedFile, validFile], {
+        currentFilesCount: 0,
+        formats: [pngFormat],
+        maxFileSize: 4,
       })
     ).toEqual({
       acceptedFiles: [validFile],
@@ -218,7 +247,7 @@ describe('validateUploadFiles', () => {
     expect(
       validateUploadFiles([firstFile, secondFile], {
         currentFilesCount: 1,
-        formats: [fileFormat.PNG],
+        formats: [pngFormat],
         maxFileSize: 1024,
         maxFilesCount: 2,
       })
@@ -227,14 +256,36 @@ describe('validateUploadFiles', () => {
       validationError: uploadValidationError.FILES_COUNT_EXCEEDED,
     });
   });
+
+  test('applies extension fallback consistently throughout a batch', () => {
+    const file = new File(['image'], 'image.png');
+
+    expect(
+      validateUploadFiles([file], {
+        currentFilesCount: 0,
+        formats: [pngFormat],
+        maxFileSize: 1024,
+        extensionFallback: true,
+      })
+    ).toEqual({ acceptedFiles: [file], validationError: undefined });
+  });
+
+  test('rejects invalid collection counts before processing a batch', () => {
+    const basePreset = { formats: [pngFormat], maxFileSize: 1024 };
+    const file = new File(['image'], 'image.png', { type: 'image/png' });
+
+    expect(() => defineUploadPreset({ ...basePreset, maxFilesCount: -1 })).toThrow('invalidMaxFilesCount');
+    expect(() => validateUploadFiles([file], { ...basePreset, currentFilesCount: 0.5 })).toThrow(
+      'invalidCurrentFilesCount'
+    );
+  });
 });
 
-// =====================================================================================================================
-// ZOD FILE SCHEMAS
-// =====================================================================================================================
+// == ZodSchemas ========================================================
 
 describe('zodUploadFileSchema', () => {
-  const strictPngSchema = zodUploadFileSchema({ formats: [fileFormat.PNG], maxFileSize: 8 });
+  const options = { formats: [pngFormat], maxFileSize: 8 };
+  const strictPngSchema = zodUploadFileSchema(options);
 
   test('accepts supported non-empty files within the configured size', () => {
     const file = new File(['content'], 'image.png', { type: 'image/png' });
@@ -242,28 +293,25 @@ describe('zodUploadFileSchema', () => {
     expect(strictPngSchema.parse(file)).toBe(file);
   });
 
-  test('reports stable validation keys for empty, oversized, and unsupported files', () => {
+  test('uses the same first-error ordering as direct validation', () => {
     const cases = [
-      [new File([], 'empty.png', { type: 'image/png' }), uploadValidationError.EMPTY_FILE],
-      [new File([new Uint8Array(9)], 'large.png', { type: 'image/png' }), uploadValidationError.FILE_SIZE_EXCEEDED],
-      [new File(['content'], 'image.gif', { type: 'image/gif' }), uploadValidationError.UNSUPPORTED_FILE_FORMAT],
-    ] as const;
+      new File([], 'empty.pdf', { type: 'application/pdf' }),
+      new File([new Uint8Array(9)], 'large.pdf', { type: 'application/pdf' }),
+      new File([new Uint8Array(9)], 'large.png', { type: 'image/png' }),
+    ];
 
-    for (const [file, expectedMessage] of cases) {
+    for (const file of cases) {
+      const expectedError = validateUploadFile(file, options);
       const result = strictPngSchema.safeParse(file);
 
       expect(result.success).toBe(false);
-      if (!result.success) expect(result.error.issues.map((issue) => issue.message)).toContain(expectedMessage);
+      if (result.success === false) expect(result.error.issues[0]?.message).toBe(expectedError);
     }
   });
 
   test('rejects extension-only matches unless fallback is explicitly enabled', () => {
     const file = new File(['content'], 'image.png');
-    const fallbackSchema = zodUploadFileSchema({
-      formats: [fileFormat.PNG],
-      maxFileSize: 8,
-      extensionFallback: true,
-    });
+    const fallbackSchema = zodUploadFileSchema({ ...options, extensionFallback: true });
 
     expect(strictPngSchema.safeParse(file).success).toBe(false);
     expect(fallbackSchema.safeParse(file).success).toBe(true);
