@@ -1,5 +1,4 @@
-// Oxlint configuration – defines typed linting rules and overrides;
-// Uses `tsconfig.json` and skips generated project output files;
+// Oxlint configuration – defines typed linting rules and overrides.
 // More details: https://oxc.rs/docs/guide/usage/linter/config.html;
 
 {

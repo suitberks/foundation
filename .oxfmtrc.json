@@ -1,5 +1,4 @@
-// Oxfmt configuration – defines formatting and import sorting rules;
-// Applies consistent project style across supported source files;
+// Oxfmt configuration – formatting and import sorting rules;
 // More details: https://oxc.rs/docs/guide/usage/formatter.html;
 
 {
