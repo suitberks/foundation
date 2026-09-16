@@ -17,3 +17,14 @@ export type Simplify<TValue> = { [TKey in keyof TValue]: TValue[TKey] } & {};
 export type ExactlyOne<TEntity, TKeys extends keyof TEntity> = {
   [TKey in TKeys]: Simplify<Pick<TEntity, TKey> & Partial<Record<Exclude<TKeys, TKey>, never>>>;
 }[TKeys];
+
+/**
+ * Builds a union whose branches require one selected property while preserving every remaining property.
+ * Additional selected properties may coexist, but at least one must hold its concrete declared value.
+ *
+ * @example
+ * type UserPatch = AtLeastOne<{ email?: string; fullName?: string }>;
+ */
+export type AtLeastOne<TEntity, TKeys extends keyof TEntity = keyof TEntity> = TKeys extends keyof TEntity
+  ? Simplify<Required<Pick<TEntity, TKeys>> & Partial<Omit<TEntity, TKeys>>>
+  : never;

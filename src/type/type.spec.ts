@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import type { ExactlyOne, Simplify } from '@/index';
+import type { AtLeastOne, ExactlyOne, Simplify } from '@/index';
 
 // These tests describe exact compile-time transformations provided by shared type utilities;
 // They keep selector exclusivity and intersection flattening visible to project typechecking;
@@ -23,9 +23,28 @@ type _ExactlyOneContract = Assert<
 type _SimplifyContract = Assert<
   IsExact<Simplify<{ identifier: string } & { enabled?: boolean }>, { identifier: string; enabled?: boolean }>
 >;
+type _AtLeastOneContract = Assert<
+  IsExact<
+    AtLeastOne<{ name?: string; count?: number; enabled: boolean }, 'name' | 'count'>,
+    { name: string; count?: number; enabled?: boolean } | { count: number; name?: string; enabled?: boolean }
+  >
+>;
+
+function assertRejectedAtLeastOneShapes(): void {
+  // @ts-expect-error At least one selected property must hold a concrete value.
+  const emptyPatch: AtLeastOne<{ name?: string; count?: number }> = {};
+
+  // @ts-expect-error Explicit undefined does not satisfy a selected property branch.
+  const undefinedPatch: AtLeastOne<{ name?: string; count?: number }> = { name: undefined };
+
+  void emptyPatch;
+  void undefinedPatch;
+}
+
+void assertRejectedAtLeastOneShapes;
 
 test('type utilities preserve their exact compile-time contracts', () => {
-  const contracts: [_ExactlyOneContract, _SimplifyContract] = [true, true];
+  const contracts: [_AtLeastOneContract, _ExactlyOneContract, _SimplifyContract] = [true, true, true];
 
-  expect(contracts).toEqual([true, true]);
+  expect(contracts).toEqual([true, true, true]);
 });
