@@ -1,28 +1,26 @@
 import { createStringEnumRecord } from '@/utilities/enums.utilities';
 
-// `HMAC` enumerations define the supported digest algorithms and signature encodings;
-// Derived unions and records retain one literal source for every exported alias;
+// HMAC literal catalogs define the supported digest algorithms and signature encodings;
+// Derived unions and records retain one authoritative source for every public alias;
 
-// == DIGEST ALGORITHMS ==========================================================
+// == DigestAlgorithms ==================================================
 
 export const hmacAlgorithmsArray = ['SHA-256', 'SHA-384', 'SHA-512'] as const;
 
 export type HMACAlgorithm = (typeof hmacAlgorithmsArray)[number];
 
-// Concise aliases expose algorithms without repeating the Web Crypto string literals;
-// Both exports reference the same immutable record derived from `hmacAlgorithmsArray`;
+// ↓ Expose descriptive and concise aliases from one immutable algorithm record;
 
 export const hmacAlgorithmsRecord = createStringEnumRecord(hmacAlgorithmsArray);
 export const hmacAlgorithm = hmacAlgorithmsRecord;
 
-// == SIGNATURE ENCODINGS ========================================================
+// == SignatureEncodings ================================================
 
 export const hmacEncodingsArray = ['hex', 'base64', 'base64url'] as const;
 
 export type HMACEncoding = (typeof hmacEncodingsArray)[number];
 
-// Concise aliases keep service options synchronized with the canonical encoding list;
-// Both exports reference the same immutable record derived from `hmacEncodingsArray`;
+// ↓ Expose descriptive and concise aliases from one immutable encoding record;
 
 export const hmacEncodingsRecord = createStringEnumRecord(hmacEncodingsArray);
 export const hmacEncoding = hmacEncodingsRecord;
