@@ -29,10 +29,13 @@ export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereCon
       return value === null ? isNull(column) : eq(column, value);
     });
 
-  if (conditions.length === 0) {
+  // ↓ Narrow Drizzle's optional result while preserving the empty-condition safety guard.
+
+  const condition = and(...conditions);
+
+  if (condition === undefined) {
     throw drizzleErrors.whereConditionsRequired();
   }
 
-  // Drizzle returns `undefined` only for the empty condition collection rejected above.
-  return and(...conditions)!;
+  return condition;
 }
