@@ -5,7 +5,9 @@ import {
   DEFAULT_HMAC_ENCODING,
   type HMACAlgorithm,
   type HMACEncoding,
+  type HMACErrorCode,
   type HMACInput,
+  type HMACSecret,
   HMACService,
   decodeHMACSignature,
   encodeHMACSignature,
@@ -13,17 +15,15 @@ import {
   hmacAlgorithmsArray,
   hmacEncoding,
   hmacEncodingsArray,
+  hmacErrors,
   toHMACBytes,
 } from '@/index';
 
-// =====================================================================================================================
-// COMPILE-TIME CONTRACT SUPPORT
-// =====================================================================================================================
+// These tests cover HMAC catalogs, encoding, key reuse, signing, and verification behavior;
+// They preserve exact public types and stable failures across raw and imported secret material;
 
-/**
- * Compares public types in both assignability directions for exactness.
- * These assertions keep emitted HMAC contracts synchronized with runtime values.
- */
+// == CompileTimeContracts ==============================================
+
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
     ? (<TValue>() => TValue extends TExpected ? 1 : 2) extends <TValue>() => TValue extends TActual ? 1 : 2
@@ -31,19 +31,20 @@ type IsExact<TActual, TExpected> =
       : false
     : false;
 
-/**
- * Constrains a compile-time proposition to true and fails typecheck otherwise.
- * Underscore-prefixed aliases document intentional type-only declarations.
- */
 type Assert<TCondition extends true> = TCondition;
 
 type _HMACAlgorithmContract = Assert<IsExact<HMACAlgorithm, 'SHA-256' | 'SHA-384' | 'SHA-512'>>;
 type _HMACEncodingContract = Assert<IsExact<HMACEncoding, 'hex' | 'base64' | 'base64url'>>;
 type _HMACInputContract = Assert<IsExact<HMACInput, string | Uint8Array>>;
+type _HMACSecretContract = Assert<IsExact<HMACSecret, string | Uint8Array | CryptoKey>>;
+type _HMACErrorCodeContract = Assert<
+  IsExact<
+    HMACErrorCode,
+    'invalidHexSignature' | 'invalidBase64Signature' | 'invalidBase64UrlSignature' | 'incompatibleCryptoKey'
+  >
+>;
 
-// =====================================================================================================================
-// ALGORITHM AND ENCODING CATALOGS
-// =====================================================================================================================
+// == HMACCatalogs ======================================================
 
 describe('HMAC catalogs', () => {
   test('keeps literal collections, aliases, and defaults synchronized', () => {
@@ -56,9 +57,24 @@ describe('HMAC catalogs', () => {
   });
 });
 
-// =====================================================================================================================
-// BINARY INPUT AND SIGNATURE ENCODING
-// =====================================================================================================================
+// == HMACErrors ========================================================
+
+describe('HMAC errors', () => {
+  test('creates typed failures with stable camelCase codes', () => {
+    const invalidHexError = hmacErrors.invalidHexSignature();
+    const invalidBase64Error = hmacErrors.invalidBase64Signature();
+    const invalidBase64UrlError = hmacErrors.invalidBase64UrlSignature();
+    const incompatibleKeyError = hmacErrors.incompatibleCryptoKey();
+
+    expect(invalidHexError).toBeInstanceOf(TypeError);
+    expect(invalidHexError.message).toBe('invalidHexSignature');
+    expect(invalidBase64Error.message).toBe('invalidBase64Signature');
+    expect(invalidBase64UrlError.message).toBe('invalidBase64UrlSignature');
+    expect(incompatibleKeyError.message).toBe('incompatibleCryptoKey');
+  });
+});
+
+// == SignatureEncoding ================================================
 
 describe('HMAC encoding utilities', () => {
   test('encodes strings as UTF-8 and copies supplied byte arrays', () => {
@@ -81,15 +97,13 @@ describe('HMAC encoding utilities', () => {
   );
 
   test('rejects malformed signatures before cryptographic verification', () => {
-    expect(() => decodeHMACSignature('abc', hmacEncoding.HEX)).toThrow(TypeError);
-    expect(() => decodeHMACSignature('not base64', hmacEncoding.BASE64)).toThrow(TypeError);
-    expect(() => decodeHMACSignature('a', hmacEncoding.BASE64URL)).toThrow(TypeError);
+    expect(() => decodeHMACSignature('abc', hmacEncoding.HEX)).toThrow('invalidHexSignature');
+    expect(() => decodeHMACSignature('not base64', hmacEncoding.BASE64)).toThrow('invalidBase64Signature');
+    expect(() => decodeHMACSignature('a', hmacEncoding.BASE64URL)).toThrow('invalidBase64UrlSignature');
   });
 });
 
-// =====================================================================================================================
-// HMAC SIGNING AND VERIFICATION
-// =====================================================================================================================
+// == HMACService =======================================================
 
 describe('HMACService', () => {
   test('uses SHA-256 and hexadecimal signatures by default', () => {
@@ -106,6 +120,40 @@ describe('HMACService', () => {
     expect(await service.sign('Hi There', secret)).toBe(
       'b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7'
     );
+  });
+
+  test('imports one non-extractable key for repeated signing and verification', async () => {
+    const service = new HMACService();
+    const key = await service.importKey('shared-secret');
+    const signature = await service.sign('payload', key);
+
+    expect(key.type).toBe('secret');
+    expect(key.extractable).toBe(false);
+    expect(key.usages).toEqual(['sign', 'verify']);
+    expect(key.algorithm.name).toBe('HMAC');
+    expect(await service.verify('payload', signature, key)).toBe(true);
+  });
+
+  test('rejects imported keys that violate the configured algorithm policy', async () => {
+    const sha256Service = new HMACService();
+    const sha384Service = new HMACService({ algorithm: hmacAlgorithm.SHA_384 });
+    const sha256Key = await sha256Service.importKey('shared-secret');
+
+    expect(sha384Service.sign('payload', sha256Key)).rejects.toThrow('incompatibleCryptoKey');
+  });
+
+  test('rejects imported keys that do not permit the requested operation', async () => {
+    const service = new HMACService();
+    const signOnlyKey = await crypto.subtle.importKey(
+      'raw',
+      toHMACBytes('shared-secret'),
+      { name: 'HMAC', hash: hmacAlgorithm.SHA_256 },
+      false,
+      ['sign']
+    );
+    const signature = await service.sign('payload', signOnlyKey);
+
+    expect(service.verify('payload', signature, signOnlyKey)).rejects.toThrow('incompatibleCryptoKey');
   });
 
   test.each([

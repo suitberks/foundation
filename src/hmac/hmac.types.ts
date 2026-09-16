@@ -7,6 +7,12 @@ import type { HMACAlgorithm, HMACEncoding } from './hmac.enums';
 export type HMACInput = string | Uint8Array;
 
 /**
+ * Secret material accepted directly or as a previously imported Web Crypto key.
+ * Imported keys avoid repeated key imports across high-frequency operations.
+ */
+export type HMACSecret = HMACInput | CryptoKey;
+
+/**
  * Configures the digest algorithm and textual signature encoding for one service.
  * Omitted values select SHA-256 and lowercase hexadecimal output by default.
  */
