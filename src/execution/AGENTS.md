@@ -152,6 +152,27 @@ export const EXAMPLE_NON_IMPORTANT = 5; // ← Short contextual explanation.
 
 Do not comment a constant whose name and literal already communicate everything.
 
+## Enums
+
+Every migrated enum collection file starts with this exact two-line header.
+Replace only `{Entity}` with the owning module entity while preserving wording:
+
+```ts
+// `{Entity}` enums define supported literal collections and synchronized public aliases;
+// Derived unions and records preserve one authoritative source for every enum family;
+```
+
+Keep each enum family colocated as its readonly literal array, derived union,
+immutable record, and concise alias. Introduce the record pair with this exact
+comment, replacing only `{Entity}` with the concrete enum family entity:
+
+```ts
+// ↓ Descriptive and concise aliases share one immutable `{Entity}` record;
+```
+
+Use a compact named divider when one file owns several enum families. Do not
+repeat family values manually in unions, records, aliases, or documentation.
+
 ## JSDoc
 
 Document non-obvious exported functions, types, services, schemas, adapters, and
