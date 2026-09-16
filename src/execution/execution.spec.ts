@@ -196,6 +196,7 @@ describe('retryExecution', () => {
 
     expect(await waiting).toEqual({ success: false, error: cancellation });
     expect(await waitForRetry(0)).toBeUndefined();
+    expect(waitForRetry(-1)).rejects.toThrow('invalidRetryDelay');
   });
 
   test('retries failures and exposes one-based attempt context until success', async () => {
@@ -236,15 +237,23 @@ describe('retryExecution', () => {
   test('preserves the latest failure after exhaustion or rejected retry filtering', async () => {
     const exhaustedFailure = new Error('exhausted');
     const filteredFailure = new Error('filtered');
+    let exhaustedFilterCalls = 0;
 
     const exhausted = await captureExecution(() =>
-      retryExecution(() => Promise.reject(exhaustedFailure), { maxAttempts: 2 })
+      retryExecution(() => Promise.reject(exhaustedFailure), {
+        maxAttempts: 2,
+        shouldRetry: () => {
+          exhaustedFilterCalls += 1;
+          return true;
+        },
+      })
     );
     const filtered = await captureExecution(() =>
       retryExecution(() => Promise.reject(filteredFailure), { shouldRetry: () => false })
     );
 
     expect(exhausted).toEqual({ success: false, error: exhaustedFailure });
+    expect(exhaustedFilterCalls).toBe(1);
     expect(filtered).toEqual({ success: false, error: filteredFailure });
   });
 

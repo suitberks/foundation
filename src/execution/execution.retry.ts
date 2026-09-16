@@ -7,7 +7,9 @@ import { validateRetryDelay, validateRetryExecutionOptions } from './execution.v
  * Zero-duration delays resolve immediately without allocating a timer.
  */
 export async function waitForRetry(delayMilliseconds: number, signal?: AbortSignal): Promise<void> {
+  validateRetryDelay(delayMilliseconds);
   signal?.throwIfAborted();
+
   if (delayMilliseconds === 0) return;
 
   await new Promise<void>((resolve, reject) => {
@@ -47,19 +49,21 @@ export async function retryExecution<TData>(
       return await execution({ attempt, signal });
     } catch (error) {
       const isMaxAttempts = attempt === maxAttempts;
-      const shouldRetryResult = shouldRetry ? await shouldRetry(error, attempt) : true;
+      const isRetryRejected =
+        // Reject the retry if the attempt limit is reached or the retry filter returns false.
+        isMaxAttempts === false && shouldRetry ? (await shouldRetry(error, attempt)) === false : false;
 
       // Preserve the latest failure when no further attempt is allowed.
-      if (isMaxAttempts || (shouldRetry && shouldRetryResult === false)) throw error;
+      if (isMaxAttempts || isRetryRejected) throw error;
 
       signal?.throwIfAborted();
 
       // ↓ Resolve and validate the delay before allocating its timer.
 
       const resolvedDelay =
+        // Delay resolution may be asynchronous if a delay function is provided.
         typeof delayMilliseconds === 'function' ? await delayMilliseconds(error, attempt) : delayMilliseconds;
 
-      validateRetryDelay(resolvedDelay);
       await waitForRetry(resolvedDelay, signal);
     }
   }
