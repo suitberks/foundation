@@ -84,6 +84,12 @@ Declare named reusable behavior with `function`. Keep configured instances,
 schema values, registries, framework-typed handlers, and literal collections as
 `const` where value identity is the relevant abstraction.
 
+Keep function signatures readable. When a defaulted options object has several
+properties or makes the declaration visually dense, accept a named `options`
+parameter and destructure it at the beginning of the function body. Keep inline
+parameter destructuring only while the complete signature remains effortless to
+scan.
+
 Order declarations dependency-first within each file. Place foundational types,
 constants, predicates, and low-level helpers before the declarations that consume
 them. For independent declarations, preserve the clearest public reading order;
@@ -98,15 +104,25 @@ Use `type` aliases for public contracts. Derive types from their runtime source
 or authoritative dependency model whenever possible instead of reproducing the
 same keys and values manually.
 
+Shared type-level transformations belong to the generic `type` module. Export
+every meaningful stage used to compose a public utility, document non-obvious
+types with balanced two-line JSDoc, and add a compact `@example` when the
+resulting shape is easier to understand from one concrete alias.
+
 ## Imports
 
 Order imports as external dependencies, cross-module `@/` imports, then relative
 same-module imports. Separate groups with one blank line. Use `import type` for
 type-only dependencies and combine imports only when the result remains clear.
 
-Do not hide dependency cycles behind barrel imports. Internal files may import
-their same-module owners directly; consumers and specifications use the public
-package boundary when verifying the exported contract.
+Cross-module imports target the owning local barrel, such as `@/type`, and never
+reach into implementation files such as `@/type/type.utilities`. Files within
+one module import their siblings through relative paths. Specifications import
+the supported package contract exclusively through `@/index`.
+
+Do not hide dependency cycles behind barrel imports. Resolve a cycle by restoring
+the correct responsibility boundary rather than bypassing the barrel with a deep
+path or routing internal production code through the package root.
 
 ## Errors
 
@@ -141,9 +157,10 @@ part of the public contract; otherwise translate them at the owning boundary.
 
 ## Constants
 
-Important exported constants require a meaningful rectangular two-line JSDoc.
-The first line states the represented policy; the second explains its boundary,
-default behavior, units, or interpretation.
+Important constants require a meaningful rectangular two-line JSDoc regardless
+of whether the module barrel exposes them. The first line states the represented
+policy; the second explains its boundary, default behavior, units, or
+interpretation.
 
 ```ts
 /**
@@ -289,6 +306,11 @@ Use an authoritative dependency API instead of casting an entire foreign object
 to an unrelated record. If the JavaScript standard library erases known keys or
 entries, restore only the narrow relation the type system lost.
 
+Extract a dense or multi-clause boolean expression into a positively named local
+constant before using it for control flow. The name must state the resulting
+condition, not merely repeat one operand or force the reader to negate the
+expression mentally.
+
 Validate static policy before starting work. Validate dynamically resolved
 policy before allocating its resource. Reject invalid runtime data even when
 TypeScript normally prevents it, because JavaScript and explicit assertions can
@@ -354,7 +376,8 @@ For each module migration:
 7. Add narrow runtime guards where static callers can bypass type safety.
 8. Rewrite comments and JSDoc only inside the module being migrated.
 9. Keep its spec colocated, public-facing, deterministic, and free of JSDoc.
-10. Inspect generated declarations and the final diff for accidental expansion.
+10. Replace cross-module deep imports with imports from the owning local barrel.
+11. Inspect generated declarations and the final diff for accidental expansion.
 
 ## Verification
 
