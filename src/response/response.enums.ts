@@ -1,4 +1,4 @@
-import { createStringEnumRecord } from '@/utilities/enums.utilities';
+import { createStringEnumRecord } from '@/string-enum/string-enum.utilities';
 
 // `Response` enums define supported literal collections and synchronized public aliases;
 // Derived unions and records preserve one authoritative source for every enum family;
