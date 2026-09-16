@@ -9,6 +9,7 @@ import {
   type UploadPreset,
   type UploadErrorCode,
   type UploadValidationError,
+  assertUploadFormat,
   createUploadAccept,
   defineUploadFormat,
   defineUploadPreset,
@@ -54,7 +55,15 @@ type _UploadFormatContract = Assert<
   IsExact<UploadFormat, Readonly<{ mimeTypes: readonly string[]; extensions: readonly string[] }>>
 >;
 type _UploadErrorCodeContract = Assert<
-  IsExact<UploadErrorCode, 'invalidMaxFileSize' | 'invalidMaxFilesCount' | 'invalidCurrentFilesCount'>
+  IsExact<
+    UploadErrorCode,
+    | 'uploadFormatRequired'
+    | 'invalidMimeType'
+    | 'invalidFileExtension'
+    | 'invalidMaxFileSize'
+    | 'invalidMaxFilesCount'
+    | 'invalidCurrentFilesCount'
+  >
 >;
 type _ValidationErrorContract = Assert<
   IsExact<UploadValidationError, 'emptyFile' | 'unsupportedFileFormat' | 'fileSizeExceeded' | 'filesCountExceeded'>
@@ -85,6 +94,32 @@ describe('upload formats', () => {
       maxFileSize: 8 * 1024 * 1024,
       maxFilesCount: 1,
     });
+  });
+
+  test('accepts MIME-only, extension-only, wildcard, and enriched format definitions', () => {
+    const enrichedFormat = defineUploadFormat({
+      name: 'Images',
+      mimeTypes: ['image/*', '*/*'],
+      extensions: [],
+    });
+
+    expect(enrichedFormat.name).toBe('Images');
+    expect(defineUploadFormat({ mimeTypes: [], extensions: ['pdf'] })).toEqual({
+      mimeTypes: [],
+      extensions: ['pdf'],
+    });
+  });
+
+  test('exposes direct format assertion for composition outside the factory', () => {
+    expect(() => assertUploadFormat({ mimeTypes: ['application/pdf'], extensions: [] })).not.toThrow();
+  });
+
+  test('rejects empty and malformed format definitions with stable error codes', () => {
+    expect(() => defineUploadFormat({ mimeTypes: [], extensions: [] })).toThrow('uploadFormatRequired');
+    expect(() => defineUploadFormat({ mimeTypes: ['image'], extensions: [] })).toThrow('invalidMimeType');
+    expect(() => defineUploadFormat({ mimeTypes: ['image/'], extensions: [] })).toThrow('invalidMimeType');
+    expect(() => defineUploadFormat({ mimeTypes: [], extensions: [''] })).toThrow('invalidFileExtension');
+    expect(() => defineUploadFormat({ mimeTypes: [], extensions: ['tar.gz'] })).toThrow('invalidFileExtension');
   });
 
   test('publishes synchronized camelCase validation errors', () => {
