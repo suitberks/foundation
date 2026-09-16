@@ -72,9 +72,7 @@ afterEach(() => {
   mock.restore();
 });
 
-// =====================================================================================================================
-// LOG LEVEL CATALOG
-// =====================================================================================================================
+// == LogLevelCatalog ===================================================
 
 describe('logging levels', () => {
   test('keeps the literal collection, aliases, and color configuration synchronized', () => {
@@ -88,9 +86,7 @@ describe('logging levels', () => {
   });
 });
 
-// =====================================================================================================================
-// LOGGING CONFIGURATION
-// =====================================================================================================================
+// == LoggingConfiguration =============================================
 
 describe('logging configuration', () => {
   test('publishes stable redaction policy and ordered HTTP status ranges', () => {
@@ -107,9 +103,7 @@ describe('logging configuration', () => {
   });
 });
 
-// =====================================================================================================================
-// REQUEST BODY PREVIEWS
-// =====================================================================================================================
+// == RequestBodyPreviews ==============================================
 
 describe('createHTTPRequestBodyPreview', () => {
   test('normalizes and redacts ordinary request bodies without consuming the source', async () => {
@@ -150,9 +144,7 @@ describe('createHTTPRequestBodyPreview', () => {
   });
 });
 
-// =====================================================================================================================
-// SENSITIVE VALUE REDACTION
-// =====================================================================================================================
+// == SensitiveValueRedaction ==========================================
 
 describe('sensitive log value redaction', () => {
   test('redacts partial case-insensitive key matches throughout nested JSON', () => {
@@ -216,9 +208,7 @@ describe('sensitive log value redaction', () => {
   });
 });
 
-// =====================================================================================================================
-// HTTP STATUS COLOR SELECTION
-// =====================================================================================================================
+// == HTTPStatusColorSelection =========================================
 
 describe('getColoredHTTPStatus', () => {
   test.each([
@@ -265,9 +255,7 @@ describe('formatHTTPRequestLog', () => {
   });
 });
 
-// =====================================================================================================================
-// LOGGING SERVICE OUTPUT
-// =====================================================================================================================
+// == LoggingServiceOutput =============================================
 
 describe('log', () => {
   test('writes one labeled line for informational and warning messages', () => {

@@ -2,6 +2,18 @@ import { executionErrors } from './execution.errors';
 import type { RetryExecutionOptions } from './execution.types';
 
 /**
+ * Validates one resolved delay before a retry timer is allocated.
+ * Only finite non-negative millisecond durations are accepted.
+ */
+export function validateRetryDelay(delayMilliseconds: number): void {
+  const isInvalidRetryDelay = Number.isFinite(delayMilliseconds) === false || delayMilliseconds < 0;
+
+  if (isInvalidRetryDelay) {
+    throw executionErrors.invalidRetryDelay();
+  }
+}
+
+/**
  * Validates static retry policy values before the first operation attempt.
  * Dynamic delay values remain validated after their resolver completes.
  */
@@ -14,18 +26,6 @@ export function validateRetryExecutionOptions(options: RetryExecutionOptions, ma
 
   if (typeof options.delayMilliseconds === 'number') {
     validateRetryDelay(options.delayMilliseconds);
-  }
-}
-
-/**
- * Validates one resolved delay before a retry timer is allocated.
- * Only finite non-negative millisecond durations are accepted.
- */
-export function validateRetryDelay(delayMilliseconds: number): void {
-  const isInvalidRetryDelay = Number.isFinite(delayMilliseconds) === false || delayMilliseconds < 0;
-
-  if (isInvalidRetryDelay) {
-    throw executionErrors.invalidRetryDelay();
   }
 }
 

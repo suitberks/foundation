@@ -84,6 +84,16 @@ Declare named reusable behavior with `function`. Keep configured instances,
 schema values, registries, framework-typed handlers, and literal collections as
 `const` where value identity is the relevant abstraction.
 
+Order declarations dependency-first within each file. Place foundational types,
+constants, predicates, and low-level helpers before the declarations that consume
+them. For independent declarations, preserve the clearest public reading order;
+do not replace semantic grouping with mechanical alphabetical sorting.
+
+Apply the same ordering to type contracts. Declare primitive and foundational
+contracts before composed, conditional, or result types that reference them.
+Inside classes, keep the public API before private implementation details unless
+moving a private member materially clarifies a non-obvious dependency.
+
 Use `type` aliases for public contracts. Derive types from their runtime source
 or authoritative dependency model whenever possible instead of reproducing the
 same keys and values manually.

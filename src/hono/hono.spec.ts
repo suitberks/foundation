@@ -27,9 +27,7 @@ import {
 // These tests cover Hono response envelopes, file downloads, and global error handling behavior;
 // They preserve exact public contracts, binary content, stable failures, and reporting boundaries;
 
-// =====================================================================================================================
-// COMPILE-TIME CONTRACTS
-// =====================================================================================================================
+// == CompileTimeContracts =============================================
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
@@ -91,9 +89,7 @@ function createThrowingApp(error: unknown, options: HonoErrorHandlerOptions): Ho
   return app;
 }
 
-// =====================================================================================================================
-// JSON RESPONSES
-// =====================================================================================================================
+// == JSONResponses =====================================================
 
 describe('respond', () => {
   test('returns the requested status and wraps data in the shared success envelope', async () => {
@@ -128,9 +124,7 @@ describe('respond', () => {
   });
 });
 
-// =====================================================================================================================
-// FILE RESPONSES
-// =====================================================================================================================
+// == FileResponses =====================================================
 
 describe('fileRespond', () => {
   test('returns binary content with attachment and custom content type headers', async () => {
@@ -175,9 +169,7 @@ describe('fileRespond', () => {
   });
 });
 
-// =====================================================================================================================
-// ERROR HANDLING
-// =====================================================================================================================
+// == ErrorHandling =====================================================
 
 describe('honoErrors', () => {
   test('creates stable machine-readable framework failures', () => {
@@ -295,9 +287,7 @@ describe('createHonoErrorHandler', () => {
   });
 });
 
-// =====================================================================================================================
-// REQUEST LOGGING
-// =====================================================================================================================
+// == RequestLogging ====================================================
 
 describe('loggingMiddleware', () => {
   test('logs method, status, duration, path, and query details', async () => {
@@ -446,9 +436,7 @@ describe('loggingMiddleware', () => {
   });
 });
 
-// =====================================================================================================================
-// REQUEST IDENTIFIERS
-// =====================================================================================================================
+// == RequestIdentifiers ===============================================
 
 describe('requestIdMiddleware', () => {
   test('preserves an incoming identifier on the response', async () => {
