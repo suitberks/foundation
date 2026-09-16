@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 
 import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
@@ -14,6 +14,8 @@ import {
   createHonoErrorHandler,
   fileRespond,
   honoErrors,
+  log,
+  loggingMiddleware,
   respond,
 } from '@/index';
 
@@ -44,6 +46,10 @@ type _HonoFileRespondOptionsContract = Assert<
 type _HonoErrorHandlerOptionsContract = Assert<
   IsExact<HonoErrorHandlerOptions, { onUnexpectedError: (error: unknown, context: Context) => void }>
 >;
+
+afterEach(() => {
+  mock.restore();
+});
 
 async function readJSON<TData>(response: Response): Promise<TData> {
   return (await response.json()) as TData;
@@ -262,5 +268,120 @@ describe('createHonoErrorHandler', () => {
       error: 'internalServerError',
     });
     expect(reportedErrors).toEqual([error]);
+  });
+});
+
+// == RequestLogging ====================================================
+
+describe('loggingMiddleware', () => {
+  test('logs method, status, duration, path, and query details', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+
+    app.use('*', loggingMiddleware);
+    app.get('/search', (c) => c.json({ matched: true }));
+
+    const response = await app.request('/search?term=foundation&limit=2');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ matched: true });
+
+    const loggedCall = infoLog.mock.calls[0];
+    if (!loggedCall) throw new Error('expectedLoggingCall');
+    const [message, service] = loggedCall;
+
+    expect(service).toBe('hono');
+    expect(message).toContain('GET');
+    expect(message).toContain('200');
+    expect(message).toMatch(/\d+ms/);
+    expect(message).toContain('/search');
+    expect(message).toContain('(term=foundation&limit=2)');
+  });
+
+  test('logs a normalized body without consuming the route handler stream', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+    const body = '{\n  "name":   "Foundation"\n}';
+
+    app.use('*', loggingMiddleware);
+    app.post('/echo', async (c) => c.text(await c.req.text()));
+
+    const response = await app.request('/echo', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body,
+    });
+
+    expect(await response.text()).toBe(body);
+    expect(infoLog.mock.calls[0]?.[0]).toContain('{ "name": "Foundation" }');
+    expect(infoLog.mock.calls[0]?.[0]).not.toContain('\n');
+  });
+
+  test('shortens long bodies while preserving their beginning and end', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+    const body = `${'a'.repeat(31)}${'b'.repeat(30)}`;
+
+    app.use('*', loggingMiddleware);
+    app.post('/long-body', (c) => c.body(null, 204));
+    await app.request('/long-body', { method: 'POST', body });
+
+    const message = infoLog.mock.calls[0]?.[0];
+
+    expect(message).toContain(`${'a'.repeat(30)}…${'b'.repeat(30)}`);
+    expect(message).not.toContain(body);
+  });
+
+  test('logs a placeholder without reading multipart form data', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+
+    app.use('*', loggingMiddleware);
+    app.post('/upload', async (c) => {
+      const formData = await c.req.formData();
+      const name = formData.get('name');
+      if (typeof name !== 'string') throw new Error('expectedMultipartTextField');
+      return c.text(name);
+    });
+
+    const formData = new FormData();
+    formData.set('name', 'Foundation');
+    const response = await app.request('/upload', { method: 'POST', body: formData });
+
+    expect(await response.text()).toBe('Foundation');
+    expect(infoLog.mock.calls[0]?.[0]).toContain('[multipart]');
+    expect(infoLog.mock.calls[0]?.[0]).not.toContain('Foundation');
+  });
+
+  test('redacts sensitive query and nested JSON values before logging', async () => {
+    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
+    const app = new Hono();
+    const body = JSON.stringify({
+      email: 'visible@example.com',
+      newPassword: 'secret-password',
+      nested: { clientSecret: 'secret-client', access_token: 'secret-token' },
+    });
+
+    app.use('*', loggingMiddleware);
+    app.post('/secure', async (c) => c.text(await c.req.text()));
+
+    const response = await app.request('/secure?term=visible&passwordConfirmation=secret-query', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body,
+    });
+
+    expect(await response.text()).toBe(body);
+
+    const message = infoLog.mock.calls[0]?.[0];
+
+    expect(message).toContain('term=visible');
+    expect(message).toContain('visible@example.com');
+    expect(message).toContain('%5Bredacted%5D');
+    expect(message).toContain('[redacted]');
+    expect(message).not.toContain('secret-query');
+    expect(message).not.toContain('secret-password');
+    expect(message).not.toContain('secret-client');
+    expect(message).not.toContain('secret-token');
   });
 });

@@ -20,6 +20,18 @@ export const logLevelColors = {
 export const REDACTED_LOG_VALUE = '[redacted]';
 
 /**
+ * Number of characters retained from each edge of an oversized request body.
+ * The complete preview includes both edges separated by one explicit ellipsis.
+ */
+export const LOG_BODY_PREVIEW_EDGE_LENGTH = 30;
+
+/**
+ * Safe request-body placeholder emitted instead of reading multipart content.
+ * Avoiding multipart reads prevents file payloads from entering logs or memory copies.
+ */
+export const MULTIPART_LOG_BODY = '[multipart]';
+
+/**
  * Normalized key fragments treated as sensitive by logging redaction.
  * Matching ignores case and separators so compound field names remain covered.
  */

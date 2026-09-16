@@ -6,6 +6,10 @@ import { logLevelColors } from './logging.constants';
 import { logLevel } from './logging.enums';
 import type { LogLevel } from './logging.enums';
 
+/**
+ * Writes one normalized terminal message for the requested logging level and service.
+ * Optional stack traces retain the primary timestamp on a subordinate aligned line.
+ */
 function writeLog(message: string, level: LogLevel, service: string = 'log', stack?: string): void {
   const timestamp = dim(getFormattedTime());
   const serviceName = logLevelColors[level](service.padEnd(12));

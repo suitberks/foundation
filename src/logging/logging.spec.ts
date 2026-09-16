@@ -3,8 +3,13 @@ import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { green, red, yellow } from 'kleur/colors';
 
 import {
+  type HTTPRequestLogOptions,
   type LogLevel,
+  LOG_BODY_PREVIEW_EDGE_LENGTH,
+  MULTIPART_LOG_BODY,
   REDACTED_LOG_VALUE,
+  createHTTPRequestBodyPreview,
+  formatHTTPRequestLog,
   getColoredHTTPStatus,
   httpStatusColors,
   log,
@@ -27,6 +32,19 @@ type IsExact<TActual, TExpected> =
 type Assert<TCondition extends true> = TCondition;
 
 type _LogLevelContract = Assert<IsExact<LogLevel, 'info' | 'warn' | 'error'>>;
+type _HTTPRequestLogOptionsContract = Assert<
+  IsExact<
+    HTTPRequestLogOptions,
+    {
+      method: string;
+      status: number;
+      duration: number;
+      path: string;
+      searchParams?: string;
+      bodyPreview?: string;
+    }
+  >
+>;
 
 afterEach(() => {
   mock.restore();
@@ -55,6 +73,8 @@ describe('logging levels', () => {
 describe('logging configuration', () => {
   test('publishes stable redaction policy and ordered HTTP status ranges', () => {
     expect(REDACTED_LOG_VALUE).toBe('[redacted]');
+    expect(LOG_BODY_PREVIEW_EDGE_LENGTH).toBe(30);
+    expect(MULTIPART_LOG_BODY).toBe('[multipart]');
     expect(sensitiveLogKeyParts).toContain('password');
     expect(sensitiveLogKeyParts).toContain('token');
     expect(httpStatusColors.map(({ range }) => range)).toEqual([
@@ -62,6 +82,38 @@ describe('logging configuration', () => {
       [400, 499],
       [500, 599],
     ]);
+  });
+});
+
+// =====================================================================================================================
+// REQUEST BODY PREVIEWS
+// =====================================================================================================================
+
+describe('createHTTPRequestBodyPreview', () => {
+  test('normalizes and redacts ordinary request bodies without consuming the source', async () => {
+    const request = new Request('https://example.com', {
+      method: 'POST',
+      body: '{\n  "password":  "secret", "name": "Foundation"\n}',
+    });
+
+    expect(await createHTTPRequestBodyPreview(request, 'application/json')).toBe(
+      '{"password":"[redacted]","name":"Foundation"}'
+    );
+    expect(await request.text()).toContain('"password":  "secret"');
+  });
+
+  test('preserves both boundaries of an oversized body around one explicit ellipsis', async () => {
+    const body = `${'a'.repeat(31)}${'b'.repeat(30)}`;
+    const request = new Request('https://example.com', { method: 'POST', body });
+
+    expect(await createHTTPRequestBodyPreview(request)).toBe(`${'a'.repeat(30)}…${'b'.repeat(30)}`);
+  });
+
+  test('returns the multipart marker without reading the request body', async () => {
+    const request = new Request('https://example.com', { method: 'POST', body: 'binary-content' });
+
+    expect(await createHTTPRequestBodyPreview(request, 'multipart/form-data; boundary=test')).toBe(MULTIPART_LOG_BODY);
+    expect(await request.text()).toBe('binary-content');
   });
 });
 
@@ -133,6 +185,18 @@ describe('getColoredHTTPStatus', () => {
       expect(getColoredHTTPStatus(status)('status text')).toBe('status text');
     }
   );
+});
+
+describe('formatHTTPRequestLog', () => {
+  test('formats required columns and omits empty optional suffixes', () => {
+    const message = formatHTTPRequestLog({ method: 'GET', status: 200, duration: 12, path: '/health' });
+
+    expect(message).toContain('GET');
+    expect(message).toContain('200');
+    expect(message).toContain('12ms');
+    expect(message).toContain('/health');
+    expect(message).not.toContain('()');
+  });
 });
 
 // =====================================================================================================================
