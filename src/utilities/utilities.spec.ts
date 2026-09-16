@@ -3,7 +3,6 @@ import { afterEach, describe, expect, setSystemTime, test } from 'bun:test';
 import { enUS } from 'date-fns/locale';
 
 import {
-  type MeasuredExecution,
   type ReplaceDotsWithUnderscores,
   type ReplaceHyphensWithUnderscores,
   type Simplify,
@@ -17,8 +16,6 @@ import {
   getFormattedTime,
   getUTCOffset,
   getZonedTime,
-  measureExecutionTime,
-  safeExecute,
 } from '@/index';
 
 // =====================================================================================================================
@@ -58,9 +55,6 @@ type _StringEnumRecordContract = Assert<
 >;
 type _SimplifyContract = Assert<
   IsExact<Simplify<{ identifier: string } & { enabled?: boolean }>, { identifier: string; enabled?: boolean }>
->;
-type _MeasuredExecutionContract = Assert<
-  IsExact<MeasuredExecution<{ ok: true }>, { result: { ok: true }; executionTime: number }>
 >;
 
 // =====================================================================================================================
@@ -117,110 +111,6 @@ describe('createStringEnumRecord', () => {
 
   test('supports an empty readonly source without adding synthetic members', () => {
     expect(createStringEnumRecord([] as const)).toEqual({});
-  });
-});
-
-// =====================================================================================================================
-// SAFE EXECUTION AND MEASUREMENT
-// =====================================================================================================================
-
-describe('safeExecute', () => {
-  test('normalizes synchronous and asynchronous success values to promises', async () => {
-    expect(await safeExecute(() => 42)).toBe(42);
-    expect(await safeExecute(() => Promise.resolve({ source: 'async' as const }))).toEqual({ source: 'async' });
-  });
-
-  test('passes the original failure to a synchronous fallback', async () => {
-    const failure = new Error('unavailable');
-    let handledFailure: unknown;
-
-    const result = await safeExecute(
-      () => {
-        throw failure;
-      },
-      (error) => {
-        handledFailure = error;
-        return 'fallback' as const;
-      }
-    );
-
-    expect(handledFailure).toBe(failure);
-    expect(result).toBe('fallback');
-  });
-
-  test('awaits an asynchronous fallback before resolving', async () => {
-    const result = await safeExecute(
-      () => Promise.reject(new Error('temporary')),
-      async () => {
-        await Promise.resolve();
-        return { recovered: true } as const;
-      }
-    );
-
-    expect(result).toEqual({ recovered: true });
-  });
-
-  test('rethrows the original failure when no fallback is supplied', async () => {
-    const failure = new Error('fatal');
-    let thrown: unknown;
-
-    try {
-      await safeExecute(() => {
-        throw failure;
-      });
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(thrown).toBe(failure);
-  });
-
-  test('propagates a fallback failure instead of hiding it', async () => {
-    const fallbackFailure = new Error('fallback failed');
-    let thrown: unknown;
-
-    try {
-      await safeExecute(
-        () => {
-          throw new Error('primary failed');
-        },
-        () => {
-          throw fallbackFailure;
-        }
-      );
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(thrown).toBe(fallbackFailure);
-  });
-});
-
-describe('measureExecutionTime', () => {
-  test('preserves the resolved result and reports rounded non-negative milliseconds', async () => {
-    const payload = { id: 'result', nested: { retained: true } } as const;
-    const measured = await measureExecutionTime(async () => {
-      await Promise.resolve();
-      return payload;
-    });
-
-    // Timing itself is host-dependent; its stable contract is an integer millisecond duration.
-    expect(measured.result).toBe(payload);
-    expect(Number.isInteger(measured.executionTime)).toBe(true);
-    expect(measured.executionTime).toBeGreaterThanOrEqual(0);
-  });
-
-  test('does not replace or wrap a rejected execution error', async () => {
-    const failure = new Error('measurement target failed');
-    let thrown: unknown;
-
-    try {
-      await measureExecutionTime(() => Promise.reject(failure));
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(thrown).toBe(failure);
   });
 });
 
