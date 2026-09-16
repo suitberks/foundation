@@ -1,4 +1,38 @@
 /**
+ * Receives one completely formatted logging line for final output or collection.
+ * Implementations control the destination without changing formatting behavior.
+ */
+export type LogSink = (line: string) => void;
+
+/**
+ * Logger bound to one service label and one configured output destination.
+ * Every method preserves the shared timestamp, level, and trace formatting.
+ */
+export type ScopedLogger = {
+  info: (message: string) => void;
+  warn: (message: string) => void;
+  error: (message: string, error?: unknown) => void;
+};
+
+/**
+ * Options used to bind a logger to one service and output destination.
+ * The default sink writes every fully formatted line through `console.log`.
+ */
+export type CreateLoggerOptions = {
+  /**
+   * Stable service label displayed beside every message from the logger.
+   * Short labels retain the shared terminal column alignment automatically.
+   */
+  service: string;
+
+  /**
+   * Optional destination receiving each completely formatted output line.
+   * Omission preserves the standard console-backed logging behavior.
+   */
+  sink?: LogSink;
+};
+
+/**
  * Structured values required to format one completed HTTP request log entry.
  * Optional query and body previews disappear when their normalized values are empty.
  */
@@ -38,4 +72,10 @@ export type HTTPRequestLogOptions = {
    * Empty and omitted values do not produce a suffix in the formatted line.
    */
   bodyPreview?: string;
+
+  /**
+   * Optional identifier correlating this request with downstream logs and reports.
+   * Empty and omitted values do not produce a suffix in the formatted line.
+   */
+  requestId?: string;
 };

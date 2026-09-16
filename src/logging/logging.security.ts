@@ -1,5 +1,10 @@
 import { REDACTED_LOG_VALUE, sensitiveLogKeyParts } from './logging.constants';
 
+// ↓ Redaction results carry the transformed structure and whether any value changed;
+// ↓ The marker avoids needless serialization when a parsed JSON payload stays untouched;
+
+type SensitiveValueRedactionResult = { value: unknown; redacted: boolean };
+
 /**
  * Checks whether a logging field name contains a configured sensitive fragment.
  * Matching ignores casing and separators to cover compound naming conventions.
@@ -15,37 +20,71 @@ function isSensitiveLogKey(key: string): boolean {
  * Recursively replaces values owned by sensitive object keys with the public marker.
  * The result reports whether any replacement occurred to avoid needless serialization.
  */
-function redactSensitiveValue(value: unknown): { value: unknown; redacted: boolean } {
+function redactSensitiveValueResult(
+  value: unknown,
+  seenValues: WeakMap<object, unknown> = new WeakMap()
+): SensitiveValueRedactionResult {
   if (Array.isArray(value)) {
-    const entries = value.map(redactSensitiveValue);
+    const existingValue = seenValues.get(value);
+    if (existingValue) return { value: existingValue, redacted: false };
+
+    const redactedValue: unknown[] = [];
+    seenValues.set(value, redactedValue);
+
+    const entries = value.map((entry) => redactSensitiveValueResult(entry, seenValues));
+    redactedValue.push(...entries.map((entry) => entry.value));
 
     return {
-      value: entries.map((entry) => entry.value),
+      value: redactedValue,
       redacted: entries.some((entry) => entry.redacted),
     };
   }
 
   // Primitives cannot own sensitive keys; the explicit null check avoids JavaScript's object classification.
-  if (typeof value !== 'object' || value === null) return { value, redacted: false };
+  const isPrimitiveValue = typeof value !== 'object' || value === null;
+  if (isPrimitiveValue) return { value, redacted: false };
+
+  // ↓ Preserve objects whose internal state cannot be reconstructed from enumerable keys.
+
+  const prototype: object | null = Object.getPrototypeOf(value);
+  const isCustomObject = prototype !== Object.prototype && prototype !== null;
+  if (isCustomObject) return { value, redacted: false };
+
+  const existingValue = seenValues.get(value);
+  if (existingValue) return { value: existingValue, redacted: false };
 
   let redacted = false;
+  const redactedValue = Object.create(prototype) as Record<string, unknown>;
+  seenValues.set(value, redactedValue);
 
-  const entries = Object.entries(value).map(([key, entryValue]) => {
-    // Replace complete sensitive values without exposing or traversing nested content.
+  // ↓ Copy enumerable entries individually so circular references resolve to the cloned structure.
+
+  for (const [key, entryValue] of Object.entries(value)) {
+    // ↓ Replace complete sensitive values without exposing or traversing nested content.
+
     if (isSensitiveLogKey(key)) {
       redacted = true;
-      return [key, REDACTED_LOG_VALUE] as const;
+      redactedValue[key] = REDACTED_LOG_VALUE;
+      continue;
     }
 
-    const nestedEntry = redactSensitiveValue(entryValue);
+    const nestedEntry = redactSensitiveValueResult(entryValue, seenValues);
 
-    // Carry nested replacements upward while preserving every safe value.
+    // ↓ Carry nested replacements upward while preserving every safe value.
+
     redacted ||= nestedEntry.redacted;
+    redactedValue[key] = nestedEntry.value;
+  }
 
-    return [key, nestedEntry.value] as const;
-  });
+  return { value: redactedValue, redacted };
+}
 
-  return { value: Object.fromEntries(entries), redacted };
+/**
+ * Recursively replaces values owned by sensitive keys in an arbitrary structure.
+ * Arrays and safe values retain their original ordering and primitive identity.
+ */
+export function redactSensitiveValue(value: unknown): unknown {
+  return redactSensitiveValueResult(value).value;
 }
 
 /**
@@ -73,7 +112,7 @@ export function redactSensitiveJSON(json: string): string {
     // ↓ Parse structure before redaction so key boundaries cannot be confused with string content.
 
     const parsedValue = JSON.parse(json) as unknown;
-    const result = redactSensitiveValue(parsedValue);
+    const result = redactSensitiveValueResult(parsedValue);
 
     return result.redacted ? JSON.stringify(result.value) : json;
   } catch {

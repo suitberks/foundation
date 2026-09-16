@@ -3,12 +3,17 @@ import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { green, red, yellow } from 'kleur/colors';
 
 import {
+  type CreateLoggerOptions,
   type HTTPRequestLogOptions,
   type LogLevel,
+  type LogSink,
+  type LoggingErrorCode,
+  type ScopedLogger,
   LOG_BODY_PREVIEW_EDGE_LENGTH,
   MULTIPART_LOG_BODY,
   REDACTED_LOG_VALUE,
   createHTTPRequestBodyPreview,
+  createLogger,
   formatHTTPRequestLog,
   getColoredHTTPStatus,
   httpStatusColors,
@@ -17,8 +22,11 @@ import {
   logLevelColors,
   logLevelsArray,
   logLevelsRecord,
+  loggingErrors,
+  normalizeLogError,
   redactSensitiveJSON,
   redactSensitiveSearchParams,
+  redactSensitiveValue,
   sensitiveLogKeyParts,
 } from '@/index';
 
@@ -32,6 +40,19 @@ type IsExact<TActual, TExpected> =
 type Assert<TCondition extends true> = TCondition;
 
 type _LogLevelContract = Assert<IsExact<LogLevel, 'info' | 'warn' | 'error'>>;
+type _LogSinkContract = Assert<IsExact<LogSink, (line: string) => void>>;
+type _ScopedLoggerContract = Assert<
+  IsExact<
+    ScopedLogger,
+    {
+      info: (message: string) => void;
+      warn: (message: string) => void;
+      error: (message: string, error?: unknown) => void;
+    }
+  >
+>;
+type _CreateLoggerOptionsContract = Assert<IsExact<CreateLoggerOptions, { service: string; sink?: LogSink }>>;
+type _LoggingErrorCodeContract = Assert<IsExact<LoggingErrorCode, 'invalidBodyPreviewEdgeLength'>>;
 type _HTTPRequestLogOptionsContract = Assert<
   IsExact<
     HTTPRequestLogOptions,
@@ -42,6 +63,7 @@ type _HTTPRequestLogOptionsContract = Assert<
       path: string;
       searchParams?: string;
       bodyPreview?: string;
+      requestId?: string;
     }
   >
 >;
@@ -115,6 +137,17 @@ describe('createHTTPRequestBodyPreview', () => {
     expect(await createHTTPRequestBodyPreview(request, 'multipart/form-data; boundary=test')).toBe(MULTIPART_LOG_BODY);
     expect(await request.text()).toBe('binary-content');
   });
+
+  test('applies an explicit edge limit and rejects invalid runtime limits', async () => {
+    const request = new Request('https://example.com', { method: 'POST', body: 'abcdefghij' });
+
+    expect(await createHTTPRequestBodyPreview(request, undefined, 3)).toBe('abc…hij');
+    expect(createHTTPRequestBodyPreview(request, undefined, 0)).rejects.toThrow('invalidBodyPreviewEdgeLength');
+    expect(loggingErrors.invalidBodyPreviewEdgeLength()).toMatchObject({
+      name: 'RangeError',
+      message: 'invalidBodyPreviewEdgeLength',
+    });
+  });
 });
 
 // =====================================================================================================================
@@ -160,6 +193,27 @@ describe('sensitive log value redaction', () => {
       'tag=first&access_token=%5Bredacted%5D&tag=second&access_token=%5Bredacted%5D'
     );
   });
+
+  test('redacts arbitrary nested structures without mutating the source value', () => {
+    const source = { profile: { email: 'visible@example.com', apiKey: 'secret-value' } };
+
+    expect(redactSensitiveValue(source)).toEqual({
+      profile: { email: 'visible@example.com', apiKey: '[redacted]' },
+    });
+    expect(source.profile.apiKey).toBe('secret-value');
+  });
+
+  test('preserves built-in objects and circular references without traversing internal state', () => {
+    const createdAt = new Date('2026-09-16T00:00:00.000Z');
+    const source: { token: string; createdAt: Date; self?: unknown } = { token: 'secret-token', createdAt };
+    source.self = source;
+
+    const redacted = redactSensitiveValue(source) as typeof source;
+
+    expect(redacted.token).toBe('[redacted]');
+    expect(redacted.createdAt).toBe(createdAt);
+    expect(redacted.self).toBe(redacted);
+  });
 });
 
 // =====================================================================================================================
@@ -197,6 +251,18 @@ describe('formatHTTPRequestLog', () => {
     expect(message).toContain('/health');
     expect(message).not.toContain('()');
   });
+
+  test('appends request correlation only when an identifier is provided', () => {
+    const message = formatHTTPRequestLog({
+      method: 'GET',
+      status: 200,
+      duration: 12,
+      path: '/health',
+      requestId: 'request-1',
+    });
+
+    expect(message).toContain('[request-1]');
+  });
 });
 
 // =====================================================================================================================
@@ -226,5 +292,27 @@ describe('log', () => {
     expect(consoleLog.mock.calls[0]?.[0]).toContain('Request failed');
     expect(consoleLog.mock.calls[1]?.[0]).toContain('↳ trace');
     expect(consoleLog.mock.calls[1]?.[0]).toContain('Error: request failed');
+  });
+
+  test('normalizes native errors and ignores unsupported failure values', () => {
+    const failure = new Error('requestFailed');
+
+    expect(normalizeLogError(failure)).toContain('Error: requestFailed');
+    expect(normalizeLogError('requestFailed')).toBe('requestFailed');
+    expect(normalizeLogError({ message: 'requestFailed' })).toBeUndefined();
+  });
+
+  test('creates a service-bound logger with an injected output sink', () => {
+    const lines: string[] = [];
+    const logger = createLogger({ service: 'worker', sink: (line) => lines.push(line) });
+
+    logger.info('Worker ready');
+    logger.error('Request failed', new Error('requestFailed'));
+
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain('worker');
+    expect(lines[0]).toContain('Worker ready');
+    expect(lines[1]).toContain('Request failed');
+    expect(lines[2]).toContain('Error: requestFailed');
   });
 });

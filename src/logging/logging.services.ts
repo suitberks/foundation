@@ -3,22 +3,57 @@ import { dim, red, white } from 'kleur/colors';
 import { getFormattedTime } from '@/utilities/datetime.utilities';
 
 import { logLevelColors } from './logging.constants';
-import { logLevel } from './logging.enums';
 import type { LogLevel } from './logging.enums';
+import { logLevel } from './logging.enums';
+import type { CreateLoggerOptions, LogSink, ScopedLogger } from './logging.types';
+import { normalizeLogError } from './logging.utilities';
+
+/**
+ * Writes one fully formatted logging line through the standard console destination.
+ * Keeping the sink explicit allows configured loggers to replace output independently.
+ */
+function writeConsoleLog(line: string): void {
+  console.log(line);
+}
 
 /**
  * Writes one normalized terminal message for the requested logging level and service.
- * Optional stack traces retain the primary timestamp on a subordinate aligned line.
+ * Recognized error context retains the primary timestamp on a subordinate aligned line.
  */
-function writeLog(message: string, level: LogLevel, service: string = 'log', stack?: string): void {
+function writeLog(
+  message: string,
+  level: LogLevel,
+  service: string = 'log',
+  error?: unknown,
+  sink: LogSink = writeConsoleLog
+): void {
   const timestamp = dim(getFormattedTime());
   const serviceName = logLevelColors[level](service.padEnd(12));
   const formattedMessage = white(message);
+  const trace = normalizeLogError(error);
 
-  console.log(`[${timestamp}] ${serviceName} | ${formattedMessage}`);
+  sink(`[${timestamp}] ${serviceName} | ${formattedMessage}`);
 
   // Keep stack traces visually subordinate while correlating them with the primary timestamp.
-  if (stack) console.log(`[${timestamp}] ${red('↳ trace').padEnd(18)} | ${dim(stack)}`);
+  if (trace) sink(`[${timestamp}] ${red('↳ trace').padEnd(18)} | ${dim(trace)}`);
+}
+
+/**
+ * Creates a logger permanently bound to one service label and output destination.
+ * Calls retain the shared formatting while avoiding repeated service arguments.
+ */
+export function createLogger(options: CreateLoggerOptions): ScopedLogger {
+  return {
+    info(message) {
+      writeLog(message, logLevel.INFO, options.service, undefined, options.sink);
+    },
+    warn(message) {
+      writeLog(message, logLevel.WARN, options.service, undefined, options.sink);
+    },
+    error(message, error) {
+      writeLog(message, logLevel.ERROR, options.service, error, options.sink);
+    },
+  };
 }
 
 /**
@@ -43,10 +78,10 @@ export const log = {
   },
 
   /**
-   * Writes an error message with optional service and stack trace context.
-   * Provided stack traces are rendered beneath the primary message.
+   * Writes an error message with optional service and unknown failure context.
+   * Native errors and strings render a normalized subordinate trace line.
    */
-  error(message: string, service?: string, stack?: string): void {
-    writeLog(message, logLevel.ERROR, service, stack);
+  error(message: string, service?: string, error?: unknown): void {
+    writeLog(message, logLevel.ERROR, service, error);
   },
 };
