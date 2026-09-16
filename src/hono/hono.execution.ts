@@ -1,14 +1,14 @@
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
-import { ERROR_RESPONSE_STATUSES, createErrorResponse, isResponseErrorCode } from '@/response';
+import { createErrorResponse, isErrorResponseStatus, isResponseErrorCode } from '@/response';
 import type { ErrorResponse, ErrorResponseStatus } from '@/response';
 
 import { honoErrors } from './hono.errors';
 import type { HonoErrorHandlerOptions } from './hono.types';
 
 /**
- * Identifies client HTTP exceptions safe to expose through the shared API envelope.
+ * Identifies client HTTP exceptions safe to expose through the shared response envelope.
  * Both status membership and camelCase error-code syntax must satisfy the contract.
  */
 function isExpectedHTTPException(error: unknown): error is HTTPException & { status: ErrorResponseStatus } {
@@ -17,7 +17,7 @@ function isExpectedHTTPException(error: unknown): error is HTTPException & { sta
 
   // ↓ Enforce the closed status catalog and machine-readable error-code format together.
 
-  const isSupportedStatus = ERROR_RESPONSE_STATUSES.some((status) => status === error.status);
+  const isSupportedStatus = isErrorResponseStatus(error.status);
   const isMachineReadableCode = isResponseErrorCode(error.message);
 
   return isSupportedStatus && isMachineReadableCode;

@@ -15,7 +15,7 @@ export type HonoErrorHandlerOptions = {
 };
 
 /**
- * Options for a typed JSON response wrapped in the shared API success envelope.
+ * Options for a typed JSON response wrapped in the shared success envelope.
  * The status generic preserves the literal code inferred by the route contract.
  */
 export type HonoRespondOptions<TData extends object, TStatus extends SuccessResponseStatus> = {

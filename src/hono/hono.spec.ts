@@ -62,7 +62,7 @@ function createThrowingApp(error: unknown, options: HonoErrorHandlerOptions): Ho
 // == JSONResponses ======================================================
 
 describe('respond', () => {
-  test('returns the requested status and wraps data in the API success envelope', async () => {
+  test('returns the requested status and wraps data in the shared success envelope', async () => {
     const app = new Hono();
 
     app.post('/users', (context) => respond(context, { status: 201, data: { id: 'user-1' } }));
@@ -221,7 +221,7 @@ describe('createHonoErrorHandler', () => {
     expect(reportedErrors).toEqual([error]);
   });
 
-  test('rejects exception statuses outside the shared API envelope', async () => {
+  test('rejects exception statuses outside the shared response envelope', async () => {
     const error = new HTTPException(418, { message: 'teapotDetected' });
     const reportedErrors: unknown[] = [];
     const app = createThrowingApp(error, {
