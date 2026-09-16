@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import type { UnofficialStatusCode } from 'hono/utils/http-status';
 
 import {
   type ErrorResponse,
@@ -92,6 +93,14 @@ describe('respond', () => {
       data: {},
     });
   });
+
+  test('passes explicitly cast unofficial success statuses through Hono', async () => {
+    const app = new Hono();
+
+    app.get('/custom', (context) => respond(context, { status: 299 as UnofficialStatusCode }));
+
+    expect((await app.request('/custom')).status).toBe(299);
+  });
 });
 
 // == FileResponses ======================================================
@@ -169,6 +178,23 @@ describe('createHonoErrorHandler', () => {
     expect(reportedErrors).toEqual([]);
   });
 
+  test('passes explicitly cast unofficial client error statuses through Hono', async () => {
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(new HTTPException(499 as UnofficialStatusCode, { message: 'customClientFailure' }), {
+      onUnexpectedError: (error) => reportedErrors.push(error),
+    });
+
+    const response = await app.request('/error');
+
+    expect(response.status).toBe(499);
+    expect(await readJSON<ErrorResponse>(response)).toEqual({
+      kind: 'error',
+      status: 499 as UnofficialStatusCode,
+      error: 'customClientFailure',
+    });
+    expect(reportedErrors).toEqual([]);
+  });
+
   test('reports unexpected failures with request context and returns a stable fallback', async () => {
     const failure = new Error('databaseUnavailable');
     const reported: Array<{ error: unknown; pathname: string }> = [];
@@ -222,7 +248,7 @@ describe('createHonoErrorHandler', () => {
   });
 
   test('rejects exception statuses outside the shared response envelope', async () => {
-    const error = new HTTPException(418, { message: 'teapotDetected' });
+    const error = new HTTPException(399 as UnofficialStatusCode, { message: 'redirectDetected' });
     const reportedErrors: unknown[] = [];
     const app = createThrowingApp(error, {
       onUnexpectedError: (reportedError) => reportedErrors.push(reportedError),

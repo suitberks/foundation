@@ -1,5 +1,6 @@
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 import { createErrorResponse, isErrorResponseStatus, isResponseErrorCode } from '@/response';
 import type { ErrorResponse, ErrorResponseStatus } from '@/response';
@@ -31,7 +32,9 @@ export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorH
   return (error, context) => {
     if (isExpectedHTTPException(error)) {
       const response = createErrorResponse(error.status, error.message);
-      return context.json(response, response.status);
+
+      // Hono represents concrete unofficial statuses through its `-1` type-level escape hatch.
+      return context.json(response, response.status as ContentfulStatusCode);
     }
 
     options.onUnexpectedError(error, context);
@@ -42,6 +45,6 @@ export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorH
     const status = fallback.status as 500;
     const response: ErrorResponse = createErrorResponse(status, fallback.message);
 
-    return context.json(response, response.status);
+    return context.json(response, status);
   };
 }
