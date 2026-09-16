@@ -1,14 +1,13 @@
 import { createStringEnumRecord } from '@/utilities/enums.utilities';
 
-// `Logging` levels share one literal source across service methods and color configuration;
-// The derived union and records keep runtime values synchronized with public type contracts;
+// `Logging` enums define supported literal collections and synchronized public aliases;
+// Derived unions and records preserve one authoritative source for every enum family;
 
 export const logLevelsArray = ['info', 'warn', 'error'] as const;
 
 export type LogLevel = (typeof logLevelsArray)[number];
 
-// Concise alias supports `logLevel.INFO`, `logLevel.WARN`, and `logLevel.ERROR` access;
-// Both exports preserve the same immutable record derived from `logLevelsArray`;
+// ↓ Descriptive and concise aliases share one immutable `LogLevel` record;
 
 export const logLevelsRecord = createStringEnumRecord(logLevelsArray);
 export const logLevel = logLevelsRecord;

@@ -3,21 +3,17 @@ import { dim, red, white } from 'kleur/colors';
 import { getFormattedTime } from '@/utilities/datetime.utilities';
 
 import { logLevelColors } from './logging.constants';
+import { logLevel } from './logging.enums';
 import type { LogLevel } from './logging.enums';
 
 function writeLog(message: string, level: LogLevel, service: string = 'log', stack?: string): void {
-  // The service owns terminal output while callers select only a level, message, and label;
-  // Timestamp formatting and aligned presentation remain consistent across every log method;
-
   const timestamp = dim(getFormattedTime());
   const serviceName = logLevelColors[level](service.padEnd(12));
   const formattedMessage = white(message);
 
   console.log(`[${timestamp}] ${serviceName} | ${formattedMessage}`);
 
-  // Stack traces use a subordinate line but retain the timestamp of their primary error;
-  // The fixed trace label keeps multiline failures aligned with ordinary service output;
-
+  // Keep stack traces visually subordinate while correlating them with the primary timestamp.
   if (stack) console.log(`[${timestamp}] ${red('↳ trace').padEnd(18)} | ${dim(stack)}`);
 }
 
@@ -31,7 +27,7 @@ export const log = {
    * Missing service names use the shared `log` fallback label.
    */
   info(message: string, service?: string): void {
-    writeLog(message, 'info', service);
+    writeLog(message, logLevel.INFO, service);
   },
 
   /**
@@ -39,7 +35,7 @@ export const log = {
    * Missing service names use the shared `log` fallback label.
    */
   warn(message: string, service?: string): void {
-    writeLog(message, 'warn', service);
+    writeLog(message, logLevel.WARN, service);
   },
 
   /**
@@ -47,6 +43,6 @@ export const log = {
    * Provided stack traces are rendered beneath the primary message.
    */
   error(message: string, service?: string, stack?: string): void {
-    writeLog(message, 'error', service, stack);
+    writeLog(message, logLevel.ERROR, service, stack);
   },
 };

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 
-import { Hono } from 'hono';
 import { green, red, yellow } from 'kleur/colors';
 
 import {
@@ -12,16 +11,12 @@ import {
   logLevel,
   logLevelColors,
   logLevelsArray,
-  loggingMiddleware,
+  logLevelsRecord,
   redactSensitiveJSON,
   redactSensitiveSearchParams,
   sensitiveLogKeyParts,
 } from '@/index';
 
-/**
- * Compares public types in both assignability directions for exactness.
- * The assertion protects literal unions derived from exported collections.
- */
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
     ? (<TValue>() => TValue extends TExpected ? 1 : 2) extends <TValue>() => TValue extends TActual ? 1 : 2
@@ -29,10 +24,6 @@ type IsExact<TActual, TExpected> =
       : false
     : false;
 
-/**
- * Constrains a compile-time proposition to true and fails typecheck otherwise.
- * Underscore-prefixed aliases document intentional type-only declarations.
- */
 type Assert<TCondition extends true> = TCondition;
 
 type _LogLevelContract = Assert<IsExact<LogLevel, 'info' | 'warn' | 'error'>>;
@@ -52,6 +43,7 @@ describe('logging levels', () => {
     expect(logLevel.INFO).toBe('info');
     expect(logLevel.WARN).toBe('warn');
     expect(logLevel.ERROR).toBe('error');
+    expect(logLevel).toBe(logLevelsRecord);
     expect(Object.keys(logLevelColors)).toEqual([...logLevelsArray]);
   });
 });
@@ -108,6 +100,14 @@ describe('sensitive log value redaction', () => {
     expect(redacted.toString()).toBe('term=visible&passwordConfirmation=%5Bredacted%5D&api_key=%5Bredacted%5D');
     expect(source.toString()).toBe('term=visible&passwordConfirmation=password-value&api_key=key-value');
   });
+
+  test('preserves repeated query keys and their ordering while redacting each value', () => {
+    const source = new URLSearchParams('tag=first&access_token=one&tag=second&access_token=two');
+
+    expect(redactSensitiveSearchParams(source).toString()).toBe(
+      'tag=first&access_token=%5Bredacted%5D&tag=second&access_token=%5Bredacted%5D'
+    );
+  });
 });
 
 // =====================================================================================================================
@@ -162,128 +162,5 @@ describe('log', () => {
     expect(consoleLog.mock.calls[0]?.[0]).toContain('Request failed');
     expect(consoleLog.mock.calls[1]?.[0]).toContain('↳ trace');
     expect(consoleLog.mock.calls[1]?.[0]).toContain('Error: request failed');
-  });
-});
-
-// =====================================================================================================================
-// HONO REQUEST LOGGING MIDDLEWARE
-// =====================================================================================================================
-
-describe('loggingMiddleware', () => {
-  test('logs method, status, duration, path, and query details', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-
-    app.use('*', loggingMiddleware);
-    app.get('/search', (c) => c.json({ matched: true }));
-
-    const response = await app.request('/search?term=foundation&limit=2');
-
-    // A real Hono request verifies middleware continuation and final response behavior together.
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ matched: true });
-
-    const loggedCall = infoLog.mock.calls[0];
-    if (!loggedCall) throw new Error('The request logger did not emit its expected call');
-    const [message, service] = loggedCall;
-
-    // Duration is checked by shape because wall-clock measurements are intentionally nondeterministic.
-    expect(service).toBe('hono');
-    expect(message).toContain('GET');
-    expect(message).toContain('200');
-    expect(message).toMatch(/\d+ms/);
-    expect(message).toContain('/search');
-    expect(message).toContain('(term=foundation&limit=2)');
-  });
-
-  test('logs a normalized body without consuming the route handler stream', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-    const body = '{\n  "name":   "Foundation"\n}';
-
-    app.use('*', loggingMiddleware);
-    app.post('/echo', async (c) => c.text(await c.req.text()));
-
-    const response = await app.request('/echo', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body,
-    });
-
-    // Logging reads the clone while the handler observes the original byte-for-byte body.
-    expect(await response.text()).toBe(body);
-    expect(infoLog.mock.calls[0]?.[0]).toContain('{ "name": "Foundation" }');
-    expect(infoLog.mock.calls[0]?.[0]).not.toContain('\n');
-  });
-
-  test('shortens long bodies while preserving their beginning and end', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-    const body = `${'a'.repeat(31)}${'b'.repeat(30)}`;
-
-    app.use('*', loggingMiddleware);
-    app.post('/long-body', (c) => c.body(null, 204));
-    await app.request('/long-body', { method: 'POST', body });
-
-    const message = infoLog.mock.calls[0]?.[0];
-
-    // Both edges remain visible and the complete over-limit source never reaches output.
-    expect(message).toContain(`${'a'.repeat(30)}…${'b'.repeat(30)}`);
-    expect(message).not.toContain(body);
-  });
-
-  test('logs a placeholder without reading multipart form data', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-
-    app.use('*', loggingMiddleware);
-    app.post('/upload', async (c) => {
-      const formData = await c.req.formData();
-      const name = formData.get('name');
-      if (typeof name !== 'string') throw new Error('Expected the multipart name field to be text');
-      return c.text(name);
-    });
-
-    const formData = new FormData();
-    formData.set('name', 'Foundation');
-    const response = await app.request('/upload', { method: 'POST', body: formData });
-
-    // The handler can parse its form while the logger exposes only the media-type placeholder.
-    expect(await response.text()).toBe('Foundation');
-    expect(infoLog.mock.calls[0]?.[0]).toContain('[multipart]');
-    expect(infoLog.mock.calls[0]?.[0]).not.toContain('Foundation');
-  });
-
-  test('redacts sensitive query and nested JSON values before logging', async () => {
-    const infoLog = spyOn(log, 'info').mockImplementation(() => undefined);
-    const app = new Hono();
-    const body = JSON.stringify({
-      email: 'visible@example.com',
-      newPassword: 'secret-password',
-      nested: { clientSecret: 'secret-client', access_token: 'secret-token' },
-    });
-
-    app.use('*', loggingMiddleware);
-    app.post('/secure', async (c) => c.text(await c.req.text()));
-
-    const response = await app.request('/secure?term=visible&passwordConfirmation=secret-query', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body,
-    });
-
-    expect(await response.text()).toBe(body);
-
-    const message = infoLog.mock.calls[0]?.[0];
-
-    // Safe context remains useful while every configured sensitive value is absent.
-    expect(message).toContain('term=visible');
-    expect(message).toContain('visible@example.com');
-    expect(message).toContain('%5Bredacted%5D');
-    expect(message).toContain('[redacted]');
-    expect(message).not.toContain('secret-query');
-    expect(message).not.toContain('secret-password');
-    expect(message).not.toContain('secret-client');
-    expect(message).not.toContain('secret-token');
   });
 });

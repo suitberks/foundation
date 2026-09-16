@@ -6,7 +6,9 @@ import { REDACTED_LOG_VALUE, sensitiveLogKeyParts } from './logging.constants';
  */
 function isSensitiveLogKey(key: string): boolean {
   const normalizedKey = key.toLowerCase().replaceAll(/[^a-z]/g, '');
-  return sensitiveLogKeyParts.some((sensitivePart) => normalizedKey.includes(sensitivePart));
+  const isSensitive = sensitiveLogKeyParts.some((sensitivePart) => normalizedKey.includes(sensitivePart));
+
+  return isSensitive;
 }
 
 /**
@@ -23,17 +25,13 @@ function redactSensitiveValue(value: unknown): { value: unknown; redacted: boole
     };
   }
 
-  // Primitives cannot own sensitive keys and therefore pass through without allocation;
-  // The null check is explicit because JavaScript otherwise classifies `null` as an object;
-
+  // Primitives cannot own sensitive keys; the explicit null check avoids JavaScript's object classification.
   if (typeof value !== 'object' || value === null) return { value, redacted: false };
 
   let redacted = false;
 
   const entries = Object.entries(value).map(([key, entryValue]) => {
-    // A sensitive parent key replaces its complete value without inspecting nested content;
-    // This prevents objects, arrays, and primitive secrets from following different paths;
-
+    // Replace complete sensitive values without exposing or traversing nested content.
     if (isSensitiveLogKey(key)) {
       redacted = true;
       return [key, REDACTED_LOG_VALUE] as const;
@@ -41,9 +39,7 @@ function redactSensitiveValue(value: unknown): { value: unknown; redacted: boole
 
     const nestedEntry = redactSensitiveValue(entryValue);
 
-    // The accumulated flag records changes from every preceding and current object property;
-    // Reconstructed entries preserve safe values while carrying nested replacements upward;
-
+    // Carry nested replacements upward while preserving every safe value.
     redacted ||= nestedEntry.redacted;
 
     return [key, nestedEntry.value] as const;
@@ -57,13 +53,12 @@ function redactSensitiveValue(value: unknown): { value: unknown; redacted: boole
  * A new collection is returned so the caller's search parameters remain unchanged.
  */
 export function redactSensitiveSearchParams(searchParams: URLSearchParams): URLSearchParams {
-  const redactedSearchParams = new URLSearchParams(searchParams);
+  const redactedSearchParams = new URLSearchParams();
 
-  // Replacing by key covers repeated values while preserving all safe entries and ordering;
-  // The encoded output remains valid for direct inclusion in the request log suffix;
+  // ↓ Rebuild entries individually so repeated keys and their original ordering remain intact.
 
-  for (const key of new Set(redactedSearchParams.keys())) {
-    if (isSensitiveLogKey(key)) redactedSearchParams.set(key, REDACTED_LOG_VALUE);
+  for (const [key, value] of searchParams) {
+    redactedSearchParams.append(key, isSensitiveLogKey(key) ? REDACTED_LOG_VALUE : value);
   }
 
   return redactedSearchParams;
@@ -74,11 +69,8 @@ export function redactSensitiveSearchParams(searchParams: URLSearchParams): URLS
  * Invalid JSON and payloads without matching keys are returned byte-for-byte unchanged.
  */
 export function redactSensitiveJSON(json: string): string {
-  if (json === undefined || null) return json;
-
   try {
-    // JSON parsing exposes nested key structure that string replacement cannot distinguish safely;
-    // Serialization occurs only after redaction so unaffected payload formatting stays untouched;
+    // ↓ Parse structure before redaction so key boundaries cannot be confused with string content.
 
     const parsedValue = JSON.parse(json) as unknown;
     const result = redactSensitiveValue(parsedValue);
