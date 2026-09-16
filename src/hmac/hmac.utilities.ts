@@ -38,7 +38,10 @@ export function decodeHMACSignature(signature: string, encoding: HMACEncoding): 
   if (encoding === 'hex') {
     // ↓ Reject odd-length or non-hexadecimal signatures before native decoding.
 
-    if (signature.length % 2 !== 0 || !/^[0-9a-f]*$/i.test(signature)) {
+    const hexSignatureRegex = /^[0-9a-f]*$/i;
+    const isInvalidHexSignature = signature.length % 2 !== 0 || hexSignatureRegex.test(signature) === false;
+
+    if (isInvalidHexSignature) {
       throw hmacErrors.invalidHexSignature();
     }
 
@@ -48,7 +51,10 @@ export function decodeHMACSignature(signature: string, encoding: HMACEncoding): 
   if (encoding === 'base64') {
     // ↓ Require canonical Base64 groups and padding before native decoding.
 
-    if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(signature)) {
+    const base64SignatureRegex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+    const isInvalidBase64Signature = base64SignatureRegex.test(signature) === false;
+
+    if (isInvalidBase64Signature) {
       throw hmacErrors.invalidBase64Signature();
     }
 
@@ -57,7 +63,10 @@ export function decodeHMACSignature(signature: string, encoding: HMACEncoding): 
 
   // ↓ Accept unpadded URL-safe signatures while rejecting impossible lengths.
 
-  if (!/^[A-Za-z0-9_-]*$/.test(signature) || signature.length % 4 === 1) {
+  const base64UrlSignatureRegex = /^[A-Za-z0-9_-]*$/;
+  const isInvalidBase64UrlSignature = base64UrlSignatureRegex.test(signature) === false || signature.length % 4 === 1;
+
+  if (isInvalidBase64UrlSignature) {
     throw hmacErrors.invalidBase64UrlSignature();
   }
 
