@@ -10,8 +10,8 @@ const tsdownConfig = defineConfig({
 
   dts: true,
   clean: true,
-  unbundle: false, // Bundle all dependencies into the output files
-  fixedExtension: false, // Preserve package-compatible `.js` and `.d.ts` extensions
+  unbundle: false, // ← Bundle all dependencies into the output files.
+  fixedExtension: false, // ← Preserve package-compatible `.js` and `.d.ts` extensions.
 });
 
 export default tsdownConfig;

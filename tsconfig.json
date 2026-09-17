@@ -1,34 +1,40 @@
 {
   "compilerOptions": {
-    // JavaScript features
+    // ↓ JavaScript features
+
     "target": "ESNext",
     "lib": ["ESNext"],
     "types": ["bun"],
 
-    // Module system
+    // ↓ Module system
+
     "module": "esnext",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
-    // Path aliases
+    // ↓ Path aliases
+
     "paths": {
       "@/*": ["./src/*"]
     },
 
-    // Type safety
+    // ↓ Type safety
+
     "strict": true,
     "useUnknownInCatchVariables": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
 
-    // Code hygiene
+    // ↓ Code hygiene
+
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
 
-    // Performance and compatibility
+    // ↓ Performance and compatibility
+
     "skipLibCheck": true
   },
   "exclude": ["tmp"]

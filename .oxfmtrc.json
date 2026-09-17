@@ -16,7 +16,8 @@
   // Dependencies and generated output remain outside automatic formatting.
   "ignorePatterns": ["out/**", "build/**", "dist/**", "coverage/**", "node_modules/**", "tmp/**"],
 
-  // Import sorting
+  // ↓ Import sorting
+
   "sortImports": {
     "newlinesBetween": true,
     "sortSideEffects": true,
