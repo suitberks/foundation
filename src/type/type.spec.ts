@@ -26,14 +26,14 @@ type IsExact<TActual, TExpected> =
 
 type Assert<TCondition extends true> = TCondition;
 
+type _SimplifyContract = Assert<
+  IsExact<Simplify<{ identifier: string } & { enabled?: boolean }>, { identifier: string; enabled?: boolean }>
+>;
 type _ExactlyOneContract = Assert<
   IsExact<
     ExactlyOne<{ id: string; email: string; fullName: string }, 'id' | 'email'>,
     { id: string; email?: never } | { email: string; id?: never }
   >
->;
-type _SimplifyContract = Assert<
-  IsExact<Simplify<{ identifier: string } & { enabled?: boolean }>, { identifier: string; enabled?: boolean }>
 >;
 type _AtLeastOneContract = Assert<
   IsExact<
@@ -42,6 +42,7 @@ type _AtLeastOneContract = Assert<
   >
 >;
 type _IsNilContract = Assert<IsExact<typeof isNil, (value: unknown) => value is null | undefined>>;
+type _IsNotNilContract = Assert<IsExact<typeof isNotNil, <TValue>(value: TValue) => value is NonNullable<TValue>>>;
 type _IsBooleanContract = Assert<IsExact<typeof isBoolean, (value: unknown) => value is boolean>>;
 type _IsNumberContract = Assert<IsExact<typeof isNumber, (value: unknown) => value is number>>;
 type _IsByteContract = Assert<IsExact<typeof isByte, (value: unknown) => value is number>>;
@@ -62,17 +63,18 @@ void assertRejectedAtLeastOneShapes;
 
 test('type utilities preserve their exact compile-time contracts', () => {
   const contracts: [
-    _AtLeastOneContract,
-    _ExactlyOneContract,
     _SimplifyContract,
+    _ExactlyOneContract,
+    _AtLeastOneContract,
     _IsNilContract,
+    _IsNotNilContract,
     _IsBooleanContract,
     _IsNumberContract,
     _IsByteContract,
     _IsStringContract,
-  ] = [true, true, true, true, true, true, true, true];
+  ] = [true, true, true, true, true, true, true, true, true];
 
-  expect(contracts).toEqual([true, true, true, true, true, true, true, true]);
+  expect(contracts).toEqual([true, true, true, true, true, true, true, true, true]);
 });
 
 // == RuntimePredicates =================================================
