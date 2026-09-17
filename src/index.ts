@@ -11,6 +11,7 @@ export * from './logging';
 export * from './object';
 export * from './random';
 export * from './response';
+export * from './string';
 export * from './string-enum';
 export * from './type';
 export * from './upload';
