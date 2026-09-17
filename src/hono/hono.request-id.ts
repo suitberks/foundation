@@ -1,5 +1,7 @@
 import type { Context, MiddlewareHandler } from 'hono';
 
+import { isString } from '@/guard';
+
 import { HONO_REQUEST_ID_HEADER } from './hono.constants';
 import { honoErrors } from './hono.errors';
 import type { HonoRequestIdMiddlewareOptions } from './hono.types';
@@ -26,7 +28,7 @@ export function createRequestIdMiddleware(options: HonoRequestIdMiddlewareOption
   return async (context, next) => {
     const incomingRequestId = context.req.header(header)?.trim();
     const generatedRequestId = incomingRequestId ? undefined : createRequestId();
-    const requestId = typeof generatedRequestId === 'string' ? generatedRequestId.trim() : incomingRequestId;
+    const requestId = isString(generatedRequestId) ? generatedRequestId.trim() : incomingRequestId;
 
     const isInvalidRequestId = requestId === undefined || requestId.length === 0;
     if (isInvalidRequestId) throw honoErrors.invalidRequestId();

@@ -1,3 +1,5 @@
+import { isObject, isString } from '@/guard';
+
 import { DEFAULT_HMAC_ALGORITHM, DEFAULT_HMAC_ENCODING } from './hmac.constants';
 import type { HMACAlgorithm, HMACEncoding } from './hmac.enums';
 import { hmacErrors } from './hmac.errors';
@@ -64,13 +66,13 @@ export class HMACService {
   }
 
   private async resolveKey(secret: HMACSecret, usage: 'sign' | 'verify'): Promise<CryptoKey> {
-    const isRawSecret = typeof secret === 'string' || secret instanceof Uint8Array;
+    const isRawSecret = isString(secret) || secret instanceof Uint8Array;
     if (isRawSecret) return this.importKey(secret);
 
     // ↓ Recover and validate HMAC metadata omitted by the ambient `KeyAlgorithm` type.
 
     const hash = Reflect.get(secret.algorithm, 'hash') as unknown;
-    const hashName = typeof hash === 'object' && hash !== null && 'name' in hash ? hash.name : undefined;
+    const hashName = isObject(hash) && 'name' in hash ? hash.name : undefined;
     const isCompatible =
       secret.type === 'secret' &&
       secret.algorithm.name === 'HMAC' &&

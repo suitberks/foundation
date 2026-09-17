@@ -1,5 +1,7 @@
 import { blue, bold, dim, white } from 'kleur/colors';
 
+import { isString } from '@/guard';
+
 import { httpStatusColors, LOG_BODY_PREVIEW_EDGE_LENGTH, MULTIPART_LOG_BODY } from './logging.constants';
 import { loggingErrors } from './logging.errors';
 import { redactSensitiveJSON } from './logging.security';
@@ -10,7 +12,7 @@ import type { HTTPRequestLogOptions } from './logging.types';
  * Strings pass through directly, while native errors prefer their complete stack.
  */
 export function normalizeLogError(error: unknown): string | undefined {
-  if (typeof error === 'string') return error;
+  if (isString(error)) return error;
   if (error instanceof Error === false) return undefined;
 
   return error.stack ?? error.message;

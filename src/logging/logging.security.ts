@@ -1,3 +1,5 @@
+import { isObject } from '@/guard';
+
 import { REDACTED_LOG_VALUE, sensitiveLogKeyParts } from './logging.constants';
 
 // ↓ Redaction results carry the transformed structure and whether any value changed;
@@ -40,9 +42,8 @@ function redactSensitiveValueResult(
     };
   }
 
-  // Primitives cannot own sensitive keys; the explicit null check avoids JavaScript's object classification.
-  const isPrimitiveValue = typeof value !== 'object' || value === null;
-  if (isPrimitiveValue) return { value, redacted: false };
+  // Values outside JavaScript's object category cannot own enumerable sensitive keys.
+  if (isObject(value) === false) return { value, redacted: false };
 
   // ↓ Preserve objects whose internal state cannot be reconstructed from enumerable keys.
 

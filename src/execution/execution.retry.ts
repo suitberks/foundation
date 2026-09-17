@@ -1,3 +1,5 @@
+import { isFunction } from '@/guard';
+
 import { DEFAULT_RETRY_MAX_ATTEMPTS } from './execution.constants';
 import type { RetryExecutionContext, RetryExecutionOptions } from './execution.types';
 import { validateRetryDelay, validateRetryExecutionOptions } from './execution.validation';
@@ -64,7 +66,7 @@ export async function retryExecution<TData>(
 
       const resolvedDelay =
         // Delay resolution may be asynchronous if a delay function is provided.
-        typeof delayMilliseconds === 'function' ? await delayMilliseconds(error, attempt) : delayMilliseconds;
+        isFunction(delayMilliseconds) ? await delayMilliseconds(error, attempt) : delayMilliseconds;
 
       await waitForRetry(resolvedDelay, signal);
     }

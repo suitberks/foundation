@@ -1,3 +1,5 @@
+import { isNumber } from '@/guard';
+
 import { executionErrors } from './execution.errors';
 import type { RetryExecutionOptions } from './execution.types';
 
@@ -24,7 +26,7 @@ export function validateRetryExecutionOptions(options: RetryExecutionOptions, ma
     throw executionErrors.invalidMaxAttempts();
   }
 
-  if (typeof options.delayMilliseconds === 'number') {
+  if (isNumber(options.delayMilliseconds)) {
     validateRetryDelay(options.delayMilliseconds);
   }
 }

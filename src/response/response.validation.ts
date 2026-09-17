@@ -1,3 +1,5 @@
+import { isString } from '@/guard';
+
 import { ERROR_RESPONSE_STATUSES, responseKind, SUCCESS_RESPONSE_STATUSES } from './response.enums';
 import type { ErrorResponseStatus, SuccessResponseStatus } from './response.enums';
 import type { ErrorResponse, ResponseResult, SuccessResponse } from './response.types';
@@ -7,7 +9,7 @@ import type { ErrorResponse, ResponseResult, SuccessResponse } from './response.
  * Human-readable text and punctuation remain excluded from public envelopes.
  */
 export function isResponseErrorCode(value: unknown): value is string {
-  return typeof value === 'string' && /^[a-z][A-Za-z0-9]*$/.test(value);
+  return isString(value) && /^[a-z][A-Za-z0-9]*$/.test(value);
 }
 
 /**
