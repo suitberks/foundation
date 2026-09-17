@@ -11,7 +11,7 @@ bun add @kalutskii/foundation
 
 ## Modules
 
-- **Generic:** `base64`, `datetime`, `decimal`, `execution`, `object`, `random`, `string-enum`, `type`.
+- **Generic:** `base64`, `datetime`, `decimal`, `execution`, `guard`, `object`, `random`, `string-enum`, `type`.
 - **Contracts:** `response`, `upload`, `zod`.
 - **Security:** `hmac`, `jwt`.
 - **Adapters:** `drizzle`, `hono`, `logging`.

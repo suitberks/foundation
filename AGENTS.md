@@ -70,7 +70,7 @@ Contract primitives
   response / logging / zod
             ↓
 Generic foundations
-  base64 / datetime / decimal / object / random / string-enum / type
+  base64 / datetime / decimal / guard / object / random / string-enum / type
 ```
 
 Independent modules may skip layers, but dependencies must never point upward.

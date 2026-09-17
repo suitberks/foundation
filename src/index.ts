@@ -3,6 +3,7 @@ export * from './datetime';
 export * from './decimal';
 export * from './drizzle';
 export * from './execution';
+export * from './guard';
 export * from './hmac';
 export * from './hono';
 export * from './jwt';
