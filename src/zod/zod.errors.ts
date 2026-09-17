@@ -6,5 +6,4 @@ export const zodErrors = {
 };
 
 // ↓ Inferred literal union of error codes from `zodErrors`;
-
 export type ZodErrorCode = keyof typeof zodErrors;
