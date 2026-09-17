@@ -1,6 +1,11 @@
 import type { DecimalFormat } from './decimal.types';
 
 const DECIMAL_ZERO_PATTERN = /^-?0(?:\.0+)?$/; // ← Matches every canonical signed textual zero.
+
+/**
+ * Compiled expressions keyed by normalized decimal-format object identity.
+ * Weak references preserve reuse without extending consumer-owned lifetimes.
+ */
 const decimalPatternCache = new WeakMap<DecimalFormat, RegExp>();
 
 /**

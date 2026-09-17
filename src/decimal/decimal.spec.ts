@@ -45,7 +45,12 @@ type _DecimalFormatContract = Assert<
     }>
   >
 >;
-type _DecimalErrorCodeContract = Assert<IsExact<DecimalErrorCode, 'invalidDecimalPrecision' | 'invalidDecimalScale'>>;
+type _DecimalErrorCodeContract = Assert<
+  IsExact<
+    DecimalErrorCode,
+    'invalidDecimalPrecision' | 'invalidDecimalScale' | 'invalidDecimalSignedPolicy' | 'invalidDecimalZeroPolicy'
+  >
+>;
 
 // == FormatDefinitions =================================================
 
@@ -77,6 +82,15 @@ describe('decimal formats', () => {
 
     expect(decimalErrors.invalidDecimalPrecision().message).toBe('invalidDecimalPrecision');
     expect(decimalErrors.invalidDecimalScale().message).toBe('invalidDecimalScale');
+  });
+
+  test('rejects invalid runtime policies that bypass the static option contract', () => {
+    expect(() =>
+      Reflect.apply(defineDecimalFormat, undefined, [{ precision: 5, scale: 2, signed: 'enabled' }])
+    ).toThrow('invalidDecimalSignedPolicy');
+    expect(() =>
+      Reflect.apply(defineDecimalFormat, undefined, [{ precision: 5, scale: 2, zeroAllowed: null }])
+    ).toThrow('invalidDecimalZeroPolicy');
   });
 });
 

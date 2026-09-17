@@ -4,6 +4,8 @@
 export const decimalErrors = {
   invalidDecimalPrecision: () => new RangeError('invalidDecimalPrecision'),
   invalidDecimalScale: () => new RangeError('invalidDecimalScale'),
+  invalidDecimalSignedPolicy: () => new TypeError('invalidDecimalSignedPolicy'),
+  invalidDecimalZeroPolicy: () => new TypeError('invalidDecimalZeroPolicy'),
 };
 
 // ↓ Inferred literal union of error codes from `decimalErrors`;
