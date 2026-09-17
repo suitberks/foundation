@@ -5,6 +5,8 @@ import { HTTPException } from 'hono/http-exception';
 
 export const honoErrors = {
   internalServerError: () => new HTTPException(500, { message: 'internalServerError' }),
+  invalidBodyLimit: () => new RangeError('invalidBodyLimit'),
+  invalidDelayMilliseconds: () => new RangeError('invalidDelayMilliseconds'),
   invalidRequestId: () => new TypeError('invalidRequestId'),
 };
 

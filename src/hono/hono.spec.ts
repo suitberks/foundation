@@ -3,18 +3,27 @@ import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { UnofficialStatusCode } from 'hono/utils/http-status';
+import { z } from 'zod';
 
 import {
   type ErrorResponse,
   type HonoErrorCode,
   type HonoErrorHandlerOptions,
   type HonoFileRespondOptions,
+  type HonoLimitedValidatorOptions,
   type HonoLoggingMiddlewareOptions,
+  type HonoQueryValidatorOptions,
   type HonoRequestIdMiddlewareOptions,
   type HonoRespondOptions,
+  type HonoValidationErrorFactory,
+  type HonoValidatorOptions,
   type SuccessResponse,
+  createDelayMiddleware,
   createHonoErrorHandler,
+  createHonoValidator,
+  createLimitedHonoValidator,
   createLoggingMiddleware,
+  createQueryValidator,
   createRequestIdMiddleware,
   fileRespond,
   honoErrors,
@@ -24,8 +33,8 @@ import {
   respond,
 } from '@/index';
 
-// These tests cover Hono response envelopes, file downloads, and global error handling behavior;
-// They preserve exact public contracts, binary content, stable failures, and reporting boundaries;
+// These tests cover Hono responses, validation, middleware, and global error handling behavior;
+// They preserve exact public contracts, stable failures, body limits, and request boundaries;
 
 // == CompileTimeContracts =============================================
 
@@ -38,7 +47,34 @@ type IsExact<TActual, TExpected> =
 
 type Assert<TCondition extends true> = TCondition;
 
-type _HonoErrorCodeContract = Assert<IsExact<HonoErrorCode, 'internalServerError' | 'invalidRequestId'>>;
+type _HonoErrorCodeContract = Assert<
+  IsExact<HonoErrorCode, 'internalServerError' | 'invalidBodyLimit' | 'invalidDelayMilliseconds' | 'invalidRequestId'>
+>;
+type _HonoValidationErrorFactoryContract = Assert<IsExact<HonoValidationErrorFactory, () => Error>>;
+type _HonoValidatorOptionsContract = Assert<
+  IsExact<
+    HonoValidatorOptions<z.ZodString, 'json'>,
+    { target: 'json'; schema: z.ZodString; createValidationError: HonoValidationErrorFactory }
+  >
+>;
+type _HonoLimitedValidatorOptionsContract = Assert<
+  IsExact<
+    HonoLimitedValidatorOptions<z.ZodString, 'form'>,
+    {
+      target: 'form';
+      schema: z.ZodString;
+      createValidationError: HonoValidationErrorFactory;
+      maxSize: number;
+      createBodyTooLargeError: HonoValidationErrorFactory;
+    }
+  >
+>;
+type _HonoQueryValidatorOptionsContract = Assert<
+  IsExact<
+    HonoQueryValidatorOptions<z.ZodString>,
+    { schema: z.ZodString; createValidationError: HonoValidationErrorFactory }
+  >
+>;
 type _HonoRespondOptionsContract = Assert<
   IsExact<HonoRespondOptions<{ id: string }, 201>, { status: 201; data?: { id: string } }>
 >;
@@ -169,16 +205,258 @@ describe('fileRespond', () => {
   });
 });
 
+// == RequestValidation ================================================
+
+describe('createHonoValidator', () => {
+  test('passes asynchronously validated and transformed JSON to the route handler', async () => {
+    const schema = z.object({
+      identifier: z
+        .string()
+        .refine(async (value) => value.startsWith('employee-'))
+        .transform((value) => value.length),
+    });
+    const app = new Hono();
+
+    app.post(
+      '/employees',
+      createHonoValidator({
+        target: 'json',
+        schema,
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      (context) => {
+        const body: { identifier: number } = context.req.valid('json');
+
+        return context.json(body);
+      }
+    );
+
+    const response = await app.request('/employees', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ identifier: 'employee-1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ identifier: 10 });
+  });
+
+  test('translates rejected schema input through the application-owned error factory', async () => {
+    const app = new Hono();
+
+    app.onError((error, context) => context.text(error.message, 400));
+    app.post(
+      '/employees',
+      createHonoValidator({
+        target: 'json',
+        schema: z.object({ identifier: z.string() }),
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      (context) => context.body(null, 204)
+    );
+
+    const response = await app.request('/employees', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ identifier: 1 }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('requestValidationFailed');
+  });
+
+  test('parses and validates URL-encoded form values through Hono', async () => {
+    const app = new Hono();
+
+    app.post(
+      '/preferences',
+      createHonoValidator({
+        target: 'form',
+        schema: z.object({ notificationsEnabled: z.literal('true').transform(() => true) }),
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      (context) => {
+        const form: { notificationsEnabled: boolean } = context.req.valid('form');
+
+        return context.json(form);
+      }
+    );
+
+    const response = await app.request('/preferences', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'notificationsEnabled=true',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ notificationsEnabled: true });
+  });
+});
+
+describe('createLimitedHonoValidator', () => {
+  test('accepts a request body exactly at the configured byte boundary', async () => {
+    const app = new Hono();
+
+    app.post(
+      '/value',
+      createLimitedHonoValidator({
+        target: 'json',
+        schema: z.string(),
+        maxSize: 5,
+        createValidationError: () => new Error('requestValidationFailed'),
+        createBodyTooLargeError: () => new Error('requestBodyTooLarge'),
+      }),
+      (context) => context.json(context.req.valid('json'))
+    );
+
+    const response = await app.request('/value', {
+      method: 'POST',
+      headers: { 'content-length': '5', 'content-type': 'application/json' },
+      body: '"abc"',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toBe('abc');
+  });
+
+  test('rejects an oversized request before body parsing', async () => {
+    const app = new Hono();
+
+    app.onError((error, context) => context.text(error.message, 413));
+    app.post(
+      '/value',
+      createLimitedHonoValidator({
+        target: 'json',
+        schema: z.string(),
+        maxSize: 4,
+        createValidationError: () => new Error('requestValidationFailed'),
+        createBodyTooLargeError: () => new Error('requestBodyTooLarge'),
+      }),
+      (context) => context.body(null, 204)
+    );
+
+    const response = await app.request('/value', {
+      method: 'POST',
+      headers: { 'content-length': '5', 'content-type': 'application/json' },
+      body: '"abc"',
+    });
+
+    expect(response.status).toBe(413);
+    expect(await response.text()).toBe('requestBodyTooLarge');
+  });
+
+  test('rejects invalid byte limits during middleware construction', () => {
+    const createValidator = (maxSize: number) =>
+      createLimitedHonoValidator({
+        target: 'json',
+        schema: z.string(),
+        maxSize,
+        createValidationError: () => new Error('requestValidationFailed'),
+        createBodyTooLargeError: () => new Error('requestBodyTooLarge'),
+      });
+
+    expect(() => createValidator(0)).toThrow('invalidBodyLimit');
+    expect(() => createValidator(1.5)).toThrow('invalidBodyLimit');
+    expect(() => createValidator(Number.POSITIVE_INFINITY)).toThrow('invalidBodyLimit');
+  });
+});
+
+describe('createQueryValidator', () => {
+  test('coerces flat query values through the supplied schema', async () => {
+    const app = new Hono();
+
+    app.get(
+      '/employees',
+      createQueryValidator({
+        schema: z.object({ id: z.coerce.number().int().positive() }),
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      (context) => context.json(context.req.valid('query'))
+    );
+
+    const response = await app.request('/employees?id=12');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ id: 12 });
+  });
+
+  test('does not reinterpret bracket notation as nested query data', async () => {
+    const app = new Hono();
+
+    app.onError((error, context) => context.text(error.message, 400));
+    app.get(
+      '/employees',
+      createQueryValidator({
+        schema: z.object({ id: z.coerce.number() }),
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      (context) => context.body(null, 204)
+    );
+
+    const response = await app.request('/employees?filter%5Bid%5D=12');
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('requestValidationFailed');
+  });
+});
+
+// == DevelopmentDelay =================================================
+
+describe('createDelayMiddleware', () => {
+  test('defers downstream handling until the configured timer settles', async () => {
+    let handled = false;
+    const app = new Hono();
+
+    app.use('*', createDelayMiddleware(1));
+    app.get('/health', (context) => {
+      handled = true;
+      return context.text('healthy');
+    });
+
+    const responsePromise = app.request('/health');
+
+    expect(handled).toBe(false);
+    expect((await responsePromise).status).toBe(200);
+    expect(handled).toBe(true);
+  });
+
+  test('avoids timer allocation when the configured delay is zero', async () => {
+    const timeout = spyOn(globalThis, 'setTimeout');
+    const app = new Hono();
+
+    app.use('*', createDelayMiddleware(0));
+    app.get('/health', (context) => context.text('healthy'));
+
+    const response = await app.request('/health');
+
+    expect(response.status).toBe(200);
+    expect(timeout).not.toHaveBeenCalled();
+  });
+
+  test('rejects negative and non-finite delays during middleware construction', () => {
+    expect(() => createDelayMiddleware(-1)).toThrow('invalidDelayMilliseconds');
+    expect(() => createDelayMiddleware(Number.NaN)).toThrow('invalidDelayMilliseconds');
+    expect(() => createDelayMiddleware(Number.POSITIVE_INFINITY)).toThrow('invalidDelayMilliseconds');
+  });
+});
+
 // == ErrorHandling =====================================================
 
 describe('honoErrors', () => {
   test('creates stable machine-readable framework failures', () => {
     const internalServerError = honoErrors.internalServerError();
+    const invalidBodyLimit = honoErrors.invalidBodyLimit();
+    const invalidDelayMilliseconds = honoErrors.invalidDelayMilliseconds();
     const invalidRequestId = honoErrors.invalidRequestId();
 
     expect(internalServerError).toBeInstanceOf(HTTPException);
     expect(internalServerError.status).toBe(500);
     expect(internalServerError.message).toBe('internalServerError');
+    expect(invalidBodyLimit).toMatchObject({ name: 'RangeError', message: 'invalidBodyLimit' });
+    expect(invalidDelayMilliseconds).toMatchObject({
+      name: 'RangeError',
+      message: 'invalidDelayMilliseconds',
+    });
     expect(invalidRequestId).toMatchObject({ name: 'TypeError', message: 'invalidRequestId' });
   });
 });
