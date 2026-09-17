@@ -1,3 +1,5 @@
+import { isBoolean } from '@/type';
+
 import { decimalErrors } from './decimal.errors';
 import type { DecimalFormat, DecimalFormatOptions } from './decimal.types';
 
@@ -18,6 +20,14 @@ export function defineDecimalFormat(options: DecimalFormatOptions): DecimalForma
 
   if (hasValidScale === false) {
     throw decimalErrors.invalidDecimalScale();
+  }
+
+  if (isBoolean(signed) === false) {
+    throw decimalErrors.invalidDecimalSignedPolicy();
+  }
+
+  if (isBoolean(zeroAllowed) === false) {
+    throw decimalErrors.invalidDecimalZeroPolicy();
   }
 
   return Object.freeze({ precision, scale, signed, zeroAllowed });
