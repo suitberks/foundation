@@ -5,9 +5,10 @@ import { createStringEnumRecord } from '@/string-enum';
 
 export const logLevelsArray = ['info', 'warn', 'error'] as const;
 
-export type LogLevel = (typeof logLevelsArray)[number];
-
 // ↓ Descriptive and concise aliases share one immutable `LogLevel` record;
 
 export const logLevelsRecord = createStringEnumRecord(logLevelsArray);
 export const logLevel = logLevelsRecord;
+
+// ↓ Inferred literal union of values from `logLevelsArray`;
+export type LogLevel = (typeof logLevelsArray)[number];
