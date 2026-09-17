@@ -1,4 +1,4 @@
-import { isBoolean } from '@/type';
+import { isBoolean } from '@/guard';
 
 import { decimalErrors } from './decimal.errors';
 import type { DecimalFormat, DecimalFormatOptions } from './decimal.types';
