@@ -33,8 +33,27 @@ export type DecimalFormatOptions = Readonly<{
  * Optional policies are resolved so every validator observes identical behavior.
  */
 export type DecimalFormat = Readonly<{
+  /**
+   * Maximum digit count accepted across integer and fractional decimal parts.
+   * Format construction guarantees a positive safe integer above `scale`.
+   */
   precision: number;
+
+  /**
+   * Maximum digit count accepted after the decimal separator.
+   * Format construction guarantees a non-negative safe integer below `precision`.
+   */
   scale: number;
+
+  /**
+   * Indicates whether canonical decimal strings may include a leading minus sign.
+   * The resolved boolean remains `false` when the source option was omitted.
+   */
   signed: boolean;
+
+  /**
+   * Indicates whether signed and fractional textual zero values are accepted.
+   * The resolved boolean remains `true` when the source option was omitted.
+   */
   zeroAllowed: boolean;
 }>;
