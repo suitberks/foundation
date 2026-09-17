@@ -1,5 +1,6 @@
 export * from './base64';
 export * from './datetime';
+export * from './decimal';
 export * from './drizzle';
 export * from './execution';
 export * from './hmac';
