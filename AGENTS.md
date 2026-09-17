@@ -222,12 +222,27 @@ Replace only `{Entity}` with the owning module entity while preserving wording:
 // Derived unions and records preserve one authoritative source for every enum family;
 ```
 
-Keep each enum family colocated as its readonly literal array, derived union,
-immutable record, and concise alias. Introduce the record pair with this exact
-comment, replacing only `{Entity}` with the concrete enum family entity:
+When drizzle-kit must discover a colocated PostgreSQL enum, append this exact
+third line without adding it to enum files that do not own a PostgreSQL enum:
+
+```ts
+// * Note: PostgreSQL enum remains colocated in `.enums.ts` for drizzle-kit discovery;
+```
+
+Keep each enum family colocated in this order: readonly literal array, optional
+PostgreSQL enum, immutable record, concise alias, and derived union. Introduce
+the record pair with this exact comment, replacing only `{Entity}` with the
+concrete enum family entity:
 
 ```ts
 // ↓ Descriptive and concise aliases share one immutable `{Entity}` record;
+```
+
+Introduce the derived union with this exact comment, replacing only `{array}`
+with the authoritative literal-array identifier:
+
+```ts
+// ↓ Inferred literal union of values from `{array}`;
 ```
 
 Use a compact named divider when one file owns several enum families. Do not

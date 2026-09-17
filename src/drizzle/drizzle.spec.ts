@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SQLiteDialect, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { SQLiteSyncDialect, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import { type DrizzleErrorCode, type SQLWhereConditions, drizzleErrors, sqlWhere } from '@/index';
 
@@ -24,7 +24,7 @@ const usersTable = sqliteTable('users', {
   active: integer('active', { mode: 'boolean' }),
 });
 
-const sqliteDialect = new SQLiteDialect();
+const sqliteDialect = new SQLiteSyncDialect();
 
 type _SQLWhereConditionsContract = Assert<
   IsExact<
