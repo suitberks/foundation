@@ -1,5 +1,5 @@
 {
-  "name": "@kalutskii/foundation",
+  "name": "@suitberks/foundation",
   "version": "3.0.10",
   "description": "Shared TypeScript foundations for reusable contracts, validation, framework adapters and utilities.",
   "license": "MIT",
@@ -18,7 +18,8 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsdown",

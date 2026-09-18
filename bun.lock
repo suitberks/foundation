@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@kalutskii/foundation",
+      "name": "@suitberks/foundation",
       "devDependencies": {
         "@types/bun": "^1.4.2",
         "oxfmt": "^0.68.0",

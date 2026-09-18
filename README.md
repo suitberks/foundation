@@ -1,4 +1,4 @@
-# @kalutskii/foundation
+# @suitberks/foundation
 
 Shared TypeScript foundations for reusable contracts, validation, framework adapters, and utilities.
 Designed for Bun, Node.js, Hono, Drizzle ORM, and Zod applications.
@@ -6,7 +6,7 @@ Designed for Bun, Node.js, Hono, Drizzle ORM, and Zod applications.
 ## Installation
 
 ```bash
-bun add @kalutskii/foundation
+bun add @suitberks/foundation
 ```
 
 ## Modules
