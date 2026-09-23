@@ -19,8 +19,8 @@ import {
   toHMACBytes,
 } from '@/index';
 
-// These tests cover HMAC catalogs, encoding, key reuse, signing, and verification behavior;
-// They preserve exact public types and stable failures across raw and imported secret material;
+// These tests cover HMAC catalogs, encoding, key reuse, signing, and verification behavior.
+// They preserve exact public types and stable failures across raw and imported secret material.
 
 // == CompileTimeContracts ==============================================
 

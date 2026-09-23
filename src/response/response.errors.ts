@@ -1,7 +1,7 @@
 import type { ErrorResponseStatus } from './response.enums';
 
-// Specific errors describing failure scenarios for `Response`-related operations;
-// Used by the owning module to communicate stable and machine-readable failures;
+// Specific errors describing failure scenarios for `Response`-related operations.
+// Used by the owning module to communicate stable and machine-readable failures.
 
 export const responseErrors = {
   invalidResponseErrorCode: () => new TypeError('invalidResponseErrorCode'),
@@ -9,7 +9,7 @@ export const responseErrors = {
   invalidErrorResponseStatus: () => new RangeError('invalidErrorResponseStatus'),
 };
 
-// ↓ Inferred literal union of error codes from `responseErrors`;
+// ↓ Inferred literal union of error codes from `responseErrors`.
 export type ResponseErrorCode = keyof typeof responseErrors;
 
 /**

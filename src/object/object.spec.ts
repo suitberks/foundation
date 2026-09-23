@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import { isPlainObject } from '@/index';
 
-// These tests describe the public behavior covered by the object module specification;
-// They preserve ordinary-record recognition across native and custom object boundaries;
+// These tests describe the public behavior covered by the object module specification.
+// They preserve ordinary-record recognition across native and custom object boundaries.
 
 describe('isPlainObject', () => {
   test('accepts ordinary records regardless of whether they are empty', () => {

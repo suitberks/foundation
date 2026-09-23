@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import { isBoolean, isByte, isFunction, isNil, isNotNil, isNumber, isObject, isString } from '@/index';
 
-// These tests describe nullish, primitive, object, function, and binary runtime guards;
-// They preserve exact narrowing contracts without coercing or normalizing supplied values;
+// These tests describe nullish, primitive, object, function, and binary runtime guards.
+// They preserve exact narrowing contracts without coercing or normalizing supplied values.
 
 // == CompileTimeContracts ==============================================
 

@@ -2,8 +2,8 @@ import { isObject } from '@/guard';
 
 import { REDACTED_LOG_VALUE, sensitiveLogKeyParts } from './logging.constants';
 
-// ↓ Redaction results carry the transformed structure and whether any value changed;
-// ↓ The marker avoids needless serialization when a parsed JSON payload stays untouched;
+// ↓ Redaction results carry the transformed structure and whether any value changed.
+// ↓ The marker avoids needless serialization when a parsed JSON payload stays untouched.
 
 type SensitiveValueRedactionResult = { value: unknown; redacted: boolean };
 

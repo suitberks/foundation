@@ -1,5 +1,5 @@
-// Specific errors describing failure scenarios for `Upload`-related operations;
-// Used by the owning module to communicate stable and machine-readable failures;
+// Specific errors describing failure scenarios for `Upload`-related operations.
+// Used by the owning module to communicate stable and machine-readable failures.
 
 export const uploadErrors = {
   uploadFormatRequired: () => new TypeError('uploadFormatRequired'),
@@ -10,5 +10,5 @@ export const uploadErrors = {
   invalidCurrentFilesCount: () => new RangeError('invalidCurrentFilesCount'),
 };
 
-// ↓ Inferred literal union of error codes from `uploadErrors`;
+// ↓ Inferred literal union of error codes from `uploadErrors`.
 export type UploadErrorCode = keyof typeof uploadErrors;

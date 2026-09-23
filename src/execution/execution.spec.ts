@@ -15,8 +15,8 @@ import {
   waitForRetry,
 } from '@/index';
 
-// These tests cover execution recovery, capture, retry, timeout, and measurement behavior;
-// They preserve exact public types and cancellation semantics across synchronous and async work;
+// These tests cover execution recovery, capture, retry, timeout, and measurement behavior.
+// They preserve exact public types and cancellation semantics across synchronous and async work.
 
 // == CompileTimeContracts ==============================================
 

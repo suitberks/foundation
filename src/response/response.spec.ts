@@ -31,8 +31,8 @@ import {
   unwrapResponse,
 } from '@/index';
 
-// These tests cover response envelopes, error-code validation, resolution, and unwrapping behavior;
-// They preserve exact public types, status context, payload identity, and stable failure boundaries;
+// These tests cover response envelopes, error-code validation, resolution, and unwrapping behavior.
+// They preserve exact public types, status context, payload identity, and stable failure boundaries.
 
 // == CompileTimeContracts ==============================================
 

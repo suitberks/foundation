@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import { escapeLikePattern } from '@/index';
 
-// These tests cover literal escaping for values embedded within SQL `LIKE` patterns;
-// They preserve ordinary text, Unicode content, escape ordering, and caller composition;
+// These tests cover literal escaping for values embedded within SQL `LIKE` patterns.
+// They preserve ordinary text, Unicode content, escape ordering, and caller composition.
 
 // == LiteralEscaping ===================================================
 

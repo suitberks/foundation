@@ -2,8 +2,8 @@ import { expect, test } from 'bun:test';
 
 import type { AtLeastOne, ExactlyOne, Simplify } from '@/index';
 
-// These tests describe exact compile-time transformations provided by shared type utilities;
-// They keep mapped contracts, selector exclusivity, and readable intersections type-safe;
+// These tests describe exact compile-time transformations provided by shared type utilities.
+// They keep mapped contracts, selector exclusivity, and readable intersections type-safe.
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2

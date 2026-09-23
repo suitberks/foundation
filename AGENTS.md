@@ -167,8 +167,8 @@ Every registry starts with this exact two-line header. Replace only `{Entity}`
 while preserving the wording and punctuation:
 
 ```ts
-// Specific errors describing failure scenarios for `{Entity}`-related operations;
-// Used by the owning module to communicate stable and machine-readable failures;
+// Specific errors describing failure scenarios for `{Entity}`-related operations.
+// Used by the owning module to communicate stable and machine-readable failures.
 ```
 
 Registry keys and emitted error messages use the same camelCase code. Factories
@@ -180,7 +180,7 @@ its literals manually. Place this exact zone comment above the alias, replacing
 only `{entity}` with the camelCase registry owner:
 
 ```ts
-// ↓ Inferred literal union of error codes from `{entity}Errors`;
+// ↓ Inferred literal union of error codes from `{entity}Errors`.
 ```
 
 Do not add sentences, punctuation, prefixes, or implementation details to error
@@ -218,15 +218,15 @@ Every enum collection file starts with this exact two-line header.
 Replace only `{Entity}` with the owning module entity while preserving wording:
 
 ```ts
-// `{Entity}` enums define supported literal collections and synchronized public aliases;
-// Derived unions and records preserve one authoritative source for every enum family;
+// `{Entity}` enums define supported literal collections and synchronized public aliases.
+// Derived unions and records preserve one authoritative source for every enum family.
 ```
 
 When drizzle-kit must discover a colocated PostgreSQL enum, append this exact
 third line without adding it to enum files that do not own a PostgreSQL enum:
 
 ```ts
-// * Note: PostgreSQL enum remains colocated in `.enums.ts` for drizzle-kit discovery;
+// * Note: PostgreSQL enum remains colocated in `.enums.ts` for drizzle-kit discovery.
 ```
 
 Keep each enum family colocated in this order: readonly literal array, optional
@@ -235,14 +235,14 @@ the record pair with this exact comment, replacing only `{Entity}` with the
 concrete enum family entity:
 
 ```ts
-// ↓ Descriptive and concise aliases share one immutable `{Entity}` record;
+// ↓ Descriptive and concise aliases share one immutable `{Entity}` record.
 ```
 
 Introduce the derived union with this exact comment, replacing only `{array}`
 with the authoritative literal-array identifier:
 
 ```ts
-// ↓ Inferred literal union of values from `{array}`;
+// ↓ Inferred literal union of values from `{array}`.
 ```
 
 Use a compact named divider when one file owns several enum families. Do not
@@ -281,7 +281,7 @@ weakening their meaning.
 
 Inside functions, comments explain only non-obvious ordering, typing, cleanup,
 cancellation, resource ownership, or safety. Every inline comment ends with a
-period.
+period. A comment ending with a documentation URL uses a semicolon instead.
 
 Choose comment geometry from its semantic target, not from comment length or
 the visual length of the following expression. A comment targeting an entire
@@ -387,8 +387,8 @@ Start with one balanced two-line description of the specification. Organize real
 behavioral groups with concise balanced dividers:
 
 ```ts
-// These tests describe the public behavior covered by this module specification;
-// They preserve exact types and observable semantics across supported operations;
+// These tests describe the public behavior covered by this module specification.
+// They preserve exact types and observable semantics across supported operations.
 
 // == CompileTimeContracts ==============================================
 ```

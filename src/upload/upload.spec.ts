@@ -27,8 +27,8 @@ import {
   zodUploadFileSchema,
 } from '@/index';
 
-// These tests describe generic upload formats, policies, validation, and schema composition;
-// They preserve literal inference and identical validation behavior across every public adapter;
+// These tests describe generic upload formats, policies, validation, and schema composition.
+// They preserve literal inference and identical validation behavior across every public adapter.
 
 // == CompileTimeContracts ==============================================
 

@@ -4,8 +4,8 @@ import { SQLiteSyncDialect, integer, sqliteTable, text } from 'drizzle-orm/sqlit
 
 import { type DrizzleErrorCode, type SQLWhereConditions, drizzleErrors, sqlWhere } from '@/index';
 
-// These tests cover typed Drizzle equality conditions, omission, and mutation safety behavior;
-// They preserve exact public contracts and stable errors through compiled SQL representations;
+// These tests cover typed Drizzle equality conditions, omission, and mutation safety behavior.
+// They preserve exact public contracts and stable errors through compiled SQL representations.
 
 // == CompileTimeContracts ==============================================
 

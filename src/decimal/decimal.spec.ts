@@ -9,8 +9,8 @@ import {
   isDecimalString,
 } from '@/index';
 
-// These tests describe canonical decimal formats, recognition, defaults, and failures;
-// They preserve exact public types and PostgreSQL-compatible decimal-string semantics;
+// These tests describe canonical decimal formats, recognition, defaults, and failures.
+// They preserve exact public types and PostgreSQL-compatible decimal-string semantics.
 
 // == CompileTimeContracts ==============================================
 

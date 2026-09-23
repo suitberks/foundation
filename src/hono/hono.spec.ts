@@ -33,8 +33,8 @@ import {
   respond,
 } from '@/index';
 
-// These tests cover Hono responses, validation, middleware, and global error handling behavior;
-// They preserve exact public contracts, stable failures, body limits, and request boundaries;
+// These tests cover Hono responses, validation, middleware, and global error handling behavior.
+// They preserve exact public contracts, stable failures, body limits, and request boundaries.
 
 // == CompileTimeContracts =============================================
 

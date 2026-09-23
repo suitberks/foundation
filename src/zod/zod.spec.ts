@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { zodAtLeastOne, zodErrors } from '@/index';
 import type { AtLeastOne, ZodErrorCode } from '@/index';
 
-// These tests describe the public behavior covered by the Zod module specification;
-// They preserve exact refinement types and stable validation failures for object schemas;
+// These tests describe the public behavior covered by the Zod module specification.
+// They preserve exact refinement types and stable validation failures for object schemas.
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2

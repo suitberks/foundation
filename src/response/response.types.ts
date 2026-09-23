@@ -1,7 +1,7 @@
 import type { ErrorResponseStatus, SuccessResponseStatus, responseKind } from './response.enums';
 
-// ↓ Response envelopes preserve payloads, error codes, and their supported HTTP statuses;
-// ↓ Discriminated branches keep successful data separate from machine-readable failures;
+// ↓ Response envelopes preserve payloads, error codes, and their supported HTTP statuses.
+// ↓ Discriminated branches keep successful data separate from machine-readable failures.
 
 export type SuccessResponse<TData = void> = {
   kind: typeof responseKind.SUCCESS;
@@ -19,8 +19,8 @@ export type ResponseResult<TData = void, TErrorCode extends string = string> =
   | SuccessResponse<TData>
   | ErrorResponse<TErrorCode>;
 
-// ↓ Derived helpers extract response branches and describe resolution without losing status context;
-// ↓ Registry keys remain the authoritative source for application-owned machine-readable error codes;
+// ↓ Derived helpers extract response branches and describe resolution without losing status context.
+// ↓ Registry keys remain the authoritative source for application-owned machine-readable error codes.
 
 export type ResponseData<TResult extends ResponseResult<unknown>> =
   TResult extends SuccessResponse<infer TData> ? TData : never;

@@ -11,8 +11,8 @@ import {
 } from '@/index';
 import type { JWTErrorCode, JWTPayload, JWTPayloadSchema, JWTServiceOptions, JWTSignOptions } from '@/index';
 
-// These tests describe the public behavior covered by the JWT module specification;
-// They preserve exact types and observable semantics across supported operations;
+// These tests describe the public behavior covered by the JWT module specification.
+// They preserve exact types and observable semantics across supported operations.
 
 const SECRET = 'correct-horse-battery-staple';
 const WRONG_SECRET = 'incorrect-secret';
