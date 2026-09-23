@@ -2,7 +2,7 @@ import { createStringEnumRecord } from '@/string-enum';
 
 // `Response` enums define supported literal collections and synchronized public aliases.
 // Derived unions and records preserve one authoritative source for every enum family.
-// * Note: Reference chart for conventional HTTP status meanings: 2to.uk/http-status-codes;
+// * Note: Reference chart for conventional status meanings: 2to.uk/http-status-codes;
 
 // == ResponseKinds =====================================================
 
