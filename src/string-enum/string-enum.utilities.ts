@@ -1,7 +1,7 @@
 import type { StringEnumRecord } from './string-enum.types';
 
 /**
- * Creates an immutable enum-like record from a readonly string array.
+ * Creates an immutable enum-like record from a readonly string formatted array.
  * Keys become upper snake case across camelCase, dotted, and hyphenated values.
  *
  * @example
