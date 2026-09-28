@@ -1,5 +1,5 @@
-import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import type { AnyColumn, SQL, Table } from 'drizzle-orm';
+import { and, eq, getColumns, isNull } from 'drizzle-orm';
 
 import { drizzleErrors } from './drizzle.errors';
 import type { SQLWhereConditions } from './drizzle.types';
@@ -12,7 +12,7 @@ import type { SQLWhereConditions } from './drizzle.types';
  * await db.update(usersTable).set(values).where(sqlWhere(usersTable, { id: 1 })).returning();
  */
 export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereConditions<NoInfer<TTable>>): SQL {
-  const columns = getTableColumns(table);
+  const columns = getColumns(table);
 
   // Restore the key-column relation erased by `Object.entries` and generic indexed access.
   const entries = Object.entries(where) as Array<[keyof typeof columns, unknown]>;
@@ -38,4 +38,20 @@ export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereCon
   }
 
   return condition;
+}
+
+/**
+ * Builds an optional Drizzle `WHERE` clause for explicitly omitted conditions.
+ * Provided objects retain every validation and failure of strict `sqlWhere`.
+ *
+ * @example
+ * await db.select().from(usersTable).where(sqlWhereOptional(usersTable, filters));
+ */
+export function sqlWhereOptional<TTable extends Table>(
+  table: TTable,
+  where: SQLWhereConditions<NoInfer<TTable>> | undefined
+): SQL | undefined {
+  if (where === undefined) return undefined;
+
+  return sqlWhere(table, where);
 }

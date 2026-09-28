@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { SQL } from 'drizzle-orm';
 import { SQLiteSyncDialect, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-import { type DrizzleErrorCode, type SQLWhereConditions, drizzleErrors, sqlWhere } from '@/index';
+import { type DrizzleErrorCode, type SQLWhereConditions, drizzleErrors, sqlWhere, sqlWhereOptional } from '@/index';
 
 // These tests cover typed Drizzle equality conditions, omission, and mutation safety behavior.
 // They preserve exact public contracts and stable errors through compiled SQL representations.
@@ -33,6 +34,7 @@ type _SQLWhereConditionsContract = Assert<
   >
 >;
 type _DrizzleErrorCodeContract = Assert<IsExact<DrizzleErrorCode, 'whereConditionsRequired' | 'whereColumnNotFound'>>;
+type _OptionalWhereReturnContract = Assert<IsExact<ReturnType<typeof sqlWhereOptional>, SQL | undefined>>;
 
 function assertRejectedConditions(): void {
   // @ts-expect-error Unknown conditions cannot address columns outside the supplied table.
@@ -40,6 +42,12 @@ function assertRejectedConditions(): void {
 
   // @ts-expect-error Condition values must match their corresponding selected column type.
   sqlWhere(usersTable, { id: '42' });
+
+  // @ts-expect-error Optional conditions cannot address columns outside the supplied table.
+  sqlWhereOptional(usersTable, { unknownColumn: 'value' });
+
+  // @ts-expect-error Optional condition values must match their selected column type.
+  sqlWhereOptional(usersTable, { id: '42' });
 }
 
 void assertRejectedConditions;
@@ -121,5 +129,34 @@ describe('sqlWhere omitted conditions', () => {
     const invalidWhere = { unknownColumn: 'value' } as SQLWhereConditions<typeof usersTable>;
 
     expect(() => sqlWhere(usersTable, invalidWhere)).toThrow('whereColumnNotFound');
+  });
+});
+
+// == OptionalSQLConditions ============================================
+
+describe('sqlWhereOptional', () => {
+  test('returns undefined only for an omitted where object', () => {
+    expect(sqlWhereOptional(usersTable, undefined)).toBeUndefined();
+  });
+
+  test('delegates defined conditions to the strict SQL builder', () => {
+    const where = { id: 0, displayName: null, active: false };
+    const condition = sqlWhereOptional(usersTable, where);
+
+    expect(condition).toBeDefined();
+    expect(sqliteDialect.sqlToQuery(condition as SQL)).toEqual(sqliteDialect.sqlToQuery(sqlWhere(usersTable, where)));
+  });
+
+  test('preserves strict failures for empty and undefined-only objects', () => {
+    expect(() => sqlWhereOptional(usersTable, {})).toThrow('whereConditionsRequired');
+    expect(() => sqlWhereOptional(usersTable, { id: undefined, displayName: undefined })).toThrow(
+      'whereConditionsRequired'
+    );
+  });
+
+  test('preserves strict failures for unknown runtime columns', () => {
+    const invalidWhere = { unknownColumn: 'value' } as SQLWhereConditions<typeof usersTable>;
+
+    expect(() => sqlWhereOptional(usersTable, invalidWhere)).toThrow('whereColumnNotFound');
   });
 });
