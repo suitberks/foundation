@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import type { AtLeastOne, ExactlyOne, Simplify } from '@/index';
+import type { AtLeastOne, ExactlyOne, NonNullableFields, Simplify } from '@/index';
 
 // These tests describe exact compile-time transformations provided by shared type utilities.
 // They keep mapped contracts, selector exclusivity, and readable intersections type-safe.
@@ -16,6 +16,12 @@ type Assert<TCondition extends true> = TCondition;
 
 type _SimplifyContract = Assert<
   IsExact<Simplify<{ identifier: string } & { enabled?: boolean }>, { identifier: string; enabled?: boolean }>
+>;
+type _NonNullableFieldsContract = Assert<
+  IsExact<
+    NonNullableFields<Pick<{ id: number; name?: string | null; enabled: boolean | undefined }, 'name' | 'enabled'>>,
+    { name: string; enabled: boolean }
+  >
 >;
 type _ExactlyOneContract = Assert<
   IsExact<
@@ -44,7 +50,12 @@ function assertRejectedAtLeastOneShapes(): void {
 void assertRejectedAtLeastOneShapes;
 
 test('type utilities preserve their exact compile-time contracts', () => {
-  const contracts: [_SimplifyContract, _ExactlyOneContract, _AtLeastOneContract] = [true, true, true];
+  const contracts: [_SimplifyContract, _NonNullableFieldsContract, _ExactlyOneContract, _AtLeastOneContract] = [
+    true,
+    true,
+    true,
+    true,
+  ];
 
-  expect(contracts).toEqual([true, true, true]);
+  expect(contracts).toEqual([true, true, true, true]);
 });

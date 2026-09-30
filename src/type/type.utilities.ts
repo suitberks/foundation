@@ -8,6 +8,15 @@
 export type Simplify<TValue> = { [TKey in keyof TValue]: TValue[TKey] } & {};
 
 /**
+ * Removes null, undefined, and optionality from every property of an object type.
+ * Apply Pick or Omit first when only a subset of entity fields needs this guarantee.
+ *
+ * @example
+ * type Snapshot = NonNullableFields<Pick<{ name?: string | null }, 'name'>>;
+ */
+export type NonNullableFields<TEntity> = { [TKey in keyof TEntity]-?: NonNullable<TEntity[TKey]> };
+
+/**
  * Builds a union whose branches retain one selected property and forbid every other selected key.
  * Each flattened branch preserves the selected property's original value type and optionality.
  *
