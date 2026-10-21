@@ -20,10 +20,10 @@
     {
       "files": ["**/*.ts"],
       "rules": {
-        // Explicit boolean comparisons are used intentionally for readability.
+        // Note: Explicit boolean comparisons are used intentionally for readability.
         "typescript/no-unnecessary-boolean-literal-compare": "off",
 
-        // Type assertions are intentionally used in generic adapters, schemas, and boundary code.
+        // Note: Type assertions are intentionally used in generic adapters, schemas, and boundary code.
         "typescript/no-unsafe-type-assertion": "off",
 
         // ↓ Only allow `import type` for types; enables better tree-shaking and clarity.
@@ -36,7 +36,7 @@
           }
         ],
 
-        // ↓ Remove `noUnusedLocals` and `noUnusedParameters` from `tsconfig.json` to avoid duplicate errors.
+        // ↓ Note: Remove `noUnusedLocals` and `noUnusedParameters` from `tsconfig.json` to avoid duplicate errors.
 
         "typescript/no-unused-vars": [
           "error",

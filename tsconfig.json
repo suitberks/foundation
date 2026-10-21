@@ -36,6 +36,5 @@
     // ↓ Performance and compatibility
 
     "skipLibCheck": true
-  },
-  "exclude": ["tmp"]
+  }
 }

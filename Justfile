@@ -3,9 +3,9 @@
 
 # ==========================================================================================
 
-quality-assurance:
+quality-assurance *args:
     # Validates types, lints the codebase, and applies formatting.
-    bun run typecheck && bun run lint && bun run format && bun run test
+    bun run typecheck && bun run lint && bun run format && bun run test {{ args }}
 
 # ==========================================================================================
 
