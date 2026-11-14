@@ -1,8 +1,12 @@
+import { decodeBase64, encodeBase64 } from '@/base64';
 import { isString } from '@/guard';
 
+import { HMAC_BASE64_OPTIONS, HMAC_HEX_SIGNATURE_PATTERN } from './hmac.constants';
 import type { HMACEncoding } from './hmac.enums';
+import { hmacEncoding } from './hmac.enums';
 import { hmacErrors } from './hmac.errors';
 import type { HMACInput } from './hmac.types';
+import { validateHMACEncoding } from './hmac.validation';
 
 const textEncoder = new TextEncoder(); // ← Shared stateless UTF-8 encoder.
 
@@ -26,10 +30,13 @@ export function toHMACBytes(input: HMACInput): Uint8Array<ArrayBuffer> {
  * Hex output remains lowercase while Base64 URL output omits conventional padding.
  */
 export function encodeHMACSignature(signature: Uint8Array, encoding: HMACEncoding): string {
-  if (encoding === 'hex') return signature.toHex();
-  if (encoding === 'base64') return signature.toBase64();
+  validateHMACEncoding(encoding);
 
-  return signature.toBase64({ alphabet: 'base64url', omitPadding: true });
+  if (encoding === hmacEncoding.HEX) {
+    return signature.toHex();
+  }
+
+  return encodeBase64(signature, HMAC_BASE64_OPTIONS[encoding]);
 }
 
 /**
@@ -37,40 +44,26 @@ export function encodeHMACSignature(signature: Uint8Array, encoding: HMACEncodin
  * Malformed alphabets, lengths, or padding combinations reject with `TypeError`.
  */
 export function decodeHMACSignature(signature: string, encoding: HMACEncoding): Uint8Array<ArrayBuffer> {
-  if (encoding === 'hex') {
+  validateHMACEncoding(encoding);
+
+  if (encoding === hmacEncoding.HEX) {
     // ↓ Reject odd-length or non-hexadecimal signatures before native decoding.
 
-    const hexSignatureRegex = /^[0-9a-f]*$/i;
-    const isInvalidHexSignature = signature.length % 2 !== 0 || hexSignatureRegex.test(signature) === false;
+    const hasValidHexSignature = signature.length % 2 === 0 && HMAC_HEX_SIGNATURE_PATTERN.test(signature);
 
-    if (isInvalidHexSignature) {
+    if (hasValidHexSignature === false) {
       throw hmacErrors.invalidHexSignature();
     }
 
     return Uint8Array.fromHex(signature);
   }
 
-  if (encoding === 'base64') {
-    // ↓ Require canonical Base64 groups and padding before native decoding.
-
-    const base64SignatureRegex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-    const isInvalidBase64Signature = base64SignatureRegex.test(signature) === false;
-
-    if (isInvalidBase64Signature) {
-      throw hmacErrors.invalidBase64Signature();
-    }
-
-    return Uint8Array.fromBase64(signature, { lastChunkHandling: 'strict' });
+  try {
+    return decodeBase64(signature, HMAC_BASE64_OPTIONS[encoding]);
+  } catch {
+    // Translate malformed transport text into the stable failure of its signature encoding.
+    throw encoding === hmacEncoding.BASE64
+      ? hmacErrors.invalidBase64Signature()
+      : hmacErrors.invalidBase64UrlSignature();
   }
-
-  // ↓ Accept unpadded URL-safe signatures while rejecting impossible lengths.
-
-  const base64UrlSignatureRegex = /^[A-Za-z0-9_-]*$/;
-  const isInvalidBase64UrlSignature = base64UrlSignatureRegex.test(signature) === false || signature.length % 4 === 1;
-
-  if (isInvalidBase64UrlSignature) {
-    throw hmacErrors.invalidBase64UrlSignature();
-  }
-
-  return Uint8Array.fromBase64(signature, { alphabet: 'base64url' });
 }
