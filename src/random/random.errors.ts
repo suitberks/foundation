@@ -5,5 +5,5 @@ export const randomErrors = {
   invalidRandomStringLength: () => new RangeError('invalidRandomStringLength'),
 };
 
-// ↓ Inferred literal union of error codes from `randomErrors`.
+// Inferred literal union of error codes from `randomErrors`.
 export type RandomErrorCode = keyof typeof randomErrors;

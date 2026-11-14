@@ -11,13 +11,13 @@ export const RANDOM_ALPHANUMERIC_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefg
 export const DEFAULT_RANDOM_STRING_LENGTH = 10;
 
 /**
- * Maximum random-byte count requested from Web Crypto in one operation.
+ * Maximum random-byte count requested from Web Crypto in one single operation.
  * The boundary follows the platform limit enforced by `crypto.getRandomValues`.
  */
 export const RANDOM_BYTE_BATCH_SIZE = 65_536;
 
 /**
- * Exclusive byte boundary retaining complete ranges of the output alphabet.
+ * Exclusive byte boundary retaining only complete ranges of the output alphabet.
  * Bytes at or above this value are rejected to prevent modulo distribution bias.
  */
 export const RANDOM_BYTE_ACCEPTANCE_BOUNDARY =

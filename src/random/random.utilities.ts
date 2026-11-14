@@ -7,12 +7,12 @@ import {
 import { assertRandomStringLength } from './random.validation';
 
 /**
- * Creates a cryptographically sourced string from the alphanumeric collection.
- * Rejection sampling prevents modulo bias while bounded batches support long output.
+ * Creates a cryptographically sourced string from the alphanumeric character set.
+ * Rejection sampling prevents modulo bias while bounded batches allow long output.
  *
  * @example
- * generateRandomString(5); // `aZ3fG`
- * generateRandomString(); // `G5kLm2P9sQ`
+ * generateRandomString(5); // ← `aZ3fG`
+ * generateRandomString(); // ← `G5kLm2P9sQ`
  */
 export function generateRandomString(length: number = DEFAULT_RANDOM_STRING_LENGTH): string {
   assertRandomStringLength(length);
@@ -29,10 +29,15 @@ export function generateRandomString(length: number = DEFAULT_RANDOM_STRING_LENG
     // ↓ Ignore the incomplete modulo range so every character stays equiprobable.
 
     for (const randomByte of randomBytes) {
-      if (randomByte >= RANDOM_BYTE_ACCEPTANCE_BOUNDARY) continue;
+      if (randomByte >= RANDOM_BYTE_ACCEPTANCE_BOUNDARY) {
+        continue;
+      }
 
       result += RANDOM_ALPHANUMERIC_CHARACTERS.charAt(randomByte % RANDOM_ALPHANUMERIC_CHARACTERS.length);
-      if (result.length === length) break;
+
+      if (result.length === length) {
+        break;
+      }
     }
   }
 
