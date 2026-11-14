@@ -1,9 +1,9 @@
 /**
- * Recursively replaces dots in a string literal with underscores.
+ * Recursively replaces every dot in one string literal with an underscore.
  * Every other character remains unchanged in the resulting literal type.
  *
  * @example
- * type Key = ReplaceDotsWithUnderscores<'foo.bar.baz'>; // `foo_bar_baz`
+ * type Key = ReplaceDotsWithUnderscores<'foo.bar.baz'>; // ← `foo_bar_baz`
  */
 export type ReplaceDotsWithUnderscores<TValue extends string> = TValue extends `${infer THead}.${infer TTail}`
   ? `${ReplaceDotsWithUnderscores<THead>}_${ReplaceDotsWithUnderscores<TTail>}`
@@ -14,27 +14,39 @@ export type ReplaceDotsWithUnderscores<TValue extends string> = TValue extends `
  * Every other character remains unchanged in the resulting literal type.
  *
  * @example
- * type Key = ReplaceHyphensWithUnderscores<'foo-bar-baz'>; // `foo_bar_baz`
+ * type Key = ReplaceHyphensWithUnderscores<'foo-bar-baz'>; // ← `foo_bar_baz`
  */
 export type ReplaceHyphensWithUnderscores<TValue extends string> = TValue extends `${infer THead}-${infer TTail}`
   ? `${ReplaceHyphensWithUnderscores<THead>}_${ReplaceHyphensWithUnderscores<TTail>}`
   : TValue;
 
 /**
- * Inserts underscores at lowercase-to-uppercase boundaries in a string literal.
- * Existing separators reset boundary tracking while consecutive capitals remain grouped.
+ * Determines whether one character may precede an inserted camelCase separator.
+ * Lowercase letters and digits qualify while capitals and symbols never do.
+ *
+ * @example
+ * type Prefix = IsCamelCaseBoundaryPrefix<'a'>; // ← `true`
+ */
+export type IsCamelCaseBoundaryPrefix<TCharacter extends string> =
+  TCharacter extends Uppercase<TCharacter>
+    ? '0123456789' extends `${string}${TCharacter}${string}`
+      ? true
+      : false
+    : true;
+
+/**
+ * Inserts underscores where a lowercase letter or digit precedes a capital letter.
+ * Consecutive capitals stay grouped while all other characters remain unchanged.
  */
 export type SeparateCamelCase<
   TValue extends string,
-  TPreviousWasLowercase extends boolean = false,
+  TPreviousIsBoundaryPrefix extends boolean = false,
 > = TValue extends `${infer TCharacter}${infer TRest}`
-  ? TCharacter extends '.' | '-'
-    ? `${TCharacter}${SeparateCamelCase<TRest>}`
-    : TCharacter extends Lowercase<TCharacter>
-      ? `${TCharacter}${SeparateCamelCase<TRest, true>}`
-      : TPreviousWasLowercase extends true
-        ? `_${TCharacter}${SeparateCamelCase<TRest>}`
-        : `${TCharacter}${SeparateCamelCase<TRest>}`
+  ? TCharacter extends Lowercase<TCharacter>
+    ? `${TCharacter}${SeparateCamelCase<TRest, IsCamelCaseBoundaryPrefix<TCharacter>>}`
+    : TPreviousIsBoundaryPrefix extends true
+      ? `_${TCharacter}${SeparateCamelCase<TRest>}`
+      : `${TCharacter}${SeparateCamelCase<TRest>}`
   : TValue;
 
 /**
