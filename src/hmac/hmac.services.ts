@@ -5,9 +5,10 @@ import type { HMACAlgorithm, HMACEncoding } from './hmac.enums';
 import { hmacErrors } from './hmac.errors';
 import type { HMACInput, HMACSecret, HMACServiceOptions } from './hmac.types';
 import { decodeHMACSignature, encodeHMACSignature, toHMACBytes } from './hmac.utilities';
+import { validateHMACAlgorithm, validateHMACEncoding } from './hmac.validation';
 
 /**
- * Creates and verifies keyed message authentication codes through Web Crypto.
+ * Creates and verifies keyed message authentication codes through the Web Crypto API.
  * Each instance preserves its digest algorithm and textual encoding configuration.
  */
 export class HMACService {
@@ -15,13 +16,18 @@ export class HMACService {
   public readonly encoding: HMACEncoding;
 
   constructor(options: HMACServiceOptions = {}) {
-    this.algorithm = options.algorithm ?? DEFAULT_HMAC_ALGORITHM;
-    this.encoding = options.encoding ?? DEFAULT_HMAC_ENCODING;
+    const { algorithm = DEFAULT_HMAC_ALGORITHM, encoding = DEFAULT_HMAC_ENCODING } = options;
+
+    validateHMACAlgorithm(algorithm);
+    validateHMACEncoding(encoding);
+
+    this.algorithm = algorithm;
+    this.encoding = encoding;
   }
 
   /**
-   * Imports raw secret material as a non-extractable Web Crypto HMAC key.
-   * The resulting key supports repeated signing and verification without reimporting.
+   * Imports raw secret material as one non-extractable Web Crypto HMAC key.
+   * The resulting key supports repeated signing and verification operations.
    */
   public async importKey(secret: HMACInput): Promise<CryptoKey> {
     const secretBytes = toHMACBytes(secret);
@@ -46,8 +52,8 @@ export class HMACService {
   }
 
   /**
-   * Verifies an encoded signature without requiring a manual equality comparison.
-   * Invalid signatures resolve to `false`; incompatible imported keys reject explicitly.
+   * Verifies an encoded signature without requiring any manual equality comparison.
+   * Invalid signatures resolve to `false` while incompatible imported keys reject.
    *
    * @example
    * const verified = await hmacService.verify('payload', signature, 'shared-secret');
@@ -73,13 +79,16 @@ export class HMACService {
 
     const hash = Reflect.get(secret.algorithm, 'hash') as unknown;
     const hashName = isObject(hash) && 'name' in hash ? hash.name : undefined;
+
     const isCompatible =
       secret.type === 'secret' &&
       secret.algorithm.name === 'HMAC' &&
       hashName === this.algorithm &&
       secret.usages.includes(usage);
 
-    if (isCompatible === false) throw hmacErrors.incompatibleCryptoKey();
+    if (isCompatible === false) {
+      throw hmacErrors.incompatibleCryptoKey();
+    }
 
     return secret;
   }

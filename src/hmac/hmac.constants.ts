@@ -7,7 +7,7 @@ import { hmacAlgorithm, hmacEncoding } from './hmac.enums';
 export const DEFAULT_HMAC_ALGORITHM = hmacAlgorithm.SHA_256;
 
 /**
- * Default textual encoding used for signatures returned by `HMACService`.
+ * Default textual encoding used for every signature returned by `HMACService`.
  * Hex output remains deterministic, portable, and independent of padding rules.
  */
 export const DEFAULT_HMAC_ENCODING = hmacEncoding.HEX;

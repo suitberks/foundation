@@ -6,7 +6,9 @@ export const hmacErrors = {
   invalidBase64Signature: () => new TypeError('invalidBase64Signature'),
   invalidBase64UrlSignature: () => new TypeError('invalidBase64UrlSignature'),
   incompatibleCryptoKey: () => new TypeError('incompatibleCryptoKey'),
+  invalidSignatureAlgorithm: () => new TypeError('invalidSignatureAlgorithm'),
+  invalidSignatureEncoding: () => new TypeError('invalidSignatureEncoding'),
 };
 
-// ↓ Inferred literal union of error codes from `hmacErrors`.
+// Inferred literal union of error codes from `hmacErrors`.
 export type HMACErrorCode = keyof typeof hmacErrors;

@@ -17,6 +17,8 @@ import {
   hmacEncodingsArray,
   hmacErrors,
   toHMACBytes,
+  validateHMACAlgorithm,
+  validateHMACEncoding,
 } from '@/index';
 
 // These tests cover HMAC catalogs, encoding, key reuse, signing, and verification behavior.
@@ -40,7 +42,12 @@ type _HMACSecretContract = Assert<IsExact<HMACSecret, string | Uint8Array | Cryp
 type _HMACErrorCodeContract = Assert<
   IsExact<
     HMACErrorCode,
-    'invalidHexSignature' | 'invalidBase64Signature' | 'invalidBase64UrlSignature' | 'incompatibleCryptoKey'
+    | 'invalidHexSignature'
+    | 'invalidBase64Signature'
+    | 'invalidBase64UrlSignature'
+    | 'incompatibleCryptoKey'
+    | 'invalidSignatureAlgorithm'
+    | 'invalidSignatureEncoding'
   >
 >;
 
@@ -71,6 +78,8 @@ describe('HMAC errors', () => {
     expect(invalidBase64Error.message).toBe('invalidBase64Signature');
     expect(invalidBase64UrlError.message).toBe('invalidBase64UrlSignature');
     expect(incompatibleKeyError.message).toBe('incompatibleCryptoKey');
+    expect(hmacErrors.invalidSignatureAlgorithm()).toEqual(new TypeError('invalidSignatureAlgorithm'));
+    expect(hmacErrors.invalidSignatureEncoding()).toEqual(new TypeError('invalidSignatureEncoding'));
   });
 });
 
@@ -100,6 +109,14 @@ describe('HMAC encoding utilities', () => {
     expect(() => decodeHMACSignature('abc', hmacEncoding.HEX)).toThrow('invalidHexSignature');
     expect(() => decodeHMACSignature('not base64', hmacEncoding.BASE64)).toThrow('invalidBase64Signature');
     expect(() => decodeHMACSignature('a', hmacEncoding.BASE64URL)).toThrow('invalidBase64UrlSignature');
+    expect(() => decodeHMACSignature('AAE=', hmacEncoding.BASE64URL)).toThrow('invalidBase64UrlSignature');
+  });
+
+  test('rejects unsupported runtime encodings instead of selecting a fallback representation', () => {
+    const source = new Uint8Array([0, 1]);
+
+    expect(() => encodeHMACSignature(source, 'base32' as HMACEncoding)).toThrow('invalidSignatureEncoding');
+    expect(() => decodeHMACSignature('AAE', 'base32' as HMACEncoding)).toThrow('invalidSignatureEncoding');
   });
 });
 
@@ -111,6 +128,18 @@ describe('HMACService', () => {
 
     expect(service.algorithm).toBe(hmacAlgorithm.SHA_256);
     expect(service.encoding).toBe(hmacEncoding.HEX);
+  });
+
+  test('validates runtime algorithm and encoding policies against their catalogs', () => {
+    expect(() => validateHMACAlgorithm(hmacAlgorithm.SHA_512)).not.toThrow();
+    expect(() => validateHMACEncoding(hmacEncoding.BASE64URL)).not.toThrow();
+    expect(() => validateHMACAlgorithm('SHA-1' as HMACAlgorithm)).toThrow('invalidSignatureAlgorithm');
+    expect(() => validateHMACEncoding('HEX' as HMACEncoding)).toThrow('invalidSignatureEncoding');
+  });
+
+  test('rejects unsupported runtime policies while constructing the service', () => {
+    expect(() => new HMACService({ algorithm: 'MD5' as HMACAlgorithm })).toThrow('invalidSignatureAlgorithm');
+    expect(() => new HMACService({ encoding: 'base32' as HMACEncoding })).toThrow('invalidSignatureEncoding');
   });
 
   test('matches the RFC 4231 SHA-256 test vector', async () => {

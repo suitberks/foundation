@@ -12,7 +12,7 @@ export const hmacAlgorithmsArray = ['SHA-256', 'SHA-384', 'SHA-512'] as const;
 export const hmacAlgorithmsRecord = createStringEnumRecord(hmacAlgorithmsArray);
 export const hmacAlgorithm = hmacAlgorithmsRecord;
 
-// ↓ Inferred literal union of values from `hmacAlgorithmsArray`.
+// Inferred literal union of values from `hmacAlgorithmsArray`.
 export type HMACAlgorithm = (typeof hmacAlgorithmsArray)[number];
 
 // == SignatureEncodings ================================================
@@ -24,5 +24,5 @@ export const hmacEncodingsArray = ['hex', 'base64', 'base64url'] as const;
 export const hmacEncodingsRecord = createStringEnumRecord(hmacEncodingsArray);
 export const hmacEncoding = hmacEncodingsRecord;
 
-// ↓ Inferred literal union of values from `hmacEncodingsArray`.
+// Inferred literal union of values from `hmacEncodingsArray`.
 export type HMACEncoding = (typeof hmacEncodingsArray)[number];
