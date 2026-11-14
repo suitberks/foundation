@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { z } from 'zod';
 
-import { zodAtLeastOne, zodErrors } from '@/index';
+import { zodAtLeastOne, zodErrors, zodUpdatePayload } from '@/index';
 import type { AtLeastOne, ZodErrorCode } from '@/index';
 
 // These tests describe the public behavior covered by the Zod module specification.
@@ -29,7 +29,22 @@ const patchSchema = zodAtLeastOne(
     .strict()
 );
 
+type UpdatePayload = { name?: string; count?: number; nullable?: string | null; id: number };
+
+const updateWritableFields = {
+  name: z.string(),
+  count: z.number(),
+  nullable: z.string().nullable(),
+};
+
+const updatePayloadSchema = zodUpdatePayload(updateWritableFields, { id: z.number() });
+const omittedUpdatePayloadSchema = zodUpdatePayload(updateWritableFields, { id: z.number() }).omit({ name: true });
+
 type _AtLeastOneOutputContract = Assert<IsExact<z.output<typeof patchSchema>, AtLeastOne<Patch>>>;
+type _UpdatePayloadOutputContract = Assert<IsExact<z.output<typeof updatePayloadSchema>, UpdatePayload>>;
+type _OmittedUpdatePayloadOutputContract = Assert<
+  IsExact<z.output<typeof omittedUpdatePayloadSchema>, Omit<UpdatePayload, 'name'>>
+>;
 type _ErrorCodeContract = Assert<IsExact<ZodErrorCode, 'atLeastOneRequired'>>;
 
 // == Validation ========================================================
@@ -73,5 +88,41 @@ describe('zodAtLeastOne', () => {
     if (result.success === false) {
       expect(result.error.issues[0]?.code).toBe('unrecognized_keys');
     }
+  });
+});
+
+describe('zodUpdatePayload', () => {
+  test.each([
+    { id: 1, name: 'value' },
+    { id: 1, count: 0 },
+    { id: 1, nullable: null },
+  ])('accepts any subset of writable fields beside the required identifiers: %o', (value) => {
+    expect(updatePayloadSchema.parse(value)).toEqual(value);
+  });
+
+  test('accepts an empty patch carrying only its identifier', () => {
+    expect(updatePayloadSchema.parse({ id: 1 })).toEqual({ id: 1 });
+  });
+
+  test.each([{}, { name: 'value' }])('rejects payloads without the required identifier: %o', (value) => {
+    const result = updatePayloadSchema.safeParse(value);
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues[0]?.path).toEqual(['id']);
+    }
+  });
+
+  test('retains writable field validation for supplied values', () => {
+    const result = updatePayloadSchema.safeParse({ id: 1, count: 'not-a-number' });
+
+    expect(result.success).toBe(false);
+    if (result.success === false) {
+      expect(result.error.issues[0]?.code).toBe('invalid_type');
+    }
+  });
+
+  test('returns an ordinary object schema whose fields can be omitted after construction', () => {
+    expect(omittedUpdatePayloadSchema.parse({ id: 1, name: 'value', count: 2 })).toEqual({ id: 1, count: 2 });
   });
 });
