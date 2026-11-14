@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, setSystemTime, test } from 'bun:test';
 
 import type { Locale } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+import { enUS, ru } from 'date-fns/locale';
 
 import {
   type DateTimeZoneOptions,
   type FormatTimeOptions,
   type FormattedDateOptions,
   type Simplify,
+  DEFAULT_DATETIME_LOCALE,
   DEFAULT_DATETIME_TIMEZONE,
   formatTime,
   getFormattedDate,
@@ -89,6 +90,12 @@ describe('datetime utilities', () => {
   test('formats an explicit instant with the requested locale and timezone', () => {
     expect(formatTime(FIXED_NOW, { locale: enUS, tz: 'UTC' })).toBe('00:04:05, 2 January 2024 (+0 UTC)');
     expect(formatTime(FIXED_NOW, { locale: enUS, tz: 'Europe/Moscow' })).toBe('03:04:05, 2 January 2024 (+3 UTC)');
+  });
+
+  test('uses British English with day-first ordering when no locale is provided', () => {
+    expect(DEFAULT_DATETIME_LOCALE.code).toBe('en-GB');
+    expect(formatTime(FIXED_NOW, { tz: 'UTC' })).toBe('00:04:05, 2 January 2024 (+0 UTC)');
+    expect(formatTime(FIXED_NOW, { locale: ru, tz: 'UTC' })).toBe('00:04:05, 2 января 2024 (+0 UTC)');
   });
 
   test('keeps the offset attached to the original instant during an overlapping DST hour', () => {

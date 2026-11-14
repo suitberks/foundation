@@ -26,12 +26,12 @@ export type FormattedDateOptions = DateTimeZoneOptions & {
 
 /**
  * Options controlling localized formatting for one explicit instant in time.
- * Russian localization and the shared timezone default apply when omitted.
+ * British English and the shared timezone default apply when they are omitted.
  */
 export type FormatTimeOptions = DateTimeZoneOptions & {
   /**
    * date-fns locale used for the textual calendar date representation.
-   * The Russian locale remains the default when this option is omitted.
+   * British English remains the default whenever this option is omitted.
    */
   locale?: Locale;
 };
