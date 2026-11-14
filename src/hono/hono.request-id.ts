@@ -38,8 +38,11 @@ export function createRequestIdMiddleware(options: HonoRequestIdMiddlewareOption
     const generatedRequestId = isHonoRequestId(incomingRequestId) ? undefined : createRequestId();
     const requestId = isString(generatedRequestId) ? generatedRequestId.trim() : incomingRequestId;
 
-    // Reject generated identifiers that violate the same correlation contract.
-    if (isHonoRequestId(requestId) === false) throw honoErrors.invalidRequestId();
+    // ↓ Reject generated identifiers that violate the same correlation contract.
+
+    if (isHonoRequestId(requestId) === false) {
+      throw honoErrors.invalidRequestId();
+    }
 
     context.header(header, requestId);
     await next();

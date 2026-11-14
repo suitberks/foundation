@@ -20,8 +20,11 @@ export function createDelayMiddleware(delayMilliseconds: number): MiddlewareHand
   }
 
   return createMiddleware(async (_context, next) => {
-    // Avoid allocating a timer when latency simulation is explicitly disabled.
-    if (delayMilliseconds === 0) return next();
+    // ↓ Avoid allocating a timer when latency simulation is explicitly disabled.
+
+    if (delayMilliseconds === 0) {
+      return next();
+    }
 
     await new Promise((resolve) => setTimeout(resolve, delayMilliseconds));
     await next();

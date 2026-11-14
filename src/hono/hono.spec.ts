@@ -607,7 +607,11 @@ describe('loggingMiddleware', () => {
     expect(await response.json()).toEqual({ matched: true });
 
     const loggedCall = infoLog.mock.calls[0];
-    if (loggedCall === undefined) throw new Error('expectedLoggingCall');
+
+    if (loggedCall === undefined) {
+      throw new Error('expectedLoggingCall');
+    }
+
     const [message, service] = loggedCall;
 
     expect(service).toBe('hono');
@@ -694,7 +698,11 @@ describe('loggingMiddleware', () => {
     app.post('/upload', async (c) => {
       const formData = await c.req.formData();
       const name = formData.get('name');
-      if (typeof name !== 'string') throw new Error('expectedMultipartTextField');
+
+      if (typeof name !== 'string') {
+        throw new Error('expectedMultipartTextField');
+      }
+
       return c.text(name);
     });
 

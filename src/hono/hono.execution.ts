@@ -17,10 +17,16 @@ function isExpectedHTTPException(error: unknown): error is HTTPException & { sta
   // ↓ Exclude unknown failures and server-side exceptions before inspecting public fields.
 
   const isHTTPException = error instanceof HTTPException;
-  if (isHTTPException === false) return false;
+
+  if (isHTTPException === false) {
+    return false;
+  }
 
   const isServerError = error.status >= 500;
-  if (isServerError) return false;
+
+  if (isServerError) {
+    return false;
+  }
 
   // ↓ Enforce the closed status catalog and machine-readable error-code format together.
 

@@ -73,7 +73,10 @@ export class HMACService {
 
   private async resolveKey(secret: HMACSecret, usage: 'sign' | 'verify'): Promise<CryptoKey> {
     const isRawSecret = isString(secret) || secret instanceof Uint8Array;
-    if (isRawSecret) return this.importKey(secret);
+
+    if (isRawSecret) {
+      return this.importKey(secret);
+    }
 
     // ↓ Recover and validate HMAC metadata omitted by the ambient `KeyAlgorithm` type.
 

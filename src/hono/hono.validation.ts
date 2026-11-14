@@ -18,7 +18,10 @@ export function createHonoValidator<TSchema extends z.ZodType, TTarget extends k
   return validator(target, async (value): Promise<z.output<TSchema>> => {
     const result = await schema.safeParseAsync(value);
 
-    if (result.success) return result.data;
+    if (result.success) {
+      return result.data;
+    }
+
     throw createValidationError();
   });
 }
@@ -35,7 +38,10 @@ export function createLimitedHonoValidator<TSchema extends z.ZodType, TTarget ex
   // ↓ Reject invalid static policy before constructing either reusable middleware.
 
   const hasValidBodyLimit = Number.isSafeInteger(maxSize) && maxSize >= 1;
-  if (hasValidBodyLimit === false) throw honoErrors.invalidBodyLimit();
+
+  if (hasValidBodyLimit === false) {
+    throw honoErrors.invalidBodyLimit();
+  }
 
   const limitBody = bodyLimit({
     maxSize,

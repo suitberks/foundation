@@ -15,7 +15,9 @@ const textEncoder = new TextEncoder(); // ← Shared stateless UTF-8 encoder.
  * Strings use UTF-8 while supplied bytes are copied to prevent later mutation.
  */
 export function toHMACBytes(input: HMACInput): Uint8Array<ArrayBuffer> {
-  if (isString(input)) return textEncoder.encode(input);
+  if (isString(input)) {
+    return textEncoder.encode(input);
+  }
 
   // ↓ Copy bytes into an isolated `ArrayBuffer`-backed view accepted by Web Crypto.
 
