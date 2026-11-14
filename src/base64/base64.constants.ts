@@ -2,7 +2,7 @@ import type { Base64Alphabet } from './base64.enums';
 import { base64Alphabet } from './base64.enums';
 
 /**
- * Default alphabet applied by Base64 utilities when no explicit alphabet is provided.
+ * Default alphabet applied by Base64 utilities when no alphabet option is provided.
  * The standard alphabet keeps output compatible with `atob` and MIME transports.
  */
 export const DEFAULT_BASE64_ALPHABET = base64Alphabet.BASE64;

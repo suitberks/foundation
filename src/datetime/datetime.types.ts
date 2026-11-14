@@ -6,31 +6,31 @@ import type { Locale } from 'date-fns';
  */
 export type DateTimeZoneOptions = {
   /**
-   * IANA timezone used to project and format the current instant.
-   * The shared London timezone applies when this option is omitted.
+   * IANA timezone used to project and format the current instant in time.
+   * The shared London timezone applies whenever this option is omitted.
    */
   tz?: string;
 };
 
 /**
- * Options controlling current-date formatting and optional time inclusion.
- * Time output includes its UTC offset and remains enabled unless explicitly disabled.
+ * Options controlling current-date formatting and the optional time component.
+ * Time output includes its UTC offset and stays on unless explicitly disabled.
  */
 export type FormattedDateOptions = DateTimeZoneOptions & {
   /**
-   * Controls whether wall-clock time and its UTC offset are included.
-   * Time information remains enabled unless this option is explicitly `false`.
+   * Controls whether wall-clock time and its UTC offset are both included.
+   * Time information stays enabled unless this option is explicitly `false`.
    */
   withTime?: boolean;
 };
 
 /**
- * Options controlling localized formatting for one explicit instant.
+ * Options controlling localized formatting for one explicit instant in time.
  * Russian localization and the shared timezone default apply when omitted.
  */
 export type FormatTimeOptions = DateTimeZoneOptions & {
   /**
-   * date-fns locale used for the textual calendar representation.
+   * date-fns locale used for the textual calendar date representation.
    * The Russian locale remains the default when this option is omitted.
    */
   locale?: Locale;
