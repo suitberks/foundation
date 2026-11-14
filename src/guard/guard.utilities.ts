@@ -39,7 +39,7 @@ export function isByte(value: unknown): value is number {
 }
 
 /**
- * Narrows a value to a primitive JavaScript string without performing value normalization.
+ * Narrows a value to a primitive JavaScript string without performing normalization.
  * Empty strings remain included while boxed `String` objects stay outside the result.
  */
 export function isString(value: unknown): value is string {
@@ -47,8 +47,8 @@ export function isString(value: unknown): value is string {
 }
 
 /**
- * Narrows a value to the non-null object category reported by JavaScript `typeof`.
- * Arrays and native instances remain included while functions and primitives are excluded.
+ * Narrows a value to the non-null object category reported by the JavaScript `typeof`.
+ * Arrays and native instances remain included while functions and primitives do not.
  */
 export function isObject(value: unknown): value is object {
   return typeof value === 'object' && value !== null;
