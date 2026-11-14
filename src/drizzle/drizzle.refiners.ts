@@ -20,7 +20,8 @@ export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereCon
   const conditions = entries
     .filter(([, value]) => value !== undefined)
     .map(([key, value]) => {
-      const column = columns[key] as AnyColumn | undefined;
+      // Ignore inherited properties so only the table's own columns can be addressed.
+      const column = Object.hasOwn(columns, key) ? (columns[key] as AnyColumn | undefined) : undefined;
 
       // Reject runtime keys that entered outside the statically typed boundary.
       if (column === undefined) throw drizzleErrors.whereColumnNotFound();

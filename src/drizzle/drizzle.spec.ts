@@ -130,6 +130,15 @@ describe('sqlWhere omitted conditions', () => {
 
     expect(() => sqlWhere(usersTable, invalidWhere)).toThrow('whereColumnNotFound');
   });
+
+  test.each(['toString', 'constructor', 'hasOwnProperty'])(
+    'rejects inherited object keys instead of treating them as columns: %p',
+    (key) => {
+      const invalidWhere = { [key]: 1 } as SQLWhereConditions<typeof usersTable>;
+
+      expect(() => sqlWhere(usersTable, invalidWhere)).toThrow('whereColumnNotFound');
+    }
+  );
 });
 
 // == OptionalSQLConditions ============================================

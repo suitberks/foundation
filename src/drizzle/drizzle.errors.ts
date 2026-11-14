@@ -6,5 +6,5 @@ export const drizzleErrors = {
   whereColumnNotFound: () => new Error('whereColumnNotFound'),
 };
 
-// ↓ Inferred literal union of error codes from `drizzleErrors`.
+// Inferred literal union of error codes from `drizzleErrors`.
 export type DrizzleErrorCode = keyof typeof drizzleErrors;
