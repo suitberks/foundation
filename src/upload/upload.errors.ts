@@ -10,5 +10,5 @@ export const uploadErrors = {
   invalidCurrentFilesCount: () => new RangeError('invalidCurrentFilesCount'),
 };
 
-// ↓ Inferred literal union of error codes from `uploadErrors`.
+// Inferred literal union of error codes from `uploadErrors`.
 export type UploadErrorCode = keyof typeof uploadErrors;

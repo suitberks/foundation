@@ -8,47 +8,47 @@ import type { UploadValidationError } from './upload.enums';
  */
 export type UploadFormat = Readonly<{
   /**
-   * MIME types accepted for files belonging to this format.
+   * MIME types accepted for every uploaded file that belongs to this format.
    * Exact values and complete media wildcards such as `image/*` are supported.
    */
   mimeTypes: readonly string[];
 
   /**
    * File extensions accepted when an upload policy enables extension fallback.
-   * Values may include or omit their dot prefix and are matched case-insensitively.
+   * Values may include or omit their dot prefix and match case-insensitively.
    */
   extensions: readonly string[];
 }>;
 
 /**
  * Format matching policy shared by predicates and complete file validation.
- * Extension fallback remains disabled so MIME metadata is authoritative by default.
+ * Extension fallback stays disabled so MIME metadata remains authoritative.
  */
 export type UploadFormatValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> =
   Readonly<{
     /**
-     * Format definitions accepted by this validation boundary.
-     * Literal tuples remain available to consumers that define narrower policies.
+     * Format definitions accepted by this particular upload validation boundary.
+     * Literal tuples remain available to consumers defining narrower policies.
      */
     formats: TFormats;
 
     /**
      * Allows extensions to compensate for absent or unreliable MIME metadata.
-     * Omission preserves strict MIME validation across every adapter.
+     * Omission preserves strict MIME-only validation across every adapter.
      */
     extensionFallback?: boolean;
   }>;
 
 /**
- * Constraints used to validate one browser file independently of collection capacity.
- * Empty files remain invalid independently of the configured maximum size boundary.
+ * Constraints used to validate one browser file apart from collection capacity.
+ * Empty files remain invalid regardless of the configured maximum size boundary.
  */
 export type UploadFileValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
   UploadFormatValidationOptions<TFormats> &
     Readonly<{
       /**
-       * Maximum accepted size of one uploaded file measured in bytes.
-       * The boundary must be a non-negative integer number of bytes.
+       * Maximum accepted size of one uploaded file, measured in whole bytes.
+       * The boundary must be a non-negative integer number of bytes in total.
        */
       maxFileSize: number;
     }>
@@ -62,7 +62,7 @@ export type UploadPreset<TFormats extends readonly UploadFormat[] = readonly Upl
   UploadFileValidationOptions<TFormats> &
     Readonly<{
       /**
-       * Optional maximum number of files retained by one upload collection.
+       * Optional maximum number of files retained by one entire upload collection.
        * Single-file controls can set this value to `1` for shared capacity rules.
        */
       maxFilesCount?: number;
@@ -73,8 +73,8 @@ export type UploadPreset<TFormats extends readonly UploadFormat[] = readonly Upl
  * Constraints used to validate an incoming collection of browser files.
  * Existing and incoming counts are combined when enforcing capacity.
  */
-export type UploadFilesValidationOptions = Simplify<
-  UploadPreset &
+export type UploadFilesValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
+  UploadPreset<TFormats> &
     Readonly<{
       /**
        * Number of files already retained before the incoming batch is validated.
@@ -90,14 +90,14 @@ export type UploadFilesValidationOptions = Simplify<
  */
 export type UploadFilesValidationResult = Readonly<{
   /**
-   * Valid incoming files that fit the remaining collection capacity.
+   * Valid incoming files that fit within the remaining collection capacity.
    * File objects preserve their identity and ordering through a readonly view.
    */
   acceptedFiles: readonly File[];
 
   /**
    * First stable rejection encountered while processing the incoming batch.
-   * The field remains absent when every supplied file is accepted.
+   * The field remains absent when every supplied file has been accepted.
    */
   validationError?: UploadValidationError;
 }>;

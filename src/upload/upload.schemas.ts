@@ -14,7 +14,10 @@ export function zodUploadFileSchema(options: UploadFileValidationOptions) {
     // ↓ Validates the file against the provided options and adds an issue if invalid.
 
     const validationError = validateUploadFile(file, options);
-    if (validationError === undefined) return;
+
+    if (validationError === undefined) {
+      return;
+    }
 
     context.addIssue({ code: 'custom', message: validationError });
   });

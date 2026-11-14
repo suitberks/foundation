@@ -13,9 +13,17 @@ function resolveUploadFileValidationError(
   file: File,
   options: UploadFileValidationOptions
 ): UploadValidationError | undefined {
-  if (file.size === 0) return uploadValidationError.EMPTY_FILE;
-  if (isFileFormatSupported(file, options) === false) return uploadValidationError.UNSUPPORTED_FILE_FORMAT;
-  if (file.size > options.maxFileSize) return uploadValidationError.FILE_SIZE_EXCEEDED;
+  if (file.size === 0) {
+    return uploadValidationError.EMPTY_FILE;
+  }
+
+  if (isFileFormatSupported(file, options) === false) {
+    return uploadValidationError.UNSUPPORTED_FILE_FORMAT;
+  }
+
+  if (file.size > options.maxFileSize) {
+    return uploadValidationError.FILE_SIZE_EXCEEDED;
+  }
 
   return undefined;
 }
@@ -25,9 +33,9 @@ function resolveUploadFileValidationError(
  * Invalid configuration rejects before any externally owned file is inspected.
  */
 export function assertUploadFileValidationOptions(options: UploadFileValidationOptions): void {
-  const isInvalidMaxFileSize = Number.isInteger(options.maxFileSize) === false || options.maxFileSize < 0;
+  const hasValidMaxFileSize = Number.isInteger(options.maxFileSize) && options.maxFileSize >= 0;
 
-  if (isInvalidMaxFileSize) {
+  if (hasValidMaxFileSize === false) {
     throw uploadErrors.invalidMaxFileSize();
   }
 }
@@ -39,34 +47,33 @@ export function assertUploadFileValidationOptions(options: UploadFileValidationO
 export function assertUploadPreset(preset: UploadPreset): void {
   assertUploadFileValidationOptions(preset);
 
-  const isInvalidMaxFilesCount =
-    preset.maxFilesCount !== undefined &&
-    (Number.isInteger(preset.maxFilesCount) === false || preset.maxFilesCount < 0);
+  const hasValidMaxFilesCount =
+    preset.maxFilesCount === undefined || (Number.isInteger(preset.maxFilesCount) && preset.maxFilesCount >= 0);
 
-  if (isInvalidMaxFilesCount) {
+  if (hasValidMaxFilesCount === false) {
     throw uploadErrors.invalidMaxFilesCount();
   }
 }
 
 /**
  * Asserts that one collection policy contains usable integer capacity values.
- * Optional collection capacity remains unrestricted when it is omitted.
+ * Optional collection capacity remains unrestricted whenever it is omitted.
  */
 export function assertUploadFilesValidationOptions(options: UploadFilesValidationOptions): void {
   assertUploadPreset(options);
 
-  const isInvalidCurrentFilesCount =
-    // Validates the current files count against the options and adds an issue if invalid.
-    Number.isInteger(options.currentFilesCount) === false || options.currentFilesCount < 0;
+  const hasValidCurrentFilesCount =
+    // Existing entries must form a whole non-negative count before capacity is computed.
+    Number.isInteger(options.currentFilesCount) && options.currentFilesCount >= 0;
 
-  if (isInvalidCurrentFilesCount) {
+  if (hasValidCurrentFilesCount === false) {
     throw uploadErrors.invalidCurrentFilesCount();
   }
 }
 
 /**
- * Validates one file against configured format and size constraints.
- * Returns the first stable error key or nothing for a valid file.
+ * Validates one file against its configured format and size constraints.
+ * Returns the first stable error key, or nothing at all for a valid file.
  */
 export function validateUploadFile(
   file: File,
@@ -88,10 +95,9 @@ export function validateUploadFiles(
 
   const { currentFilesCount, maxFilesCount } = options;
 
-  const availableFilesCount = maxFilesCount === undefined ? Infinity : maxFilesCount - currentFilesCount;
-
   const acceptedFiles: File[] = [];
   let validationError: UploadValidationError | undefined;
+  const availableFilesCount = maxFilesCount === undefined ? Infinity : maxFilesCount - currentFilesCount;
 
   for (const file of incomingFiles) {
     // ↓ Apply capacity only after intrinsic validation preserves the slot for a supported file.
@@ -100,7 +106,7 @@ export function validateUploadFiles(
       resolveUploadFileValidationError(file, options) ??
       (acceptedFiles.length >= availableFilesCount ? uploadValidationError.FILES_COUNT_EXCEEDED : undefined);
 
-    if (fileValidationError) {
+    if (fileValidationError !== undefined) {
       validationError ??= fileValidationError;
       continue;
     }

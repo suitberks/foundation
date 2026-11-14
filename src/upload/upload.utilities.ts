@@ -19,7 +19,10 @@ export function getFileExtension(fileName: string): string {
  */
 export function normalizeFileExtension(extension: string): string {
   const normalizedExtension = extension.trim().toLowerCase();
-  if (normalizedExtension.length === 0 || normalizedExtension === '.') return '';
+
+  if (normalizedExtension.length === 0 || normalizedExtension === '.') {
+    return '';
+  }
 
   return normalizedExtension.startsWith('.') ? normalizedExtension : `.${normalizedExtension}`;
 }
@@ -34,9 +37,15 @@ export function matchesMimeType(fileMimeType: string, configuredMimeType: string
 
   const hasMimeType = /^[^/\s]+\/[^/\s]+$/.test(normalizedFileMimeType);
   const hasConfiguredMimeType = normalizedConfiguredMimeType.length > 0;
-  if (hasMimeType === false || hasConfiguredMimeType === false) return false;
 
-  if (normalizedConfiguredMimeType === '*/*') return true;
+  if (hasMimeType === false || hasConfiguredMimeType === false) {
+    return false;
+  }
+
+  if (normalizedConfiguredMimeType === '*/*') {
+    return true;
+  }
+
   if (normalizedConfiguredMimeType.endsWith('/*')) {
     const mediaTypePrefix = normalizedConfiguredMimeType.slice(0, -1);
     const mimeTypeLengthValid = normalizedFileMimeType.length > mediaTypePrefix.length;
@@ -48,7 +57,7 @@ export function matchesMimeType(fileMimeType: string, configuredMimeType: string
 }
 
 /**
- * Checks whether a file MIME type belongs to one selected format.
+ * Checks whether a file MIME type belongs to one of the selected formats.
  * File names and extensions cannot make an unsupported MIME type valid.
  */
 export function isFileMimeTypeSupported(file: File, formats: readonly UploadFormat[]): boolean {
@@ -60,10 +69,13 @@ export function isFileMimeTypeSupported(file: File, formats: readonly UploadForm
  * The comparison is case-insensitive and requires a complete suffix.
  */
 export function isFileExtensionSupported(file: File, formats: readonly UploadFormat[]): boolean {
-  // ↓ Normalizes the file extension to lowercase and strips the dot prefix if present.
+  // ↓ Compare complete lowercase dot-prefixed suffixes on both sides.
 
   const fileExtension = getFileExtension(file.name);
-  if (fileExtension.length === 0) return false;
+
+  if (fileExtension.length === 0) {
+    return false;
+  }
 
   return formats.some((format) =>
     format.extensions.some((extension) => normalizeFileExtension(extension) === fileExtension)
@@ -71,16 +83,19 @@ export function isFileExtensionSupported(file: File, formats: readonly UploadFor
 }
 
 /**
- * Checks whether a file satisfies the format policy selected by one validation boundary.
- * MIME matching remains strict unless the caller explicitly enables extension fallback.
+ * Checks whether a file satisfies the format policy of one validation boundary.
+ * MIME matching remains strict unless the caller enables extension fallback.
  */
 export function isFileFormatSupported(file: File, options: UploadFormatValidationOptions): boolean {
   const { formats, extensionFallback = false } = options;
 
-  // ↓ Validates the file against the provided options and adds an issue if invalid.
+  // ↓ MIME metadata stays authoritative while extensions apply only through explicit fallback.
 
   const isMimeTypeSupported = isFileMimeTypeSupported(file, formats);
-  if (isMimeTypeSupported) return true;
+
+  if (isMimeTypeSupported) {
+    return true;
+  }
 
   return extensionFallback && isFileExtensionSupported(file, formats);
 }

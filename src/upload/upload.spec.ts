@@ -9,7 +9,10 @@ import {
   type UploadPreset,
   type UploadErrorCode,
   type UploadValidationError,
+  assertUploadFileValidationOptions,
+  assertUploadFilesValidationOptions,
   assertUploadFormat,
+  assertUploadPreset,
   createUploadAccept,
   defineUploadFormat,
   defineUploadPreset,
@@ -112,6 +115,17 @@ describe('upload formats', () => {
 
   test('exposes direct format assertion for composition outside the factory', () => {
     expect(() => assertUploadFormat({ mimeTypes: ['application/pdf'], extensions: [] })).not.toThrow();
+  });
+
+  test('exposes direct policy assertions for composition outside the factory', () => {
+    const formats = [{ mimeTypes: ['application/pdf'], extensions: [] }] as const;
+
+    expect(() => assertUploadFileValidationOptions({ formats, maxFileSize: 1 })).not.toThrow();
+    expect(() => assertUploadFileValidationOptions({ formats, maxFileSize: -1 })).toThrow('invalidMaxFileSize');
+    expect(() => assertUploadPreset({ formats, maxFileSize: 1, maxFilesCount: 0.5 })).toThrow('invalidMaxFilesCount');
+    expect(() => assertUploadFilesValidationOptions({ formats, maxFileSize: 1, currentFilesCount: -1 })).toThrow(
+      'invalidCurrentFilesCount'
+    );
   });
 
   test('rejects empty and malformed format definitions with stable error codes', () => {

@@ -4,8 +4,8 @@ import type { UploadFormat, UploadPreset } from './upload.types';
 import { assertUploadPreset } from './upload.validation';
 
 /**
- * Validates one upload format before it becomes part of a reusable policy.
- * Accepts MIME-only and extension-only definitions while rejecting malformed values.
+ * Validates one upload format before it becomes part of a reusable upload policy.
+ * Accepts MIME-only and extension-only definitions while rejecting malformed ones.
  */
 export function assertUploadFormat(format: UploadFormat): void {
   // ↓ Require at least one transport identifier for every declared format.
@@ -40,7 +40,7 @@ export function assertUploadFormat(format: UploadFormat): void {
 
 /**
  * Defines one upload format while preserving its literal MIME and extension tuples.
- * Applications may enrich the returned object with their own display metadata.
+ * Applications may enrich the returned format object with their own display metadata.
  */
 export function defineUploadFormat<const TFormat extends UploadFormat>(format: TFormat): TFormat {
   assertUploadFormat(format);

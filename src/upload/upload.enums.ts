@@ -17,5 +17,5 @@ export const uploadValidationErrorsArray = [
 export const uploadValidationErrorsRecord = createStringEnumRecord(uploadValidationErrorsArray);
 export const uploadValidationError = uploadValidationErrorsRecord;
 
-// ↓ Inferred literal union of values from `uploadValidationErrorsArray`.
+// Inferred literal union of values from `uploadValidationErrorsArray`.
 export type UploadValidationError = (typeof uploadValidationErrorsArray)[number];
