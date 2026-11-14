@@ -6,6 +6,7 @@ import {
   type MeasuredExecution,
   type RetryExecutionContext,
   DEFAULT_RETRY_MAX_ATTEMPTS,
+  MAX_TIMER_DELAY_MILLISECONDS,
   captureExecution,
   executionErrors,
   executeWithTimeout,
@@ -193,6 +194,14 @@ describe('retryExecution', () => {
     expect(await waiting).toEqual({ success: false, error: cancellation });
     expect(await waitForRetry(0)).toBeUndefined();
     expect(waitForRetry(-1)).rejects.toThrow('invalidRetryDelay');
+  });
+
+  test('rejects delays that would overflow the runtime timer instead of firing immediately', () => {
+    expect(MAX_TIMER_DELAY_MILLISECONDS).toBe(2 ** 31 - 1);
+    expect(waitForRetry(MAX_TIMER_DELAY_MILLISECONDS + 1)).rejects.toThrow('invalidRetryDelay');
+    expect(
+      executeWithTimeout(() => undefined, { timeoutMilliseconds: MAX_TIMER_DELAY_MILLISECONDS + 1 })
+    ).rejects.toThrow('invalidTimeout');
   });
 
   test('retries failures and exposes one-based attempt context until success', async () => {

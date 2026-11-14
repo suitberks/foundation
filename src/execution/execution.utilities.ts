@@ -14,7 +14,9 @@ export async function safeExecute<TData, TErrorResult = never>(
   try {
     return await fn();
   } catch (error) {
-    if (onError) return await onError(error);
+    if (onError !== undefined) {
+      return await onError(error);
+    }
 
     // Preserve the original failure, stack trace, and domain details.
     throw error;
@@ -25,13 +27,16 @@ export async function safeExecute<TData, TErrorResult = never>(
  * Captures a synchronous or asynchronous operation in a discriminated result.
  * Successful values and original unknown failures remain available unchanged.
  */
-export async function captureExecution<TData>(execution: Execution<TData>): Promise<ExecutionResult<TData>> {
+export async function captureExecution<TData>(fn: Execution<TData>): Promise<ExecutionResult<TData>> {
   try {
     return {
       success: true,
-      data: await execution(),
+      data: await fn(),
     };
   } catch (error) {
-    return { success: false, error };
+    return {
+      success: false,
+      error,
+    };
   }
 }

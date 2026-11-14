@@ -1,16 +1,18 @@
 import { isNumber } from '@/guard';
 
+import { MAX_TIMER_DELAY_MILLISECONDS } from './execution.constants';
 import { executionErrors } from './execution.errors';
 import type { RetryExecutionOptions } from './execution.types';
 
 /**
- * Validates one resolved delay before a retry timer is allocated.
- * Only finite non-negative millisecond durations are accepted.
+ * Validates one resolved retry delay before its timer is allocated.
+ * Only non-negative durations within the timer limit are accepted.
  */
 export function validateRetryDelay(delayMilliseconds: number): void {
-  const isInvalidRetryDelay = Number.isFinite(delayMilliseconds) === false || delayMilliseconds < 0;
+  const hasValidRetryDelay =
+    Number.isFinite(delayMilliseconds) && delayMilliseconds >= 0 && delayMilliseconds <= MAX_TIMER_DELAY_MILLISECONDS;
 
-  if (isInvalidRetryDelay) {
+  if (hasValidRetryDelay === false) {
     throw executionErrors.invalidRetryDelay();
   }
 }
@@ -20,9 +22,9 @@ export function validateRetryDelay(delayMilliseconds: number): void {
  * Dynamic delay values remain validated after their resolver completes.
  */
 export function validateRetryExecutionOptions(options: RetryExecutionOptions, maxAttempts: number): void {
-  const isInvalidMaxAttempts = Number.isInteger(maxAttempts) === false || maxAttempts < 1;
+  const hasValidMaxAttempts = Number.isInteger(maxAttempts) && maxAttempts >= 1;
 
-  if (isInvalidMaxAttempts) {
+  if (hasValidMaxAttempts === false) {
     throw executionErrors.invalidMaxAttempts();
   }
 
@@ -32,13 +34,16 @@ export function validateRetryExecutionOptions(options: RetryExecutionOptions, ma
 }
 
 /**
- * Validates the duration used to bound an execution with a timeout.
- * Only finite non-negative millisecond durations are accepted.
+ * Validates the duration used to bound one execution with a timeout.
+ * Only non-negative durations within the timer limit are accepted.
  */
 export function validateExecutionTimeout(timeoutMilliseconds: number): void {
-  const isInvalidExecutionTimeout = Number.isFinite(timeoutMilliseconds) === false || timeoutMilliseconds < 0;
+  const hasValidExecutionTimeout =
+    Number.isFinite(timeoutMilliseconds) &&
+    timeoutMilliseconds >= 0 &&
+    timeoutMilliseconds <= MAX_TIMER_DELAY_MILLISECONDS;
 
-  if (isInvalidExecutionTimeout) {
+  if (hasValidExecutionTimeout === false) {
     throw executionErrors.invalidTimeout();
   }
 }

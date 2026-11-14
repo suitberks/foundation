@@ -7,10 +7,11 @@ import { validateExecutionTimeout } from './execution.validation';
  * The promise rejects promptly even when the operation ignores its abort signal.
  */
 export async function executeWithTimeout<TData>(
-  execution: (signal: AbortSignal) => TData | Promise<TData>,
+  fn: (signal: AbortSignal) => TData | Promise<TData>,
   options: ExecuteWithTimeoutOptions
 ): Promise<TData> {
   const { timeoutMilliseconds, signal: callerSignal } = options;
+
   validateExecutionTimeout(timeoutMilliseconds);
 
   const controller = new AbortController();
@@ -39,7 +40,7 @@ export async function executeWithTimeout<TData>(
   });
 
   try {
-    const executionPromise = Promise.resolve(execution(controller.signal));
+    const executionPromise = Promise.resolve(fn(controller.signal));
     return await Promise.race([executionPromise, abortedExecution]);
   } finally {
     // ↓ Release every timer and cross-signal listener after settlement.

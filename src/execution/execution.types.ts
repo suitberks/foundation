@@ -8,7 +8,30 @@ export type Execution<TData> = () => TData | Promise<TData>;
  * Mutually exclusive result produced after capturing an operation outcome.
  * Successful data and unknown failures are distinguished by `success`.
  */
-export type ExecutionResult<TData> = { success: true; data: TData } | { success: false; error: unknown };
+export type ExecutionResult<TData> =
+  | {
+      success: true;
+      data: TData;
+    }
+  | { success: false; error: unknown };
+
+/**
+ * Result returned after measuring one successful synchronous or async execution.
+ * The resolved value remains available beside its rounded millisecond duration.
+ */
+export type MeasuredExecution<TData> = {
+  /**
+   * Value resolved by the measured execution without cloning or transformation.
+   * Its generic type remains identical to the original operation result type.
+   */
+  result: TData;
+
+  /**
+   * Rounded wall-clock duration of the measured execution in milliseconds.
+   * The value is collected only after the supplied operation has resolved.
+   */
+  executionTime: number;
+};
 
 /**
  * Context supplied to every operation attempt executed by `retryExecution`.
@@ -16,14 +39,14 @@ export type ExecutionResult<TData> = { success: true; data: TData } | { success:
  */
 export type RetryExecutionContext = Readonly<{
   /**
-   * One-based number of the attempt currently being executed.
-   * The initial operation always receives the `attempt` value `1`.
+   * One-based number of the attempt that is currently being executed.
+   * The initial operation always receives the `attempt` value of `1`.
    */
   attempt: number;
 
   /**
    * Optional signal allowing the operation to observe caller cancellation.
-   * The same signal remains available across every execution attempt.
+   * The same signal remains available across every single execution attempt.
    */
   signal?: AbortSignal;
 }>;
@@ -34,8 +57,8 @@ export type RetryExecutionContext = Readonly<{
  */
 export type RetryExecutionOptions = Readonly<{
   /**
-   * Positive total attempt count including the initial execution.
-   * Omitting this option applies the default of three attempts.
+   * Positive total attempt count that includes the initial execution.
+   * Omitting this option applies the default policy of three attempts.
    */
   maxAttempts?: number;
 
@@ -64,8 +87,8 @@ export type RetryExecutionOptions = Readonly<{
  */
 export type ExecuteWithTimeoutOptions = Readonly<{
   /**
-   * Non-negative finite execution duration expressed in milliseconds.
-   * Expiration aborts with a standard `TimeoutError` DOM exception.
+   * Non-negative millisecond duration that stays within the runtime timer limit.
+   * Expiration aborts the signal with a standard `TimeoutError` DOM exception.
    */
   timeoutMilliseconds: number;
 

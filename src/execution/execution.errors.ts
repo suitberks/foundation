@@ -8,5 +8,5 @@ export const executionErrors = {
   executionTimedOut: () => new DOMException('executionTimedOut', 'TimeoutError'),
 };
 
-// ↓ Inferred literal union of error codes from `executionErrors`.
+// Inferred literal union of error codes from `executionErrors`.
 export type ExecutionErrorCode = keyof typeof executionErrors;

@@ -5,14 +5,16 @@ import type { RetryExecutionContext, RetryExecutionOptions } from './execution.t
 import { validateRetryDelay, validateRetryExecutionOptions } from './execution.validation';
 
 /**
- * Waits for a retry delay while preserving cooperative caller cancellation.
- * Zero-duration delays resolve immediately without allocating a timer.
+ * Waits for one retry delay while preserving cooperative caller cancellation.
+ * Zero-duration delays resolve at once without allocating a timer or a listener.
  */
 export async function waitForRetry(delayMilliseconds: number, signal?: AbortSignal): Promise<void> {
   validateRetryDelay(delayMilliseconds);
   signal?.throwIfAborted();
 
-  if (delayMilliseconds === 0) return;
+  if (delayMilliseconds === 0) {
+    return;
+  }
 
   await new Promise<void>((resolve, reject) => {
     // ↓ Keep the timer and abort listener mutually disposable.
@@ -36,7 +38,7 @@ export async function waitForRetry(delayMilliseconds: number, signal?: AbortSign
  * Exhaustion, rejected filtering, and cancellation preserve the original failure.
  */
 export async function retryExecution<TData>(
-  execution: (context: RetryExecutionContext) => TData | Promise<TData>,
+  fn: (context: RetryExecutionContext) => TData | Promise<TData>,
   options: RetryExecutionOptions = {}
 ): Promise<TData> {
   const { shouldRetry, signal } = options;
@@ -48,11 +50,11 @@ export async function retryExecution<TData>(
     signal?.throwIfAborted();
 
     try {
-      return await execution({ attempt, signal });
+      return await fn({ attempt, signal });
     } catch (error) {
       const isMaxAttempts = attempt === maxAttempts;
       const isRetryRejected =
-        // Reject the retry if the attempt limit is reached or the retry filter returns false.
+        // Consult the retry filter only while another attempt remains available.
         isMaxAttempts === false && shouldRetry ? (await shouldRetry(error, attempt)) === false : false;
 
       // ↓ Preserve the latest failure when no further attempt is allowed.
