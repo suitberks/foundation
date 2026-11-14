@@ -5,5 +5,5 @@ export const jwtErrors = {
   invalidExpirationSeconds: () => new RangeError('invalidExpirationSeconds'),
 };
 
-// ↓ Inferred literal union of error codes from `jwtErrors`.
+// Inferred literal union of error codes from `jwtErrors`.
 export type JWTErrorCode = keyof typeof jwtErrors;

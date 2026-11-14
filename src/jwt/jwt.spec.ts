@@ -131,6 +131,9 @@ describe('JWTService.sign', () => {
     const hs512JWT = new JWTService(payloadSchema, { algorithm: 'HS512' });
     const token = await hs512JWT.sign({ userId: '42', role: 'admin' }, SECRET);
 
+    expect(hs512JWT.algorithm).toBe('HS512');
+    expect(rawJWT.algorithm).toBe('HS256');
+
     expect(await hs512JWT.verifyOrThrow(token, SECRET)).toEqual({ userId: '42', role: 'admin' });
     expect(await captureRejection(validatedJWT.verifyOrThrow(token, SECRET))).toBeInstanceOf(Error);
   });

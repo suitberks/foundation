@@ -13,8 +13,8 @@ import { validateJWTExpirationSeconds } from './jwt.validation';
 export class JWTService<TPayload extends JWTPayload = JWTPayload> {
   public readonly payloadSchema: JWTPayloadSchema<TPayload> | undefined;
 
-  protected readonly algorithm: SymmetricAlgorithm;
-  protected readonly defaultExpirationSeconds: number;
+  public readonly algorithm: SymmetricAlgorithm;
+  public readonly defaultExpirationSeconds: number;
 
   constructor(payloadSchema?: JWTPayloadSchema<TPayload>, options: JWTServiceOptions = {}) {
     const { algorithm = DEFAULT_JWT_ALGORITHM, defaultExpirationSeconds = DEFAULT_JWT_EXPIRATION_SECONDS } = options;
@@ -54,7 +54,6 @@ export class JWTService<TPayload extends JWTPayload = JWTPayload> {
     const { payload } = decodeJWT(token);
 
     if (this.payloadSchema === undefined) {
-      // Hono returns the base payload represented by the service's default generic.
       return payload as TPayload;
     }
 
@@ -73,7 +72,6 @@ export class JWTService<TPayload extends JWTPayload = JWTPayload> {
     const payload = await verifyJWT(token, secret, this.algorithm);
 
     if (this.payloadSchema === undefined) {
-      // Hono returns the base payload represented by the service's default generic.
       return payload as TPayload;
     }
 

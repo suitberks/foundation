@@ -8,8 +8,8 @@ import type { z } from 'zod';
  */
 export type JWTServiceOptions = {
   /**
-   * Symmetric algorithm used to sign and verify every token handled by the service.
-   * Defaults to `HS256` when the configuration does not provide another value.
+   * Symmetric algorithm used to sign and verify every token of the service.
+   * Defaults to `HS256` when the configuration provides no other algorithm.
    */
   algorithm?: SymmetricAlgorithm;
 
