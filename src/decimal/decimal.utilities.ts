@@ -1,6 +1,5 @@
+import { DECIMAL_ZERO_PATTERN } from './decimal.constants';
 import type { DecimalFormat } from './decimal.types';
-
-const DECIMAL_ZERO_PATTERN = /^-?0(?:\.0+)?$/; // ← Matches every canonical signed textual zero.
 
 /**
  * Compiled expressions keyed by normalized decimal-format object identity.
