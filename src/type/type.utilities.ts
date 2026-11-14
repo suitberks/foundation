@@ -1,5 +1,5 @@
 /**
- * Flattens an intersection or mapped type into one readable object shape.
+ * Flattens an intersection or mapped type into one readable object shape for editors.
  * Property modifiers remain unchanged while editor output becomes easier to inspect.
  *
  * @example
@@ -17,8 +17,8 @@ export type Simplify<TValue> = { [TKey in keyof TValue]: TValue[TKey] } & {};
 export type NonNullableFields<TEntity> = { [TKey in keyof TEntity]-?: NonNullable<TEntity[TKey]> };
 
 /**
- * Builds a union whose branches retain one selected property and forbid every other selected key.
- * Each flattened branch preserves the selected property's original value type and optionality.
+ * Builds a union whose branches keep one selected property and forbid the other selected keys.
+ * Each flattened branch keeps the selected property's original value type and optionality.
  *
  * @example
  * type UserSelector = ExactlyOne<{ id: string; email: string }, 'id' | 'email'>;
@@ -28,8 +28,8 @@ export type ExactlyOne<TEntity, TKeys extends keyof TEntity> = {
 }[TKeys];
 
 /**
- * Builds a union whose branches require one selected property while preserving every remaining property.
- * Additional selected properties may coexist, but at least one must hold its concrete declared value.
+ * Builds a union whose branches require one selected property and keep every other property.
+ * Additional selected properties may coexist, but one must hold its concrete declared value.
  *
  * @example
  * type UserPatch = AtLeastOne<{ email?: string; fullName?: string }>;
