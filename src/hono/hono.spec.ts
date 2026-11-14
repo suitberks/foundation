@@ -18,6 +18,7 @@ import {
   type HonoValidationErrorFactory,
   type HonoValidatorOptions,
   type SuccessResponse,
+  HONO_REQUEST_ID_PATTERN,
   createDelayMiddleware,
   createHonoErrorHandler,
   createHonoValidator,
@@ -179,7 +180,9 @@ describe('fileRespond', () => {
     const response = await app.request('/assets.csv');
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('content-disposition')).toBe('attachment; filename="assets.csv"');
+    expect(response.headers.get('content-disposition')).toBe(
+      `attachment; filename="assets.csv"; filename*=UTF-8''assets.csv`
+    );
     expect(response.headers.get('content-type')).toBe('text/csv; charset=utf-8');
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(content);
   });
@@ -199,9 +202,31 @@ describe('fileRespond', () => {
     const response = await app.request('/archive.bin');
 
     expect(response.status).toBe(201);
-    expect(response.headers.get('content-disposition')).toBe('attachment; filename="archive.bin"');
+    expect(response.headers.get('content-disposition')).toBe(
+      `attachment; filename="archive.bin"; filename*=UTF-8''archive.bin`
+    );
     expect(response.headers.get('content-type')).toBe('application/octet-stream');
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(content);
+  });
+
+  test('encodes non-ASCII, quoted, and control characters without corrupting the header', async () => {
+    const app = new Hono();
+
+    app.get('/invoice', (context) =>
+      fileRespond(context, {
+        status: 200,
+        content: new Uint8Array([1]),
+        filename: 'счёт "№1"\r\n(копия).pdf',
+      })
+    );
+
+    const response = await app.request('/invoice');
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toBe(
+      `attachment; filename="____ __1___(_____).pdf"; ` +
+        `filename*=UTF-8''%D1%81%D1%87%D1%91%D1%82%20%22%E2%84%961%22%0D%0A%28%D0%BA%D0%BE%D0%BF%D0%B8%D1%8F%29.pdf`
+    );
   });
 });
 
@@ -433,8 +458,9 @@ describe('createDelayMiddleware', () => {
     expect(timeout).not.toHaveBeenCalled();
   });
 
-  test('rejects negative and non-finite delays during middleware construction', () => {
+  test('rejects negative, non-finite, and overflowing delays during middleware construction', () => {
     expect(() => createDelayMiddleware(-1)).toThrow('invalidDelayMilliseconds');
+    expect(() => createDelayMiddleware(2 ** 31)).toThrow('invalidDelayMilliseconds');
     expect(() => createDelayMiddleware(Number.NaN)).toThrow('invalidDelayMilliseconds');
     expect(() => createDelayMiddleware(Number.POSITIVE_INFINITY)).toThrow('invalidDelayMilliseconds');
   });
@@ -717,6 +743,25 @@ describe('loggingMiddleware', () => {
 // == RequestIdentifiers ===============================================
 
 describe('requestIdMiddleware', () => {
+  test('publishes one bounded token pattern for accepted identifiers', () => {
+    expect(HONO_REQUEST_ID_PATTERN.test('3f0c9d4e-7b1a-4c2e-9f3a-1b2c3d4e5f60')).toBe(true);
+    expect(HONO_REQUEST_ID_PATTERN.test('x'.repeat(128))).toBe(true);
+    expect(HONO_REQUEST_ID_PATTERN.test('x'.repeat(129))).toBe(false);
+    expect(HONO_REQUEST_ID_PATTERN.test('')).toBe(false);
+  });
+
+  test('keeps malformed incoming identifiers out of logs without request identifier middleware', async () => {
+    const messages: string[] = [];
+    const app = new Hono();
+
+    app.use('*', createLoggingMiddleware({ write: (message) => messages.push(message) }));
+    app.get('/health', (context) => context.text('healthy'));
+
+    await app.request('/health', { headers: { 'X-Request-ID': 'forged id' } });
+
+    expect(messages[0]).not.toContain('forged');
+  });
+
   test('preserves an incoming identifier on the response', async () => {
     const app = new Hono();
 
@@ -727,6 +772,20 @@ describe('requestIdMiddleware', () => {
 
     expect(response.headers.get('X-Request-ID')).toBe('request-1');
   });
+
+  test.each(['x'.repeat(129), 'request\u001b[31m', 'request id', 'request;forged'])(
+    'replaces a malformed incoming identifier with a generated value: %p',
+    async (incomingRequestId) => {
+      const app = new Hono();
+
+      app.use('*', createRequestIdMiddleware({ createRequestId: () => 'generated-request' }));
+      app.get('/health', (context) => context.text('healthy'));
+
+      const response = await app.request('/health', { headers: { 'X-Request-ID': incomingRequestId } });
+
+      expect(response.headers.get('X-Request-ID')).toBe('generated-request');
+    }
+  );
 
   test('generates a missing identifier and exposes it to logging and error reporting', async () => {
     const messages: string[] = [];

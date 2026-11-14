@@ -10,5 +10,5 @@ export const honoErrors = {
   invalidRequestId: () => new TypeError('invalidRequestId'),
 };
 
-// ↓ Inferred literal union of error codes from `honoErrors`.
+// Inferred literal union of error codes from `honoErrors`.
 export type HonoErrorCode = keyof typeof honoErrors;

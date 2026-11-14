@@ -1,18 +1,21 @@
 import type { MiddlewareHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 
+import { MAX_TIMER_DELAY_MILLISECONDS } from '@/execution';
+
 import { honoErrors } from './hono.errors';
 
 /**
  * Creates middleware that simulates latency by delaying downstream request handling.
- * Construction rejects negative or non-finite durations before mounting the handler.
+ * Construction rejects negative, non-finite, or overflowing durations before mounting.
  */
 export function createDelayMiddleware(delayMilliseconds: number): MiddlewareHandler {
-  const isInvalidDelay = Number.isFinite(delayMilliseconds) === false || delayMilliseconds < 0;
-
   // ↓ Reject invalid static policy before constructing the reusable middleware.
 
-  if (isInvalidDelay) {
+  const hasValidDelay =
+    Number.isFinite(delayMilliseconds) && delayMilliseconds >= 0 && delayMilliseconds <= MAX_TIMER_DELAY_MILLISECONDS;
+
+  if (hasValidDelay === false) {
     throw honoErrors.invalidDelayMilliseconds();
   }
 

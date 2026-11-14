@@ -10,7 +10,7 @@ import { getHonoRequestId } from './hono.request-id';
 import type { HonoErrorHandlerOptions } from './hono.types';
 
 /**
- * Identifies client HTTP exceptions safe to expose through the shared response envelope.
+ * Identifies client HTTP exceptions safe to expose through the shared response body.
  * Both status membership and camelCase error-code syntax must satisfy the contract.
  */
 function isExpectedHTTPException(error: unknown): error is HTTPException & { status: ErrorResponseStatus } {
@@ -47,7 +47,8 @@ export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorH
 
     const fallback = honoErrors.internalServerError();
 
-    // Hono's `HTTPException` type erases the literal status supplied to its constructor.
+    // ↓ Hono's `HTTPException` type erases the literal status supplied to its constructor.
+
     const status = fallback.status as 500;
     const response: ErrorResponse = createErrorResponse(status, fallback.message);
 

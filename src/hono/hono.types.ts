@@ -11,24 +11,24 @@ import type { Simplify } from '@/type';
 export type HonoValidationErrorFactory = () => Error;
 
 /**
- * Options connecting one Zod schema to a supported Hono validation target.
+ * Options connecting one Zod schema to one supported Hono validation target.
  * Successful parsing preserves the schema output through `context.req.valid()`.
  */
 export type HonoValidatorOptions<TSchema extends z.ZodType, TTarget extends keyof ValidationTargets> = {
   /**
-   * Hono request segment parsed and validated before downstream handling.
-   * The selected target determines the key available through `context.req.valid()`.
+   * Hono request segment that is parsed and validated before downstream handling.
+   * The selected target determines the key read through `context.req.valid()`.
    */
   target: TTarget;
 
   /**
-   * Zod schema owning asynchronous parsing, coercion, and transformation.
+   * Zod schema owning asynchronous parsing, coercion, and output transformation.
    * Its output type becomes the validated value exposed to downstream handlers.
    */
   schema: TSchema;
 
   /**
-   * Factory translating rejected input into an application-owned failure.
+   * Factory translating rejected request input into an application-owned failure.
    * Applications retain ownership of status codes and machine-readable error codes.
    */
   createValidationError: HonoValidationErrorFactory;
@@ -55,7 +55,7 @@ export type HonoLimitedValidatorOptions<TSchema extends z.ZodType, TTarget exten
 >;
 
 /**
- * Options validating Hono's flat standard query representation through Zod.
+ * Options validating Hono's flat standard query representation through Zod schemas.
  * Query coercion and normalization remain explicit responsibilities of the schema.
  */
 export type HonoQueryValidatorOptions<TSchema extends z.ZodType> = Omit<
@@ -64,13 +64,13 @@ export type HonoQueryValidatorOptions<TSchema extends z.ZodType> = Omit<
 >;
 
 /**
- * Options controlling the application-owned side effect for unexpected Hono failures.
- * Expected client exceptions bypass the callback and retain their machine-readable code.
+ * Options controlling the application-owned side effect for unexpected failures.
+ * Expected client exceptions bypass the callback and keep their stable error codes.
  */
 export type HonoErrorHandlerOptions = {
   /**
-   * Receives an unexpected failure, request context, and optional correlation identifier.
-   * Applications may report original context without changing the public response envelope.
+   * Receives an unexpected failure, its context, and an optional request identifier.
+   * Applications may report the original context without changing the public envelope.
    */
   onUnexpectedError: (error: unknown, context: Context, requestId?: string) => void;
 };
@@ -82,7 +82,7 @@ export type HonoErrorHandlerOptions = {
 export type HonoLoggingMiddlewareOptions = {
   /**
    * Service label passed to the configured writer beside every completed request.
-   * Omission uses the stable `hono` label shared by the default middleware.
+   * Omission uses the stable `hono` label shared by the default logging middleware.
    */
   service?: string;
 
@@ -94,7 +94,7 @@ export type HonoLoggingMiddlewareOptions = {
 
   /**
    * Determines whether request bodies are cloned, normalized, and included in logs.
-   * Omission enables previews to preserve the established middleware behavior.
+   * Omission enables previews to preserve the established default middleware behavior.
    */
   includeBody?: boolean;
 
@@ -105,25 +105,25 @@ export type HonoLoggingMiddlewareOptions = {
   bodyPreviewEdgeLength?: number;
 
   /**
-   * Header inspected for request correlation after downstream middleware completes.
-   * Omission uses the same default header as request identifier middleware.
+   * Header inspected for correlation after downstream middleware has completed.
+   * Omission uses the same default header as the request identifier middleware.
    */
   requestIdHeader?: string;
 };
 
 /**
  * Options controlling acceptance and creation of request identifiers in Hono.
- * Existing non-empty identifiers take precedence over locally generated values.
+ * Valid incoming identifiers take precedence over locally generated values.
  */
 export type HonoRequestIdMiddlewareOptions = {
   /**
    * Header read from incoming requests and written to every outgoing response.
-   * Omission uses the shared `X-Request-ID` header name.
+   * Omission uses the shared `X-Request-ID` header name for both directions.
    */
   header?: string;
 
   /**
-   * Factory invoked only when the incoming request does not carry an identifier.
+   * Factory invoked only when the incoming request lacks a valid identifier.
    * Omission generates a standards-based random UUID through the Web Crypto API.
    */
   createRequestId?: () => string;
@@ -139,7 +139,7 @@ export type HonoRespondOptions<TData extends object, TStatus extends SuccessResp
 };
 
 /**
- * Options for a downloadable binary response with attachment metadata.
+ * Options for one downloadable binary response with its attachment metadata.
  * The content type remains optional and falls back to a generic binary type.
  */
 export type HonoFileRespondOptions<TStatus extends SuccessResponseStatus> = {

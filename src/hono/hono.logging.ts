@@ -21,11 +21,10 @@ export function createLoggingMiddleware(options: HonoLoggingMiddlewareOptions = 
 
   // ↓ Reject invalid static policy while constructing middleware instead of during a request.
 
-  const isInvalidBodyPreviewEdgeLength =
-    bodyPreviewEdgeLength !== undefined &&
-    (Number.isInteger(bodyPreviewEdgeLength) === false || bodyPreviewEdgeLength < 1);
+  const hasValidBodyPreviewEdgeLength =
+    bodyPreviewEdgeLength === undefined || (Number.isInteger(bodyPreviewEdgeLength) && bodyPreviewEdgeLength >= 1);
 
-  if (isInvalidBodyPreviewEdgeLength) {
+  if (hasValidBodyPreviewEdgeLength === false) {
     throw loggingErrors.invalidBodyPreviewEdgeLength();
   }
 
@@ -63,6 +62,6 @@ export function createLoggingMiddleware(options: HonoLoggingMiddlewareOptions = 
 
 /**
  * Ready-to-use Hono request logger backed by the shared default logging policy.
- * Applications may use the factory when request capture or output needs configuration.
+ * Applications may use the factory when request capture or output needs changes.
  */
 export const loggingMiddleware = createLoggingMiddleware();

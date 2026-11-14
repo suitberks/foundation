@@ -9,3 +9,9 @@ export const HONO_REQUEST_ID_HEADER = 'X-Request-ID';
  * Configured middleware may replace the label without changing message formatting.
  */
 export const HONO_LOGGING_SERVICE = 'hono';
+
+/**
+ * Request identifiers accepted from clients and generators before reaching logs.
+ * Bounded token characters prevent oversized values and terminal control injection.
+ */
+export const HONO_REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;

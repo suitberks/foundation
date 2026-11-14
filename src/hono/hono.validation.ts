@@ -7,8 +7,8 @@ import { honoErrors } from './hono.errors';
 import type { HonoLimitedValidatorOptions, HonoQueryValidatorOptions, HonoValidatorOptions } from './hono.types';
 
 /**
- * Creates asynchronous Zod validation for one supported Hono request target.
- * Successful output remains available with its inferred type through `context.req.valid()`.
+ * Creates asynchronous Zod validation for one supported Hono validation target.
+ * Successful output keeps its inferred type through `context.req.valid()` calls.
  */
 export function createHonoValidator<TSchema extends z.ZodType, TTarget extends keyof ValidationTargets>(
   options: HonoValidatorOptions<TSchema, TTarget>
@@ -24,21 +24,18 @@ export function createHonoValidator<TSchema extends z.ZodType, TTarget extends k
 }
 
 /**
- * Creates Zod body validation guarded by Hono's streaming byte-size limiter.
- * Oversized bodies fail before parsing while accepted output retains schema inference.
+ * Creates Zod body validation guarded by Hono's streaming byte-size body limiter.
+ * Oversized bodies fail before parsing while accepted output keeps its inference.
  */
 export function createLimitedHonoValidator<TSchema extends z.ZodType, TTarget extends 'form' | 'json'>(
   options: HonoLimitedValidatorOptions<TSchema, TTarget>
 ) {
   const { maxSize, createBodyTooLargeError, ...validatorOptions } = options;
 
-  const isInvalidBodyLimit = Number.isSafeInteger(maxSize) === false || maxSize < 1;
-
   // ↓ Reject invalid static policy before constructing either reusable middleware.
 
-  if (isInvalidBodyLimit) {
-    throw honoErrors.invalidBodyLimit();
-  }
+  const hasValidBodyLimit = Number.isSafeInteger(maxSize) && maxSize >= 1;
+  if (hasValidBodyLimit === false) throw honoErrors.invalidBodyLimit();
 
   const limitBody = bodyLimit({
     maxSize,
@@ -58,8 +55,8 @@ export function createLimitedHonoValidator<TSchema extends z.ZodType, TTarget ex
 }
 
 /**
- * Creates Zod validation for Hono's standard flat query representation.
- * Nested parsing stays excluded while schemas retain coercion and transformation control.
+ * Creates Zod validation for Hono's standard flat query string representation.
+ * Nested parsing stays excluded while schemas keep coercion and transformations.
  */
 export function createQueryValidator<TSchema extends z.ZodType>(options: HonoQueryValidatorOptions<TSchema>) {
   return createHonoValidator({ target: 'query', ...options });
