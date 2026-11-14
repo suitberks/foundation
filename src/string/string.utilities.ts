@@ -1,6 +1,6 @@
 /**
  * Escapes backslashes and SQL wildcards so one value remains literal inside `LIKE` patterns.
- * Callers own surrounding wildcards and must configure backslash as the pattern escape character.
+ * Callers own surrounding wildcards and must configure backslash as the escape character.
  *
  * @example
  * const pattern = `%${escapeLikePattern('50%_done')}%`;
