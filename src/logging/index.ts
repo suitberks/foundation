@@ -11,6 +11,7 @@ export {
 
 export * from './logging.enums';
 export * from './logging.errors';
+export * from './logging.requests';
 export * from './logging.security';
 export * from './logging.services';
 export * from './logging.types';

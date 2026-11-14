@@ -9,25 +9,28 @@ import {
   type LogSink,
   type LoggingErrorCode,
   type ScopedLogger,
+  HTTP_STATUS_COLORS,
   LOG_BODY_PREVIEW_EDGE_LENGTH,
+  LOG_BODY_PREVIEW_MAX_BYTES,
+  LOG_LEVEL_COLORS,
   MULTIPART_LOG_BODY,
+  OVERSIZED_LOG_BODY,
   REDACTED_LOG_VALUE,
+  SENSITIVE_LOG_KEY_PARTS,
   createHTTPRequestBodyPreview,
   createLogger,
   formatHTTPRequestLog,
   getColoredHTTPStatus,
-  httpStatusColors,
   log,
   logLevel,
-  logLevelColors,
   logLevelsArray,
   logLevelsRecord,
   loggingErrors,
   normalizeLogError,
+  redactSensitiveFormBody,
   redactSensitiveJSON,
   redactSensitiveSearchParams,
   redactSensitiveValue,
-  sensitiveLogKeyParts,
 } from '@/index';
 
 type IsExact<TActual, TExpected> =
@@ -82,7 +85,7 @@ describe('logging levels', () => {
     expect(logLevel.WARN).toBe('warn');
     expect(logLevel.ERROR).toBe('error');
     expect(logLevel).toBe(logLevelsRecord);
-    expect(Object.keys(logLevelColors)).toEqual([...logLevelsArray]);
+    expect(Object.keys(LOG_LEVEL_COLORS)).toEqual([...logLevelsArray]);
   });
 });
 
@@ -93,9 +96,13 @@ describe('logging configuration', () => {
     expect(REDACTED_LOG_VALUE).toBe('[redacted]');
     expect(LOG_BODY_PREVIEW_EDGE_LENGTH).toBe(30);
     expect(MULTIPART_LOG_BODY).toBe('[multipart]');
-    expect(sensitiveLogKeyParts).toContain('password');
-    expect(sensitiveLogKeyParts).toContain('token');
-    expect(httpStatusColors.map(({ range }) => range)).toEqual([
+    expect(LOG_BODY_PREVIEW_MAX_BYTES).toBe(64 * 1024);
+    expect(OVERSIZED_LOG_BODY).toBe('[oversized]');
+    expect(SENSITIVE_LOG_KEY_PARTS).toContain('password');
+    expect(SENSITIVE_LOG_KEY_PARTS).toContain('token');
+    expect(SENSITIVE_LOG_KEY_PARTS).toContain('cookie');
+    expect(SENSITIVE_LOG_KEY_PARTS).toContain('session');
+    expect(HTTP_STATUS_COLORS.map(({ range }) => range)).toEqual([
       [200, 299],
       [400, 499],
       [500, 599],
@@ -123,6 +130,22 @@ describe('createHTTPRequestBodyPreview', () => {
     const request = new Request('https://example.com', { method: 'POST', body });
 
     expect(await createHTTPRequestBodyPreview(request)).toBe(`${'a'.repeat(30)}…${'b'.repeat(30)}`);
+  });
+
+  test('redacts URL-encoded form bodies selected by their content type', async () => {
+    const request = new Request('https://example.com', { method: 'POST', body: 'login=user&password=hunter2' });
+
+    expect(await createHTTPRequestBodyPreview(request, 'application/x-www-form-urlencoded')).toBe(
+      'login=user&password=%5Bredacted%5D'
+    );
+  });
+
+  test('returns the oversized marker without logging partial content or consuming the source', async () => {
+    const body = `{"password":"${'x'.repeat(LOG_BODY_PREVIEW_MAX_BYTES)}"}`;
+    const request = new Request('https://example.com', { method: 'POST', body });
+
+    expect(await createHTTPRequestBodyPreview(request, 'application/json')).toBe(OVERSIZED_LOG_BODY);
+    expect(await request.text()).toBe(body);
   });
 
   test('returns the multipart marker without reading the request body', async () => {
@@ -184,6 +207,11 @@ describe('sensitive log value redaction', () => {
     expect(redactSensitiveSearchParams(source).toString()).toBe(
       'tag=first&access_token=%5Bredacted%5D&tag=second&access_token=%5Bredacted%5D'
     );
+  });
+
+  test('redacts URL-encoded form bodies and preserves bodies without sensitive keys', () => {
+    expect(redactSensitiveFormBody('login=user&session_id=abc')).toBe('login=user&session_id=%5Bredacted%5D');
+    expect(redactSensitiveFormBody('login=user+name&page=2')).toBe('login=user+name&page=2');
   });
 
   test('redacts arbitrary nested structures without mutating the source value', () => {

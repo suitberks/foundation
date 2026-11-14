@@ -1,11 +1,6 @@
 import { isObject } from '@/guard';
 
-import { REDACTED_LOG_VALUE, sensitiveLogKeyParts } from './logging.constants';
-
-// ↓ Redaction results carry the transformed structure and whether any value changed.
-// ↓ The marker avoids needless serialization when a parsed JSON payload stays untouched.
-
-type SensitiveValueRedactionResult = { value: unknown; redacted: boolean };
+import { REDACTED_LOG_VALUE, SENSITIVE_LOG_KEY_PARTS } from './logging.constants';
 
 /**
  * Checks whether a logging field name contains a configured sensitive fragment.
@@ -13,71 +8,93 @@ type SensitiveValueRedactionResult = { value: unknown; redacted: boolean };
  */
 function isSensitiveLogKey(key: string): boolean {
   const normalizedKey = key.toLowerCase().replaceAll(/[^a-z]/g, '');
-  const isSensitive = sensitiveLogKeyParts.some((sensitivePart) => normalizedKey.includes(sensitivePart));
+  const isSensitive = SENSITIVE_LOG_KEY_PARTS.some((sensitivePart) => normalizedKey.includes(sensitivePart));
 
   return isSensitive;
 }
 
 /**
- * Recursively replaces values owned by sensitive object keys with the public marker.
- * The result reports whether any replacement occurred to avoid needless serialization.
+ * Checks whether any traversable level of a structure owns a sensitive key.
+ * Custom instances and repeated references are skipped exactly as in redaction.
  */
-function redactSensitiveValueResult(
-  value: unknown,
-  seenValues: WeakMap<object, unknown> = new WeakMap()
-): SensitiveValueRedactionResult {
+function hasSensitiveLogValue(value: unknown, seenValues: WeakSet<object> = new WeakSet()): boolean {
+  // ↓ Primitives and already inspected references cannot add another sensitive key.
+
+  if (isObject(value) === false || seenValues.has(value)) {
+    return false;
+  }
+
+  seenValues.add(value);
+
+  if (Array.isArray(value)) {
+    return value.some((entry) => hasSensitiveLogValue(entry, seenValues));
+  }
+
+  // ↓ Skip objects whose internal state cannot be reconstructed from enumerable keys.
+
+  const prototype: object | null = Object.getPrototypeOf(value);
+  const isCustomObject = prototype !== Object.prototype && prototype !== null;
+
+  if (isCustomObject) {
+    return false;
+  }
+
+  return Object.entries(value).some(([key, entryValue]) => {
+    return isSensitiveLogKey(key) || hasSensitiveLogValue(entryValue, seenValues);
+  });
+}
+
+/**
+ * Recursively copies a structure while replacing values owned by sensitive keys.
+ * Shared and circular references resolve to the same copy inside one invocation.
+ */
+function copyRedactedLogValue(value: unknown, seenValues: WeakMap<object, unknown>): unknown {
   if (Array.isArray(value)) {
     const existingValue = seenValues.get(value);
-    if (existingValue) return { value: existingValue, redacted: false };
+
+    if (existingValue !== undefined) {
+      return existingValue;
+    }
 
     const redactedValue: unknown[] = [];
     seenValues.set(value, redactedValue);
+    redactedValue.push(...value.map((entry) => copyRedactedLogValue(entry, seenValues)));
 
-    const entries = value.map((entry) => redactSensitiveValueResult(entry, seenValues));
-    redactedValue.push(...entries.map((entry) => entry.value));
-
-    return {
-      value: redactedValue,
-      redacted: entries.some((entry) => entry.redacted),
-    };
+    return redactedValue;
   }
 
-  // Values outside JavaScript's object category cannot own enumerable sensitive keys.
-  if (isObject(value) === false) return { value, redacted: false };
+  // ↓ Values outside JavaScript's object category cannot own enumerable sensitive keys.
+
+  if (isObject(value) === false) {
+    return value;
+  }
 
   // ↓ Preserve objects whose internal state cannot be reconstructed from enumerable keys.
 
   const prototype: object | null = Object.getPrototypeOf(value);
   const isCustomObject = prototype !== Object.prototype && prototype !== null;
-  if (isCustomObject) return { value, redacted: false };
+
+  if (isCustomObject) {
+    return value;
+  }
 
   const existingValue = seenValues.get(value);
-  if (existingValue) return { value: existingValue, redacted: false };
 
-  let redacted = false;
+  if (existingValue !== undefined) {
+    return existingValue;
+  }
+
   const redactedValue = Object.create(prototype) as Record<string, unknown>;
   seenValues.set(value, redactedValue);
 
-  // ↓ Copy enumerable entries individually so circular references resolve to the cloned structure.
+  // ↓ Copy enumerable entries individually so circular references resolve to the copied structure.
 
   for (const [key, entryValue] of Object.entries(value)) {
-    // ↓ Replace complete sensitive values without exposing or traversing nested content.
-
-    if (isSensitiveLogKey(key)) {
-      redacted = true;
-      redactedValue[key] = REDACTED_LOG_VALUE;
-      continue;
-    }
-
-    const nestedEntry = redactSensitiveValueResult(entryValue, seenValues);
-
-    // ↓ Carry nested replacements upward while preserving every safe value.
-
-    redacted ||= nestedEntry.redacted;
-    redactedValue[key] = nestedEntry.value;
+    // Replace complete sensitive values without exposing or traversing nested content.
+    redactedValue[key] = isSensitiveLogKey(key) ? REDACTED_LOG_VALUE : copyRedactedLogValue(entryValue, seenValues);
   }
 
-  return { value: redactedValue, redacted };
+  return redactedValue;
 }
 
 /**
@@ -85,7 +102,7 @@ function redactSensitiveValueResult(
  * Arrays and safe values retain their original ordering and primitive identity.
  */
 export function redactSensitiveValue(value: unknown): unknown {
-  return redactSensitiveValueResult(value).value;
+  return copyRedactedLogValue(value, new WeakMap());
 }
 
 /**
@@ -105,17 +122,27 @@ export function redactSensitiveSearchParams(searchParams: URLSearchParams): URLS
 }
 
 /**
- * Replaces values under sensitive keys throughout a serialized JSON structure.
- * Invalid JSON and payloads without matching keys are returned byte-for-byte unchanged.
+ * Replaces sensitive values inside one `application/x-www-form-urlencoded` body.
+ * Bodies without matching keys are returned byte-for-byte unchanged to the caller.
+ */
+export function redactSensitiveFormBody(body: string): string {
+  const searchParams = new URLSearchParams(body);
+  const hasSensitiveKey = [...searchParams.keys()].some(isSensitiveLogKey);
+
+  return hasSensitiveKey ? redactSensitiveSearchParams(searchParams).toString() : body;
+}
+
+/**
+ * Replaces values under sensitive keys throughout one serialized JSON structure.
+ * Invalid JSON and payloads without matching keys are returned byte-for-byte.
  */
 export function redactSensitiveJSON(json: string): string {
   try {
     // ↓ Parse structure before redaction so key boundaries cannot be confused with string content.
 
     const parsedValue = JSON.parse(json) as unknown;
-    const result = redactSensitiveValueResult(parsedValue);
 
-    return result.redacted ? JSON.stringify(result.value) : json;
+    return hasSensitiveLogValue(parsedValue) ? JSON.stringify(redactSensitiveValue(parsedValue)) : json;
   } catch {
     return json;
   }

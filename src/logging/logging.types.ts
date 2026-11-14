@@ -15,7 +15,7 @@ export type ScopedLogger = {
 };
 
 /**
- * Options used to bind a logger to one service and output destination.
+ * Options used to bind a logger to one service and its output destination.
  * The default sink writes every fully formatted line through `console.log`.
  */
 export type CreateLoggerOptions = {
@@ -27,37 +27,37 @@ export type CreateLoggerOptions = {
 
   /**
    * Optional destination receiving each completely formatted output line.
-   * Omission preserves the standard console-backed logging behavior.
+   * Omission preserves the standard console-backed logging behavior here.
    */
   sink?: LogSink;
 };
 
 /**
  * Structured values required to format one completed HTTP request log entry.
- * Optional query and body previews disappear when their normalized values are empty.
+ * Optional query and body previews disappear when their values are empty.
  */
 export type HTTPRequestLogOptions = {
   /**
-   * HTTP method associated with the completed request.
-   * Formatting reserves a stable terminal column for its value.
+   * HTTP method associated with the completed request in this log entry.
+   * Formatting reserves one stable terminal column for its displayed value.
    */
   method: string;
 
   /**
-   * Final HTTP status observed after downstream request handling.
-   * Its numeric range determines the terminal color applied to the value.
+   * Final HTTP status observed after all downstream request handling.
+   * Its numeric range selects the terminal color applied to the value.
    */
   status: number;
 
   /**
-   * Completed request-processing duration expressed in milliseconds.
-   * Formatting expects the value to be rounded before it reaches this boundary.
+   * Completed request-processing duration expressed in whole milliseconds.
+   * Formatting expects the value to be rounded before reaching this boundary.
    */
   duration: number;
 
   /**
-   * Request pathname displayed without serialized query parameters.
-   * Formatting reserves a stable terminal column for its value.
+   * Request pathname displayed without its serialized query parameters.
+   * Formatting reserves one stable terminal column for its displayed value.
    */
   path: string;
 
@@ -74,7 +74,7 @@ export type HTTPRequestLogOptions = {
   bodyPreview?: string;
 
   /**
-   * Optional identifier correlating this request with downstream logs and reports.
+   * Optional identifier correlating this request with downstream reports.
    * Empty and omitted values do not produce a suffix in the formatted line.
    */
   requestId?: string;

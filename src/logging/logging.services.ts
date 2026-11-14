@@ -2,23 +2,23 @@ import { dim, red, white } from 'kleur/colors';
 
 import { getFormattedTime } from '@/datetime';
 
-import { logLevelColors } from './logging.constants';
+import { LOG_LEVEL_COLORS } from './logging.constants';
 import type { LogLevel } from './logging.enums';
 import { logLevel } from './logging.enums';
 import type { CreateLoggerOptions, LogSink, ScopedLogger } from './logging.types';
 import { normalizeLogError } from './logging.utilities';
 
 /**
- * Writes one fully formatted logging line through the standard console destination.
- * Keeping the sink explicit allows configured loggers to replace output independently.
+ * Writes one fully formatted logging line through the standard console output sink.
+ * Keeping the sink explicit lets configured loggers replace output independently.
  */
 function writeConsoleLog(line: string): void {
   console.log(line);
 }
 
 /**
- * Writes one normalized terminal message for the requested logging level and service.
- * Recognized error context retains the primary timestamp on a subordinate aligned line.
+ * Writes one normalized terminal message for the requested level and service.
+ * Recognized error context keeps the primary timestamp on a subordinate line.
  */
 function writeLog(
   message: string,
@@ -28,7 +28,7 @@ function writeLog(
   sink: LogSink = writeConsoleLog
 ): void {
   const timestamp = dim(getFormattedTime());
-  const serviceName = logLevelColors[level](service.padEnd(12));
+  const serviceName = LOG_LEVEL_COLORS[level](service.padEnd(12));
   const formattedMessage = white(message);
   const trace = normalizeLogError(error);
 
@@ -62,24 +62,24 @@ export function createLogger(options: CreateLoggerOptions): ScopedLogger {
  */
 export const log = {
   /**
-   * Writes an informational message with an optional service label.
-   * Missing service names use the shared `log` fallback label.
+   * Writes one informational message with an optional service label attached.
+   * Missing service names use the shared `log` fallback label in that column.
    */
   info(message: string, service?: string): void {
     writeLog(message, logLevel.INFO, service);
   },
 
   /**
-   * Writes a warning message with an optional service label.
-   * Missing service names use the shared `log` fallback label.
+   * Writes one warning-level message with an optional service label attached.
+   * Missing service names use the shared `log` fallback label in that column.
    */
   warn(message: string, service?: string): void {
     writeLog(message, logLevel.WARN, service);
   },
 
   /**
-   * Writes an error message with optional service and unknown failure context.
-   * Native errors and strings render a normalized subordinate trace line.
+   * Writes one error message with an optional service and unknown failure context.
+   * Native errors and strings render one normalized and subordinate trace line.
    */
   error(message: string, service?: string, error?: unknown): void {
     writeLog(message, logLevel.ERROR, service, error);
