@@ -35,8 +35,8 @@ function resolveDecimalPattern(format: DecimalFormat): RegExp {
 }
 
 /**
- * Recognizes a canonical decimal string under one validated format definition.
- * Accepted values remain compatible with the PostgreSQL decimal columns they model.
+ * Recognizes one canonical decimal string under a validated format definition.
+ * Accepted values remain compatible with the PostgreSQL columns they model.
  */
 export function isDecimalString(value: string, format: DecimalFormat): boolean {
   const decimalPattern = resolveDecimalPattern(format);

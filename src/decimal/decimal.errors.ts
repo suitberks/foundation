@@ -8,5 +8,5 @@ export const decimalErrors = {
   invalidDecimalZeroPolicy: () => new TypeError('invalidDecimalZeroPolicy'),
 };
 
-// ↓ Inferred literal union of error codes from `decimalErrors`.
+// Inferred literal union of error codes from `decimalErrors`.
 export type DecimalErrorCode = keyof typeof decimalErrors;

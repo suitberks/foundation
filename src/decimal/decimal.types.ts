@@ -10,27 +10,27 @@ export type DecimalFormatOptions = Readonly<{
   precision: number;
 
   /**
-   * Maximum digit count accepted after the decimal separator.
-   * The value must be a non-negative safe integer below the configured precision.
+   * Maximum digit count accepted after the decimal separator of a value.
+   * The value must be a non-negative safe integer below the set precision.
    */
   scale: number;
 
   /**
-   * Allows a leading negative sign when explicitly enabled.
-   * Unsigned canonical decimal strings remain the default format.
+   * Allows a leading negative sign only when this option is explicitly enabled.
+   * Unsigned canonical decimal strings remain the format accepted by default.
    */
   signed?: boolean;
 
   /**
    * Allows every canonical textual representation of zero by default.
-   * Setting the option to `false` rejects signed and fractional zero values.
+   * Setting the option to `false` rejects signed and fractional zeros.
    */
   zeroAllowed?: boolean;
 }>;
 
 /**
- * Normalized format consumed by canonical decimal-string predicates.
- * Optional policies are resolved so every validator observes identical behavior.
+ * Normalized format consumed by every canonical decimal-string predicate.
+ * Optional policies are resolved so every validator behaves identically.
  */
 export type DecimalFormat = Readonly<{
   /**
@@ -40,13 +40,13 @@ export type DecimalFormat = Readonly<{
   precision: number;
 
   /**
-   * Maximum digit count accepted after the decimal separator.
-   * Format construction guarantees a non-negative safe integer below `precision`.
+   * Maximum digit count accepted after the decimal separator of a value.
+   * Format construction guarantees a non-negative integer below `precision`.
    */
   scale: number;
 
   /**
-   * Indicates whether canonical decimal strings may include a leading minus sign.
+   * Indicates whether canonical decimal strings may include a leading minus.
    * The resolved boolean remains `false` when the source option was omitted.
    */
   signed: boolean;
