@@ -10,5 +10,5 @@ export const logLevelsArray = ['info', 'warn', 'error'] as const;
 export const logLevelsRecord = createStringEnumRecord(logLevelsArray);
 export const logLevel = logLevelsRecord;
 
-// ↓ Inferred literal union of values from `logLevelsArray`.
+// Inferred literal union of values from `logLevelsArray`.
 export type LogLevel = (typeof logLevelsArray)[number];

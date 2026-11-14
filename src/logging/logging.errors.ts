@@ -5,5 +5,5 @@ export const loggingErrors = {
   invalidBodyPreviewEdgeLength: () => new RangeError('invalidBodyPreviewEdgeLength'),
 };
 
-// ↓ Inferred literal union of error codes from `loggingErrors`.
+// Inferred literal union of error codes from `loggingErrors`.
 export type LoggingErrorCode = keyof typeof loggingErrors;

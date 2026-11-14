@@ -23,8 +23,11 @@ export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereCon
       // Ignore inherited properties so only the table's own columns can be addressed.
       const column = Object.hasOwn(columns, key) ? (columns[key] as AnyColumn | undefined) : undefined;
 
-      // Reject runtime keys that entered outside the statically typed boundary.
-      if (column === undefined) throw drizzleErrors.whereColumnNotFound();
+      // ↓ Reject runtime keys that entered outside the statically typed boundary.
+
+      if (column === undefined) {
+        throw drizzleErrors.whereColumnNotFound();
+      }
 
       // Preserve SQL null semantics instead of emitting an ineffective `= NULL` comparison.
       return value === null ? isNull(column) : eq(column, value);
@@ -52,7 +55,9 @@ export function sqlWhereOptional<TTable extends Table>(
   table: TTable,
   where: SQLWhereConditions<NoInfer<TTable>> | undefined
 ): SQL | undefined {
-  if (where === undefined) return undefined;
+  if (where === undefined) {
+    return undefined;
+  }
 
   return sqlWhere(table, where);
 }

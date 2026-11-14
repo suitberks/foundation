@@ -60,7 +60,10 @@ export async function retryExecution<TData>(
       // ↓ Preserve the latest failure when no further attempt is allowed.
 
       const isRetryUnavailable = isMaxAttempts || isRetryRejected;
-      if (isRetryUnavailable) throw error;
+
+      if (isRetryUnavailable) {
+        throw error;
+      }
 
       signal?.throwIfAborted();
 

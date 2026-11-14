@@ -25,7 +25,10 @@ function createDecimalPattern(format: DecimalFormat): RegExp {
  */
 function resolveDecimalPattern(format: DecimalFormat): RegExp {
   const cachedPattern = decimalPatternCache.get(format);
-  if (cachedPattern !== undefined) return cachedPattern;
+
+  if (cachedPattern !== undefined) {
+    return cachedPattern;
+  }
 
   const decimalPattern = createDecimalPattern(format);
   decimalPatternCache.set(format, decimalPattern);
@@ -39,9 +42,11 @@ function resolveDecimalPattern(format: DecimalFormat): RegExp {
  */
 export function isDecimalString(value: string, format: DecimalFormat): boolean {
   const decimalPattern = resolveDecimalPattern(format);
-
   const hasValidShape = decimalPattern.test(value);
-  if (hasValidShape === false) return false;
+
+  if (hasValidShape === false) {
+    return false;
+  }
 
   return format.zeroAllowed || DECIMAL_ZERO_PATTERN.test(value) === false;
 }

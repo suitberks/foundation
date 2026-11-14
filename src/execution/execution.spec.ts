@@ -209,7 +209,10 @@ describe('retryExecution', () => {
 
     const result = await retryExecution(({ attempt }) => {
       attempts.push(attempt);
-      if (attempt < 3) throw new Error(`attempt ${attempt}`);
+
+      if (attempt < 3) {
+        throw new Error(`attempt ${attempt}`);
+      }
 
       return 'complete' as const;
     });
@@ -224,7 +227,10 @@ describe('retryExecution', () => {
 
     const result = await retryExecution(
       ({ attempt }) => {
-        if (attempt === 1) throw failure;
+        if (attempt === 1) {
+          throw failure;
+        }
+
         return 'recovered' as const;
       },
       {

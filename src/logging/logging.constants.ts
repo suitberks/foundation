@@ -4,10 +4,10 @@ import type { LogLevel } from './logging.enums';
 import { logLevel } from './logging.enums';
 
 /**
- * Terminal color configuration for every supported logging level.
+ * Terminal color configuration assigned to every supported logging level.
  * The `LogLevel` contract prevents missing or unsupported level entries.
  */
-export const logLevelColors = {
+export const LOG_LEVEL_COLORS = {
   [logLevel.INFO]: blue,
   [logLevel.WARN]: yellow,
   [logLevel.ERROR]: red,
@@ -27,15 +27,27 @@ export const LOG_BODY_PREVIEW_EDGE_LENGTH = 30;
 
 /**
  * Safe request-body placeholder emitted instead of reading multipart content.
- * Avoiding multipart reads prevents file payloads from entering logs or memory copies.
+ * Skipping multipart reads keeps file payloads out of logs and memory copies.
  */
 export const MULTIPART_LOG_BODY = '[multipart]';
 
 /**
- * Normalized key fragments treated as sensitive by logging redaction.
+ * Maximum request-body size in bytes read while building one log preview.
+ * Larger bodies stop being buffered and emit a safe placeholder instead.
+ */
+export const LOG_BODY_PREVIEW_MAX_BYTES = 64 * 1024;
+
+/**
+ * Safe request-body placeholder emitted instead of previewing an oversized payload.
+ * Partial content is never logged because incomplete JSON cannot be redacted safely.
+ */
+export const OVERSIZED_LOG_BODY = '[oversized]';
+
+/**
+ * Normalized key fragments that are treated as sensitive by logging redaction.
  * Matching ignores case and separators so compound field names remain covered.
  */
-export const sensitiveLogKeyParts = [
+export const SENSITIVE_LOG_KEY_PARTS = [
   'password',
   'passwd',
   'token',
@@ -43,13 +55,16 @@ export const sensitiveLogKeyParts = [
   'authorization',
   'apikey',
   'credential',
+  'cookie',
+  'session',
+  'cvv',
 ] as const;
 
 /**
- * Terminal colors assigned to the supported HTTP response status ranges.
- * Unlisted ranges intentionally retain the terminal's default text appearance.
+ * Terminal colors assigned to every supported HTTP response status range.
+ * Unlisted ranges intentionally retain the terminal's default appearance.
  */
-export const httpStatusColors = [
+export const HTTP_STATUS_COLORS = [
   { range: [200, 299], color: green },
   { range: [400, 499], color: yellow },
   { range: [500, 599], color: red },
