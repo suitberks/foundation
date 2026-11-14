@@ -13,21 +13,21 @@ export const responseKindsArray = ['success', 'error'] as const;
 export const responseKindsRecord = createStringEnumRecord(responseKindsArray);
 export const responseKind = responseKindsRecord;
 
-// ↓ Inferred literal union of values from `responseKindsArray`.
+// Inferred literal union of values from `responseKindsArray`.
 export type ResponseKind = (typeof responseKindsArray)[number];
 
 // == SuccessStatuses ===================================================
 
-export const SUCCESS_RESPONSE_STATUSES = [200, 201, 202, 206] as const;
+export const successResponseStatusesArray = [200, 201, 202, 206] as const;
 
-// ↓ Inferred literal union of values from `SUCCESS_RESPONSE_STATUSES`.
-export type SuccessResponseStatus = (typeof SUCCESS_RESPONSE_STATUSES)[number];
+// Inferred literal union of values from `successResponseStatusesArray`.
+export type SuccessResponseStatus = (typeof successResponseStatusesArray)[number];
 
 // == ErrorStatuses =====================================================
 
-export const ERROR_RESPONSE_STATUSES = [
+export const errorResponseStatusesArray = [
   400, 401, 403, 404, 405, 406, 408, 409, 410, 413, 414, 415, 422, 425, 429, 440, 498, 500, 501, 502, 503, 504,
 ] as const;
 
-// ↓ Inferred literal union of values from `ERROR_RESPONSE_STATUSES`.
-export type ErrorResponseStatus = (typeof ERROR_RESPONSE_STATUSES)[number];
+// Inferred literal union of values from `errorResponseStatusesArray`.
+export type ErrorResponseStatus = (typeof errorResponseStatusesArray)[number];

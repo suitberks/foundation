@@ -9,7 +9,7 @@ export const responseErrors = {
   invalidErrorResponseStatus: () => new RangeError('invalidErrorResponseStatus'),
 };
 
-// ↓ Inferred literal union of error codes from `responseErrors`.
+// Inferred literal union of error codes from `responseErrors`.
 export type ResponseErrorCode = keyof typeof responseErrors;
 
 /**

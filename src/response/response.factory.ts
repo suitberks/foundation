@@ -24,8 +24,13 @@ export function createErrorResponse<const TErrorCode extends string>(
   status: ErrorResponseStatus,
   error: TErrorCode
 ): ErrorResponse<TErrorCode> {
-  if (isErrorResponseStatus(status) === false) throw responseErrors.invalidErrorResponseStatus();
-  if (isResponseErrorCode(error) === false) throw responseErrors.invalidResponseErrorCode();
+  if (isErrorResponseStatus(status) === false) {
+    throw responseErrors.invalidErrorResponseStatus();
+  }
+
+  if (isResponseErrorCode(error) === false) {
+    throw responseErrors.invalidResponseErrorCode();
+  }
 
   return { kind: responseKind.ERROR, status, error };
 }

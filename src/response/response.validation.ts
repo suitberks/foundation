@@ -1,15 +1,16 @@
 import { isString } from '@/guard';
 
-import { ERROR_RESPONSE_STATUSES, responseKind, SUCCESS_RESPONSE_STATUSES } from './response.enums';
+import { RESPONSE_ERROR_CODE_PATTERN } from './response.constants';
+import { errorResponseStatusesArray, responseKind, successResponseStatusesArray } from './response.enums';
 import type { ErrorResponseStatus, SuccessResponseStatus } from './response.enums';
 import type { ErrorResponse, ResponseResult, SuccessResponse } from './response.types';
 
 /**
- * Determines whether a value is a stable camelCase response error code.
+ * Determines whether one value is a stable camelCase response error code.
  * Human-readable text and punctuation remain excluded from public envelopes.
  */
 export function isResponseErrorCode(value: unknown): value is string {
-  return isString(value) && /^[a-z][A-Za-z0-9]*$/.test(value);
+  return isString(value) && RESPONSE_ERROR_CODE_PATTERN.test(value);
 }
 
 /**
@@ -17,7 +18,7 @@ export function isResponseErrorCode(value: unknown): value is string {
  * Runtime membership mirrors the exact union exposed by `SuccessResponseStatus`.
  */
 export function isSuccessResponseStatus(value: unknown): value is SuccessResponseStatus {
-  return SUCCESS_RESPONSE_STATUSES.some((status) => status === value);
+  return successResponseStatusesArray.some((status) => status === value);
 }
 
 /**
@@ -25,7 +26,7 @@ export function isSuccessResponseStatus(value: unknown): value is SuccessRespons
  * Runtime membership mirrors the exact union exposed by `ErrorResponseStatus`.
  */
 export function isErrorResponseStatus(value: unknown): value is ErrorResponseStatus {
-  return ERROR_RESPONSE_STATUSES.some((status) => status === value);
+  return errorResponseStatusesArray.some((status) => status === value);
 }
 
 /**
@@ -39,7 +40,7 @@ export function isSuccessResponse<TData, TErrorCode extends string>(
 }
 
 /**
- * Narrows a response result to its failed branch through the shared discriminator.
+ * Narrows a response result to its unsuccessful branch through the shared discriminator.
  * Payload and error-code generics remain unchanged for downstream control-flow analysis.
  */
 export function isErrorResponse<TData, TErrorCode extends string>(

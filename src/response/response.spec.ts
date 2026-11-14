@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  ERROR_RESPONSE_STATUSES,
+  errorResponseStatusesArray,
   type ErrorCodeOf,
   type ErrorResponse,
   type ErrorResponseStatus,
@@ -13,7 +13,7 @@ import {
   type ResponseFailureCode,
   type ResponseKind,
   type ResponseResult,
-  SUCCESS_RESPONSE_STATUSES,
+  successResponseStatusesArray,
   type SuccessResponse,
   type SuccessResponseStatus,
   createErrorResponse,
@@ -50,9 +50,9 @@ type ExampleErrors = {
   productAlreadyExists: () => Error;
 };
 type ExampleResponse = SuccessResponse<{ id: string }> | ErrorResponse<ErrorCodeOf<ExampleErrors>>;
-type _SuccessStatusContract = Assert<IsExact<SuccessResponseStatus, (typeof SUCCESS_RESPONSE_STATUSES)[number]>>;
+type _SuccessStatusContract = Assert<IsExact<SuccessResponseStatus, (typeof successResponseStatusesArray)[number]>>;
 type _ResponseKindContract = Assert<IsExact<ResponseKind, 'success' | 'error'>>;
-type _ErrorStatusContract = Assert<IsExact<ErrorResponseStatus, (typeof ERROR_RESPONSE_STATUSES)[number]>>;
+type _ErrorStatusContract = Assert<IsExact<ErrorResponseStatus, (typeof errorResponseStatusesArray)[number]>>;
 type _ResponseResultContract = Assert<
   IsExact<ResponseResult<{ id: string }, ErrorCodeOf<ExampleErrors>>, ExampleResponse>
 >;
@@ -101,8 +101,8 @@ describe('response kind catalog', () => {
 
 describe('response status catalogs', () => {
   test('publishes the complete supported success and error status sets', () => {
-    expect(SUCCESS_RESPONSE_STATUSES).toEqual([200, 201, 202, 206]);
-    expect(ERROR_RESPONSE_STATUSES).toEqual([
+    expect(successResponseStatusesArray).toEqual([200, 201, 202, 206]);
+    expect(errorResponseStatusesArray).toEqual([
       400, 401, 403, 404, 405, 406, 408, 409, 410, 413, 414, 415, 422, 425, 429, 440, 498, 500, 501, 502, 503, 504,
     ]);
   });
