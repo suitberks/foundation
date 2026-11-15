@@ -10,9 +10,8 @@ import { honoErrors } from './hono.errors';
  * Construction rejects negative, non-finite, or overflowing durations before mounting.
  */
 export function createDelayMiddleware(delayMilliseconds: number): MiddlewareHandler {
-  // ↓ Reject invalid static policy before constructing the reusable middleware.
-
   const hasValidDelay =
+    // Reject invalid static policy before constructing the reusable middleware.
     Number.isFinite(delayMilliseconds) && delayMilliseconds >= 0 && delayMilliseconds <= MAX_TIMER_DELAY_MILLISECONDS;
 
   if (hasValidDelay === false) {
@@ -20,8 +19,6 @@ export function createDelayMiddleware(delayMilliseconds: number): MiddlewareHand
   }
 
   return createMiddleware(async (_context, next) => {
-    // ↓ Avoid allocating a timer when latency simulation is explicitly disabled.
-
     if (delayMilliseconds === 0) {
       return next();
     }

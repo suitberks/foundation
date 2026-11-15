@@ -111,6 +111,5 @@ export async function createHTTPRequestBodyPreview(
     return redactedBody;
   }
 
-  // Preserve both payload boundaries while making removal of its center explicit.
   return `${redactedBody.slice(0, edgeLength)}…${redactedBody.slice(-edgeLength)}`;
 }

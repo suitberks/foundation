@@ -33,8 +33,6 @@ function writeLog(
   const trace = normalizeLogError(error);
 
   sink(`[${timestamp}] ${serviceName} | ${formattedMessage}`);
-
-  // Keep stack traces visually subordinate while correlating them with the primary timestamp.
   if (trace) sink(`[${timestamp}] ${red('↳ trace').padEnd(18)} | ${dim(trace)}`);
 }
 

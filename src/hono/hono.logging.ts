@@ -19,9 +19,8 @@ import type { HonoLoggingMiddlewareOptions } from './hono.types';
 export function createLoggingMiddleware(options: HonoLoggingMiddlewareOptions = {}): MiddlewareHandler {
   const { bodyPreviewEdgeLength } = options;
 
-  // ↓ Reject invalid static policy while constructing middleware instead of during a request.
-
   const hasValidBodyPreviewEdgeLength =
+    // Reject invalid static policy while constructing middleware instead of during a request.
     bodyPreviewEdgeLength === undefined || (Number.isInteger(bodyPreviewEdgeLength) && bodyPreviewEdgeLength >= 1);
 
   if (hasValidBodyPreviewEdgeLength === false) {

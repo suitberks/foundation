@@ -63,8 +63,6 @@ function copyRedactedLogValue(value: unknown, seenValues: WeakMap<object, unknow
     return redactedValue;
   }
 
-  // ↓ Values outside JavaScript's object category cannot own enumerable sensitive keys.
-
   if (isObject(value) === false) {
     return value;
   }
@@ -86,8 +84,6 @@ function copyRedactedLogValue(value: unknown, seenValues: WeakMap<object, unknow
 
   const redactedValue = Object.create(prototype) as Record<string, unknown>;
   seenValues.set(value, redactedValue);
-
-  // ↓ Copy enumerable entries individually so circular references resolve to the copied structure.
 
   for (const [key, entryValue] of Object.entries(value)) {
     // Replace complete sensitive values without exposing or traversing nested content.
@@ -111,8 +107,6 @@ export function redactSensitiveValue(value: unknown): unknown {
  */
 export function redactSensitiveSearchParams(searchParams: URLSearchParams): URLSearchParams {
   const redactedSearchParams = new URLSearchParams();
-
-  // ↓ Rebuild entries individually so repeated keys and their original ordering remain intact.
 
   for (const [key, value] of searchParams) {
     redactedSearchParams.append(key, isSensitiveLogKey(key) ? REDACTED_LOG_VALUE : value);
@@ -138,8 +132,6 @@ export function redactSensitiveFormBody(body: string): string {
  */
 export function redactSensitiveJSON(json: string): string {
   try {
-    // ↓ Parse structure before redaction so key boundaries cannot be confused with string content.
-
     const parsedValue = JSON.parse(json) as unknown;
 
     return hasSensitiveLogValue(parsedValue) ? JSON.stringify(redactSensitiveValue(parsedValue)) : json;

@@ -69,8 +69,6 @@ export function isFileMimeTypeSupported(file: File, formats: readonly UploadForm
  * The comparison is case-insensitive and requires a complete suffix.
  */
 export function isFileExtensionSupported(file: File, formats: readonly UploadFormat[]): boolean {
-  // ↓ Compare complete lowercase dot-prefixed suffixes on both sides.
-
   const fileExtension = getFileExtension(file.name);
 
   if (fileExtension.length === 0) {
@@ -88,8 +86,6 @@ export function isFileExtensionSupported(file: File, formats: readonly UploadFor
  */
 export function isFileFormatSupported(file: File, options: UploadFormatValidationOptions): boolean {
   const { formats, extensionFallback = false } = options;
-
-  // ↓ MIME metadata stays authoritative while extensions apply only through explicit fallback.
 
   const isMimeTypeSupported = isFileMimeTypeSupported(file, formats);
 

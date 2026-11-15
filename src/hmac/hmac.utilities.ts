@@ -19,8 +19,6 @@ export function toHMACBytes(input: HMACInput): Uint8Array<ArrayBuffer> {
     return textEncoder.encode(input);
   }
 
-  // ↓ Copy bytes into an isolated `ArrayBuffer`-backed view accepted by Web Crypto.
-
   const bytes = new Uint8Array(input.length);
   bytes.set(input);
 
@@ -49,8 +47,6 @@ export function decodeHMACSignature(signature: string, encoding: HMACEncoding): 
   validateHMACEncoding(encoding);
 
   if (encoding === hmacEncoding.HEX) {
-    // ↓ Reject odd-length or non-hexadecimal signatures before native decoding.
-
     const hasValidHexSignature = signature.length % 2 === 0 && HMAC_HEX_SIGNATURE_PATTERN.test(signature);
 
     if (hasValidHexSignature === false) {
@@ -63,7 +59,6 @@ export function decodeHMACSignature(signature: string, encoding: HMACEncoding): 
   try {
     return decodeBase64(signature, HMAC_BASE64_OPTIONS[encoding]);
   } catch {
-    // Translate malformed transport text into the stable failure of its signature encoding.
     throw encoding === hmacEncoding.BASE64
       ? hmacErrors.invalidBase64Signature()
       : hmacErrors.invalidBase64UrlSignature();

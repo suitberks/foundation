@@ -44,7 +44,6 @@ export function decodeBase64(value: string, options: Base64Options = {}): Uint8A
   try {
     return Uint8Array.fromBase64(paddedValue, { alphabet, lastChunkHandling: 'strict' });
   } catch {
-    // Translate the native trailing-bit failure into the stable module error.
     throw base64Errors.invalidBase64Value();
   }
 }

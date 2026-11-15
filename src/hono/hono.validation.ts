@@ -35,8 +35,6 @@ export function createLimitedHonoValidator<TSchema extends z.ZodType, TTarget ex
 ) {
   const { maxSize, createBodyTooLargeError, ...validatorOptions } = options;
 
-  // ↓ Reject invalid static policy before constructing either reusable middleware.
-
   const hasValidBodyLimit = Number.isSafeInteger(maxSize) && maxSize >= 1;
 
   if (hasValidBodyLimit === false) {

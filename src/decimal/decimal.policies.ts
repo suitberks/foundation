@@ -11,12 +11,11 @@ export function defineDecimalFormat(options: DecimalFormatOptions): DecimalForma
   const { precision, scale, signed = false, zeroAllowed = true } = options;
 
   const hasValidPrecision = Number.isSafeInteger(precision) && precision > 0;
+  const hasValidScale = Number.isSafeInteger(scale) && scale >= 0 && scale < precision;
 
   if (hasValidPrecision === false) {
     throw decimalErrors.invalidDecimalPrecision();
   }
-
-  const hasValidScale = Number.isSafeInteger(scale) && scale >= 0 && scale < precision;
 
   if (hasValidScale === false) {
     throw decimalErrors.invalidDecimalScale();

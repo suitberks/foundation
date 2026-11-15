@@ -54,7 +54,6 @@ export async function retryExecution<TData>(
     } catch (error) {
       const isMaxAttempts = attempt === maxAttempts;
       const isRetryRejected =
-        // Consult the retry filter only while another attempt remains available.
         isMaxAttempts === false && shouldRetry ? (await shouldRetry(error, attempt)) === false : false;
 
       // ↓ Preserve the latest failure when no further attempt is allowed.
@@ -66,8 +65,6 @@ export async function retryExecution<TData>(
       }
 
       signal?.throwIfAborted();
-
-      // ↓ Resolve and validate the delay before allocating its timer.
 
       const resolvedDelay =
         // Delay resolution may be asynchronous if a delay function is provided.

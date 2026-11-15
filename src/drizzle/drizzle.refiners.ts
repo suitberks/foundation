@@ -13,14 +13,11 @@ import type { SQLWhereConditions } from './drizzle.types';
  */
 export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereConditions<NoInfer<TTable>>): SQL {
   const columns = getColumns(table);
-
-  // Restore the key-column relation erased by `Object.entries` and generic indexed access.
   const entries = Object.entries(where) as Array<[keyof typeof columns, unknown]>;
 
   const conditions = entries
     .filter(([, value]) => value !== undefined)
     .map(([key, value]) => {
-      // Ignore inherited properties so only the table's own columns can be addressed.
       const column = Object.hasOwn(columns, key) ? (columns[key] as AnyColumn | undefined) : undefined;
 
       // ↓ Reject runtime keys that entered outside the statically typed boundary.
@@ -29,7 +26,6 @@ export function sqlWhere<TTable extends Table>(table: TTable, where: SQLWhereCon
         throw drizzleErrors.whereColumnNotFound();
       }
 
-      // Preserve SQL null semantics instead of emitting an ineffective `= NULL` comparison.
       return value === null ? isNull(column) : eq(column, value);
     });
 
