@@ -4,11 +4,15 @@
 # ==========================================================================================
 
 quality-assurance *args:
-    # Validates types, lints the codebase, and applies formatting.
+    # Validates types, lints the codebase, runs tests and applies formatting.
     bun run typecheck && bun run lint && bun run format && bun run test {{ args }}
+
+codebase-cloc *args:
+    # Counts the lines of code in the codebase using cloc.
+    git ls-files 'src/**/*.tsx' 'src/**/*.ts' '*.ts' | xargs cloc {{ args }}
 
 # ==========================================================================================
 
-# Recipe aliases
+# ↓ Recipe aliases
 
 alias qa := quality-assurance

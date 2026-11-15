@@ -1,7 +1,7 @@
 # @suitberks/foundation
 
 Shared TypeScript foundations for reusable contracts, validation, framework adapters, and utilities.
-Designed for Bun, Node.js, Hono, Drizzle ORM, and Zod applications.
+Designed for Bun, Hono, Drizzle ORM, and Zod applications on runtimes with native `Uint8Array` Base64 and hex support.
 
 ## Installation
 
@@ -11,7 +11,7 @@ bun add @suitberks/foundation
 
 ## Modules
 
-- **Generic:** `base64`, `datetime`, `decimal`, `execution`, `guard`, `object`, `random`, `string-enum`, `type`.
+- **Generic:** `base64`, `datetime`, `decimal`, `execution`, `guard`, `object`, `random`, `string`, `string-enum`, `type`.
 - **Contracts:** `response`, `upload`, `zod`.
 - **Security:** `hmac`, `jwt`.
 - **Adapters:** `drizzle`, `hono`, `logging`.

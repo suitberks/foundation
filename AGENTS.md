@@ -31,10 +31,11 @@ line count, and avoid vague owners such as `common`, `shared`, `helpers`, or
 
 - `*.constants.ts` for immutable configuration and meaningful defaults;
 - `*.enums.ts` for literal collections, unions, records, and aliases;
-- `*.errors.ts` for complete error registries and derived code unions;
+- `*.errors.ts` for complete error registries, derived code unions, and custom error classes;
 - `*.types.ts` for reusable domain and public contracts;
 - `*.schemas.ts` for runtime schemas and schema factories;
 - `*.factory.ts` for non-schema value construction;
+- `*.policies.ts` for `define*` functions that validate and fix one policy;
 - `*.presets.ts` for ready-to-use policies composed from public values;
 - `*.resolvers.ts` for result translation and unwrapping;
 - `*.validation.ts` for ordered validation behavior;
@@ -42,10 +43,11 @@ line count, and avoid vague owners such as `common`, `shared`, `helpers`, or
 - `*.refiners.ts` for refinement, narrowing, and condition construction;
 - `*.utilities.ts` for cohesive stateless reusable behavior;
 - `*.services.ts` for stateful service classes;
-- `*.measurements.ts` for execution timing contracts and measurement behavior;
+- `*.measurements.ts` for execution timing measurement behavior;
 - `*.retry.ts` and `*.timeout.ts` for bounded execution policies;
 - `*.execution.ts`, `*.logging.ts`, and `*.respond.ts` for framework concerns;
 - `*.request-id.ts` and `*.security.ts` for their narrow cross-cutting concerns;
+- `*.requests.ts` for framework-neutral HTTP request formatting and previews;
 - `*.spec.ts` for the module's runtime and compile-time specification;
 - `index.ts` for the module's public barrel.
 
@@ -67,10 +69,10 @@ Contract composition
   upload
             ↓
 Contract primitives
-  response / logging / zod
+  response / logging / zod / hmac
             ↓
 Generic foundations
-  base64 / datetime / decimal / guard / object / random / string-enum / type
+  base64 / datetime / decimal / execution / guard / object / random / string / string-enum / type
 ```
 
 Independent modules may skip layers, but dependencies must never point upward.
@@ -93,6 +95,18 @@ Private validation may remain accessible between files in one module without
 being exported from its barrel. Barrel inclusion is the explicit package API
 decision, not a mechanical list of every declaration in the directory.
 
+Constants files are always re-exported by name, so every public constant is an
+explicit decision and internal patterns or boundaries stay unexported. Inside a
+barrel, named re-exports come first, followed by one blank line and the
+`export *` statements:
+
+```ts
+export { DEFAULT_BASE64_ALPHABET } from './base64.constants';
+
+export * from './base64.enums';
+export * from './base64.utilities';
+```
+
 ## Naming and declarations
 
 Use PascalCase for exported types and classes, precise camelCase verbs for
@@ -110,7 +124,8 @@ Keep function signatures readable. When a defaulted options object has several
 properties or makes the declaration visually dense, accept a named `options`
 parameter and destructure it at the beginning of the function body. Keep inline
 parameter destructuring only while the complete signature remains effortless to
-scan.
+scan. Separate the destructuring group from the following statements with one
+blank line.
 
 Order declarations dependency-first within each file. Place foundational types,
 constants, predicates, and low-level helpers before the declarations that consume
@@ -180,7 +195,7 @@ its literals manually. Place this exact zone comment above the alias, replacing
 only `{entity}` with the camelCase registry owner:
 
 ```ts
-// ↓ Inferred literal union of error codes from `{entity}Errors`.
+// Inferred literal union of error codes from `{entity}Errors`.
 ```
 
 Do not add sentences, punctuation, prefixes, or implementation details to error
@@ -212,6 +227,11 @@ export const EXAMPLE_NON_IMPORTANT = 5; // ← Short contextual explanation.
 
 Do not comment a constant whose name and literal already communicate everything.
 
+Module-level configuration such as patterns, boundaries, and option maps lives in
+`*.constants.ts` even when the barrel keeps it private. Only configured runtime
+instances, such as a shared `TextEncoder` or a `WeakMap` cache, stay as `const`
+declarations beside the single file that consumes them.
+
 ## Enums
 
 Every enum collection file starts with this exact two-line header.
@@ -242,7 +262,7 @@ Introduce the derived union with this exact comment, replacing only `{array}`
 with the authoritative literal-array identifier:
 
 ```ts
-// ↓ Inferred literal union of values from `{array}`.
+// Inferred literal union of values from `{array}`.
 ```
 
 Use a compact named divider when one file owns several enum families. Do not
@@ -264,6 +284,18 @@ interaction, or cancellation semantics are not obvious from the property type.
 
 Use `@example` only when concrete composition materially improves understanding.
 Never wrap JSDoc examples in fenced Markdown blocks.
+
+Show a short example result after the expression with a trailing `// ←` comment.
+When that would make the line long, move the result to the next line under `// ↑`:
+
+```ts
+/**
+ * @example
+ * generateRandomString(5); // ← `aZ3fG`
+ * createStringEnumRecord(['foo-bar.s', 'baz'] as const);
+ * // ↑ `{ FOO_BAR_S: 'foo-bar.s', BAZ: 'baz' }`
+ */
+```
 
 Specifications contain no JSDoc. Test-local functions, tables, fixtures, and
 compile-time helpers either use a short ordinary comment when genuinely needed
@@ -308,15 +340,24 @@ if (signature.length % 2 !== 0 || HEX_SIGNATURE_PATTERN.test(signature) === fals
 ```
 
 When a comment explains one specific statement, omit the arrow and keep it
-directly adjacent without a blank line. This includes one-line guards and single
-declarations whose expressions happen to wrap across several visual lines:
+directly adjacent without a blank line. This includes single declarations whose
+expressions happen to wrap across several visual lines:
 
 ```ts
 // Preserve the original failure and its stack trace.
 throw error;
+```
 
-// Preserve an explicitly disabled retry policy.
-if (maxAttempts === 0) return;
+Every guard that ends with `return`, `throw`, `continue`, or `break` uses a braced
+block, even when its body is one statement. Separate the guard from neighboring
+statements with one blank line on each side:
+
+```ts
+const body = await readBoundedRequestText(request, LOG_BODY_PREVIEW_MAX_BYTES);
+
+if (body === undefined) {
+  return OVERSIZED_LOG_BODY;
+}
 ```
 
 If one compiler limitation or safety invariant motivates several declarations,
@@ -335,9 +376,24 @@ try {
 }
 ```
 
+When a wrapped declaration needs a deliberate line break, its comment may sit
+between `=` and the expression. It explains that one expression and therefore
+keeps the single-statement form without an arrow:
+
+```ts
+const resolvedDelay =
+  // Delay resolution may be asynchronous if a delay function is provided.
+  isFunction(delayMilliseconds) ? await delayMilliseconds(error, attempt) : delayMilliseconds;
+```
+
 Prefer one concise line. Use a rectangular multi-line reasoning block only when
-one line cannot remain accurate and clear. Do not prefix every line of one block
-with a separate arrow.
+one line cannot remain accurate and clear. Each line of a block comment may carry
+its own arrow when the block targets the declarations that follow it:
+
+```ts
+// ↓ Response envelopes preserve payloads, error codes, and their supported HTTP statuses.
+// ↓ Discriminated branches keep successful data separate from machine-readable failures.
+```
 
 ## Implementation and safety
 
