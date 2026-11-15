@@ -1,5 +1,5 @@
-// Oxlint configuration – defines typed linting rules and overrides.
-// More details: https://oxc.rs/docs/guide/usage/linter/config.html;
+// Oxlint configuration file, defines typed linting rules and per-file overrides for the codebase.
+// More details about Oxlint configuration: https://oxc.rs/docs/guide/usage/linter/config.html;
 
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",

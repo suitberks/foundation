@@ -1,4 +1,5 @@
-# More details about ignoring files: https://help.github.com/articles/ignoring-files;
+# Git ignore configuration file, excludes dependencies, build output, local secrets, caches, and IDE metadata.
+# More details about Git ignore configuration: https://docs.github.com/en/get-started/git-basics/ignoring-files;
 
 # ↓ Dependencies
 
@@ -39,10 +40,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
-# ↓ IntelliJ based IDEs
+# ↓ IntelliJ-based IDEs
 
 .idea
 
-# ↓ Finder (MacOS) folder config
+# ↓ Finder (macOS) folder config
 
 .DS_Store

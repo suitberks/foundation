@@ -1,5 +1,5 @@
-// Oxfmt configuration – formatting and import sorting rules.
-// More details: https://oxc.rs/docs/guide/usage/formatter.html;
+// Oxfmt configuration file, defines formatting and import sorting rules for the codebase.
+// More details about Oxfmt configuration: https://oxc.rs/docs/guide/usage/formatter.html;
 
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",

@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
-// TSDown bundles the root entry as ESM and emits the public TypeScript declarations.
-// More about the configuration: https://tsdown.dev/reference/api/Interface.UserConfig;
+// TSDown configuration file, bundles the root entry as ESM and emits public TypeScript declarations.
+// More details about TSDown configuration: https://tsdown.dev/reference/api/Interface.UserConfig;
 
 const tsdownConfig = defineConfig({
   entry: ['src/index.ts'],
