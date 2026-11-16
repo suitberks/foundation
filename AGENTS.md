@@ -101,10 +101,10 @@ barrel, named re-exports come first, followed by one blank line and the
 `export *` statements:
 
 ```ts
-export { DEFAULT_BASE64_ALPHABET } from './base64.constants';
+export { DEFAULT_BASE64_ALPHABET } from "./base64.constants";
 
-export * from './base64.enums';
-export * from './base64.utilities';
+export * from "./base64.enums";
+export * from "./base64.utilities";
 ```
 
 ## Naming and declarations
@@ -133,7 +133,7 @@ properties into a meaningfully named rest, and destructure that rest next:
 
 ```ts
 const { timeoutMilliseconds = DEFAULT_HTTP_TIMEOUT_MILLISECONDS, ...transportOptions } = options;
-const { credentials = 'include', throwHttpErrors = false, hooks } = transportOptions;
+const { credentials = "include", throwHttpErrors = false, hooks } = transportOptions;
 ```
 
 Order declarations dependency-first within each file. Place foundational types,
@@ -214,10 +214,10 @@ part of the public contract; otherwise translate them at the owning boundary.
 
 ## Constants
 
-Important constants require a meaningful rectangular two-line JSDoc regardless
-of whether the module barrel exposes them. The first line states the represented
+Every constant requires a meaningful rectangular two-line JSDoc regardless of
+whether the module barrel exposes it. The first line states the represented
 policy; the second explains its boundary, default behavior, units, or
-interpretation.
+interpretation. Keep one documentation style throughout every constants file.
 
 ```ts
 /**
@@ -226,15 +226,6 @@ interpretation.
  */
 export const DEFAULT_RETRY_MAX_ATTEMPTS = 3;
 ```
-
-Simple constants needing only a short clarification use a trailing left-arrow
-comment. Do not inflate them into JSDoc or move the comment above the declaration:
-
-```ts
-export const EXAMPLE_NON_IMPORTANT = 5; // ← Short contextual explanation.
-```
-
-Do not comment a constant whose name and literal already communicate everything.
 
 Module-level configuration such as patterns, boundaries, and option maps lives in
 `*.constants.ts` even when the barrel keeps it private. Only configured runtime
@@ -333,7 +324,7 @@ one blank line before that block:
 // ↓ Release every timer and cross-signal listener after settlement.
 
 clearTimeout(timeout);
-signal.removeEventListener('abort', onAbort);
+signal.removeEventListener("abort", onAbort);
 ```
 
 A multi-line `if`, loop, `try`, or similar construct counts as a block when the

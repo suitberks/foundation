@@ -12,6 +12,20 @@ export const DEFAULT_DATETIME_TIMEZONE = 'Europe/London';
  */
 export const DEFAULT_DATETIME_LOCALE = enGB;
 
-export const DATETIME_DATE_PATTERN = 'dd.MM.yyyy'; // ← Numeric calendar date without timezone metadata.
-export const DATETIME_TIME_PATTERN = 'HH:mm:ss'; // ← Twenty-four-hour wall-clock time without an offset.
-export const DATETIME_LOCALIZED_PATTERN = 'HH:mm:ss, d MMMM yyyy'; // ← Localized long date and wall-clock time.
+/**
+ * Numeric calendar date pattern used by date-fns formatting utilities.
+ * Day-first digits omit any timezone, offset, or localized month names.
+ */
+export const DATETIME_DATE_PATTERN = 'dd.MM.yyyy';
+
+/**
+ * Twenty-four-hour wall-clock time pattern used by date-fns formatting.
+ * Seconds stay included while timezone offsets are appended separately.
+ */
+export const DATETIME_TIME_PATTERN = 'HH:mm:ss';
+
+/**
+ * Localized long date and wall-clock time pattern for human-readable output.
+ * Month names follow the selected date-fns locale in a day-first written order.
+ */
+export const DATETIME_LOCALIZED_PATTERN = 'HH:mm:ss, d MMMM yyyy';

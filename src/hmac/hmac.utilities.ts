@@ -8,7 +8,11 @@ import { hmacErrors } from './hmac.errors';
 import type { HMACInput } from './hmac.types';
 import { validateHMACEncoding } from './hmac.validation';
 
-const textEncoder = new TextEncoder(); // ← Shared stateless UTF-8 encoder.
+/**
+ * Shared UTF-8 encoder reused by every HMAC input conversion in this module.
+ * The encoder holds no per-call state, so one instance serves every caller.
+ */
+const textEncoder = new TextEncoder();
 
 /**
  * Converts an HMAC payload or secret into an isolated byte array representation.
