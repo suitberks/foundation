@@ -8,9 +8,13 @@ export function getFileExtension(fileName: string): string {
   const normalizedFileName = fileName.trim();
   const extensionIndex = normalizedFileName.lastIndexOf('.');
 
-  return extensionIndex > 0 && extensionIndex < normalizedFileName.length - 1
-    ? normalizedFileName.slice(extensionIndex).toLowerCase()
-    : '';
+  const hasExtension = extensionIndex > 0 && extensionIndex < normalizedFileName.length - 1;
+
+  if (hasExtension === false) {
+    return '';
+  }
+
+  return normalizedFileName.slice(extensionIndex).toLowerCase();
 }
 
 /**

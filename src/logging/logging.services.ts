@@ -32,8 +32,13 @@ function writeLog(
   const formattedMessage = white(message);
   const trace = normalizeLogError(error);
 
+  const hasTrace = trace !== undefined && trace.length > 0;
+
   sink(`[${timestamp}] ${serviceName} | ${formattedMessage}`);
-  if (trace) sink(`[${timestamp}] ${red('↳ trace').padEnd(18)} | ${dim(trace)}`);
+
+  if (hasTrace) {
+    sink(`[${timestamp}] ${red('↳ trace').padEnd(18)} | ${dim(trace)}`);
+  }
 }
 
 /**

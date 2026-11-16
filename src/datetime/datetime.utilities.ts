@@ -30,8 +30,9 @@ export function getZonedTime({ tz = DEFAULT_DATETIME_TIMEZONE }: DateTimeZoneOpt
  */
 export function getUTCOffset(date: Date, tz: string): string {
   const offset = getTimezoneOffset(tz, date) / (60 * 60 * 1000);
+  const offsetSign = offset >= 0 ? '+' : '';
 
-  return `(${offset >= 0 ? '+' : ''}${offset} UTC)`;
+  return `(${offsetSign}${offset} UTC)`;
 }
 
 /**
@@ -63,7 +64,11 @@ export function getFormattedDate(options: FormattedDateOptions = {}): string {
   const pattern = withTime ? `${DATETIME_DATE_PATTERN} ${DATETIME_TIME_PATTERN}` : DATETIME_DATE_PATTERN;
   const formatted = format(zonedTime, pattern);
 
-  return `${formatted}${withTime ? ` ${getUTCOffset(currentTime, tz)}` : ''}`;
+  if (withTime === false) {
+    return formatted;
+  }
+
+  return `${formatted} ${getUTCOffset(currentTime, tz)}`;
 }
 
 /**

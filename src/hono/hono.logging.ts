@@ -13,11 +13,20 @@ import { getHonoRequestId } from './hono.request-id';
 import type { HonoLoggingMiddlewareOptions } from './hono.types';
 
 /**
+ * Writes one completed request line through the shared informational logger.
+ * The logger resolves per call so replaced or observed methods stay effective.
+ */
+function writeHonoRequestLog(message: string, service: string): void {
+  log.info(message, service);
+}
+
+/**
  * Creates Hono middleware with configurable body capture, correlation, and output.
  * Sensitive values are redacted before the completed request line reaches its writer.
  */
 export function createLoggingMiddleware(options: HonoLoggingMiddlewareOptions = {}): MiddlewareHandler {
-  const { bodyPreviewEdgeLength } = options;
+  const { bodyPreviewEdgeLength, includeBody = true, service = HONO_LOGGING_SERVICE, ...outputOptions } = options;
+  const { requestIdHeader = HONO_REQUEST_ID_HEADER, write = writeHonoRequestLog } = outputOptions;
 
   const hasValidBodyPreviewEdgeLength =
     // Reject invalid static policy while constructing middleware instead of during a request.
@@ -26,11 +35,6 @@ export function createLoggingMiddleware(options: HonoLoggingMiddlewareOptions = 
   if (hasValidBodyPreviewEdgeLength === false) {
     throw loggingErrors.invalidBodyPreviewEdgeLength();
   }
-
-  const service = options.service ?? HONO_LOGGING_SERVICE;
-  const includeBody = options.includeBody ?? true;
-  const requestIdHeader = options.requestIdHeader ?? HONO_REQUEST_ID_HEADER;
-  const write = options.write ?? ((message, serviceName) => log.info(message, serviceName));
 
   return async (context, next) => {
     const contentType = context.req.header('content-type');

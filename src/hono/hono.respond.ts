@@ -18,8 +18,7 @@ export function respond<
 ): Response & TypedResponse<SuccessResponse<TData>, TStatus, 'json'> {
   const response = createSuccessResponse(options.status, (options.data ?? {}) as TData);
 
-  // ↓ Hono cannot preserve an unconstrained generic object through its recursive `JSONParsed` type.
-
+  // Hono cannot preserve an unconstrained generic object through its recursive `JSONParsed` type.
   return c.json(response, options.status) as unknown as Response &
     TypedResponse<SuccessResponse<TData>, TStatus, 'json'>;
 }

@@ -354,7 +354,9 @@ describe('zodUploadFileSchema', () => {
       const result = strictPngSchema.safeParse(file);
 
       expect(result.success).toBe(false);
-      if (result.success === false) expect(result.error.issues[0]?.message).toBe(expectedError);
+      if (result.success === false) {
+        expect(result.error.issues[0]?.message).toBe(expectedError);
+      }
     }
   });
 

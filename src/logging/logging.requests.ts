@@ -54,7 +54,11 @@ export function getColoredHTTPStatus(status: number): (text: string) => string {
     return status >= minimum && status <= maximum;
   });
 
-  return statusColor ? statusColor.color : (text: string) => text;
+  if (statusColor === undefined) {
+    return (text: string) => text;
+  }
+
+  return statusColor.color;
 }
 
 /**

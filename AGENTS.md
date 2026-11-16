@@ -127,6 +127,15 @@ parameter destructuring only while the complete signature remains effortless to
 scan. Separate the destructuring group from the following statements with one
 blank line.
 
+When one destructuring group would exceed the line width, do not spread a single
+pattern across several lines. Separate one logical block, collect the remaining
+properties into a meaningfully named rest, and destructure that rest next:
+
+```ts
+const { timeoutMilliseconds = DEFAULT_HTTP_TIMEOUT_MILLISECONDS, ...transportOptions } = options;
+const { credentials = 'include', throwHttpErrors = false, hooks } = transportOptions;
+```
+
 Order declarations dependency-first within each file. Place foundational types,
 constants, predicates, and low-level helpers before the declarations that consume
 them. For independent declarations, preserve the clearest public reading order;
@@ -348,9 +357,9 @@ expressions happen to wrap across several visual lines:
 throw error;
 ```
 
-Every guard that ends with `return`, `throw`, `continue`, or `break` uses a braced
-block, even when its body is one statement. Separate the guard from neighboring
-statements with one blank line on each side:
+Every `if`, `else`, and loop body uses a braced block, even when it contains one
+statement. Separate each guard that ends with `return`, `throw`, `continue`, or
+`break` from neighboring statements with one blank line on each side:
 
 ```ts
 const body = await readBoundedRequestText(request, LOG_BODY_PREVIEW_MAX_BYTES);
@@ -411,9 +420,43 @@ to an unrelated record. If the JavaScript standard library erases known keys or
 entries, restore only the narrow relation the type system lost.
 
 Extract a dense or multi-clause boolean expression into a positively named local
-constant before using it for control flow. The name must state the resulting
-condition, not merely repeat one operand or force the reader to negate the
-expression mentally.
+constant before using it for control flow or returning it. The name must state the
+resulting condition, not merely repeat one operand or force the reader to negate
+the expression mentally.
+
+Keep returned expressions simple. Resolve terminal cases through guards first,
+then name the remaining condition or computed value before returning it. Avoid
+mixing several operators, nested calls, or callbacks inside one `return`:
+
+```ts
+const url = URL.parse(value);
+
+if (url === null) {
+  return true;
+}
+
+const hasEmbeddedCredentials = url.username.length > 0 || url.password.length > 0;
+
+return hasEmbeddedCredentials === false;
+```
+
+Do not compress a branch-dependent value into a conditional expression when its
+branches encode different domain semantics, invert an earlier decision, or need
+separate reasoning. Declare a typed mutable local and assign it through explicit
+`if` and `else` branches instead:
+
+```ts
+let shouldStore: boolean;
+
+if (selection.mode === bulkSelectionMode.INCLUDE) {
+  shouldStore = shouldSelect;
+} else {
+  shouldStore = shouldSelect === false;
+}
+```
+
+Reserve conditional expressions for short direct choices whose branches remain
+obvious without mentally translating or negating their meaning.
 
 Validate static policy before starting work. Validate dynamically resolved
 policy before allocating its resource. Reject invalid runtime data even when

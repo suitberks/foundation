@@ -53,8 +53,7 @@ export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorH
 
     const fallback = honoErrors.internalServerError();
 
-    // ↓ Hono's `HTTPException` type erases the literal status supplied to its constructor.
-
+    // Hono's `HTTPException` type erases the literal status supplied to its constructor.
     const status = fallback.status as 500;
     const response: ErrorResponse = createErrorResponse(status, fallback.message);
 

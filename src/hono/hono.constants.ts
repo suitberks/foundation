@@ -1,6 +1,6 @@
 /**
  * Default HTTP header carrying one request identifier across service boundaries.
- * Incoming non-empty values are preserved while missing identifiers are generated.
+ * Valid incoming values are preserved while missing or malformed ones are replaced.
  */
 export const HONO_REQUEST_ID_HEADER = 'X-Request-ID';
 

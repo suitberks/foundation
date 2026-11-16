@@ -30,13 +30,18 @@ export function getHonoRequestId(context: Context, header: string = HONO_REQUEST
  * The resolved value is returned on the response and stays available to adapters.
  */
 export function createRequestIdMiddleware(options: HonoRequestIdMiddlewareOptions = {}): MiddlewareHandler {
-  const header = options.header ?? HONO_REQUEST_ID_HEADER;
-  const createRequestId = options.createRequestId ?? (() => crypto.randomUUID());
+  const { header = HONO_REQUEST_ID_HEADER, createRequestId = () => crypto.randomUUID() } = options;
 
   return async (context, next) => {
-    const incomingRequestId = context.req.header(header)?.trim();
-    const generatedRequestId = isHonoRequestId(incomingRequestId) ? undefined : createRequestId();
-    const requestId = isString(generatedRequestId) ? generatedRequestId.trim() : incomingRequestId;
+    let requestId = context.req.header(header)?.trim();
+
+    // ↓ Replace missing or malformed incoming identifiers with one generated value.
+
+    if (isHonoRequestId(requestId) === false) {
+      const generatedRequestId: unknown = createRequestId();
+
+      requestId = isString(generatedRequestId) ? generatedRequestId.trim() : undefined;
+    }
 
     // ↓ Reject generated identifiers that violate the same correlation contract.
 

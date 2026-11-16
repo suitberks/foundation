@@ -123,7 +123,11 @@ export function redactSensitiveFormBody(body: string): string {
   const searchParams = new URLSearchParams(body);
   const hasSensitiveKey = [...searchParams.keys()].some(isSensitiveLogKey);
 
-  return hasSensitiveKey ? redactSensitiveSearchParams(searchParams).toString() : body;
+  if (hasSensitiveKey === false) {
+    return body;
+  }
+
+  return redactSensitiveSearchParams(searchParams).toString();
 }
 
 /**
@@ -134,7 +138,11 @@ export function redactSensitiveJSON(json: string): string {
   try {
     const parsedValue = JSON.parse(json) as unknown;
 
-    return hasSensitiveLogValue(parsedValue) ? JSON.stringify(redactSensitiveValue(parsedValue)) : json;
+    if (hasSensitiveLogValue(parsedValue) === false) {
+      return json;
+    }
+
+    return JSON.stringify(redactSensitiveValue(parsedValue));
   } catch {
     return json;
   }

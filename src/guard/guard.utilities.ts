@@ -35,7 +35,12 @@ export function isNumber(value: unknown): value is number {
  * Fractional, negative, infinite, and values above `0xff` remain outside the result.
  */
 export function isByte(value: unknown): value is number {
-  return isNumber(value) && Number.isInteger(value) && value >= 0 && value <= 0xff;
+  if (isNumber(value) === false) {
+    return false;
+  }
+
+  const isUnsignedByteInteger = Number.isInteger(value) && value >= 0 && value <= 0xff;
+  return isUnsignedByteInteger;
 }
 
 /**

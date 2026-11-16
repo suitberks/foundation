@@ -21,8 +21,11 @@ export async function executeWithTimeout<TData>(
 
   // ↓ Forward caller cancellation through the internally controlled signal.
 
-  if (callerSignal?.aborted) controller.abort(callerSignal.reason);
-  else callerSignal?.addEventListener('abort', forwardCallerAbort, { once: true });
+  if (callerSignal?.aborted) {
+    controller.abort(callerSignal.reason);
+  } else {
+    callerSignal?.addEventListener('abort', forwardCallerAbort, { once: true });
+  }
 
   controller.signal.throwIfAborted();
 
@@ -35,8 +38,11 @@ export async function executeWithTimeout<TData>(
   const abortedExecution = new Promise<never>((_, reject) => {
     rejectAbortedExecution = reject;
 
-    if (controller.signal.aborted) reject(controller.signal.reason);
-    else controller.signal.addEventListener('abort', rejectOnAbort, { once: true });
+    if (controller.signal.aborted) {
+      reject(controller.signal.reason);
+    } else {
+      controller.signal.addEventListener('abort', rejectOnAbort, { once: true });
+    }
   });
 
   try {
