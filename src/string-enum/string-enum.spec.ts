@@ -10,7 +10,7 @@ import {
   createStringEnumRecord,
 } from '@/index';
 
-// == CompileTimeContracts =============================================
+// == CompileTimeContracts ==============================================
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
@@ -52,7 +52,7 @@ type _CamelCaseStringEnumRecordContract = Assert<
   >
 >;
 
-// == StringEnumRecords ================================================
+// == StringEnumRecords =================================================
 
 describe('createStringEnumRecord', () => {
   test('normalizes camelCase, dots, and hyphens while preserving literal values', () => {

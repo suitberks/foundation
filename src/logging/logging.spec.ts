@@ -89,7 +89,7 @@ describe('logging levels', () => {
   });
 });
 
-// == LoggingConfiguration =============================================
+// == LoggingConfiguration ==============================================
 
 describe('logging configuration', () => {
   test('publishes stable redaction policy and ordered HTTP status ranges', () => {
@@ -110,7 +110,7 @@ describe('logging configuration', () => {
   });
 });
 
-// == RequestBodyPreviews ==============================================
+// == RequestBodyPreviews ===============================================
 
 describe('createHTTPRequestBodyPreview', () => {
   test('normalizes and redacts ordinary request bodies without consuming the source', async () => {
@@ -167,7 +167,7 @@ describe('createHTTPRequestBodyPreview', () => {
   });
 });
 
-// == SensitiveValueRedaction ==========================================
+// == SensitiveValueRedaction ===========================================
 
 describe('sensitive log value redaction', () => {
   test('redacts partial case-insensitive key matches throughout nested JSON', () => {
@@ -236,7 +236,7 @@ describe('sensitive log value redaction', () => {
   });
 });
 
-// == HTTPStatusColorSelection =========================================
+// == HTTPStatusColorSelection ==========================================
 
 describe('getColoredHTTPStatus', () => {
   test.each([
@@ -283,7 +283,7 @@ describe('formatHTTPRequestLog', () => {
   });
 });
 
-// == LoggingServiceOutput =============================================
+// == LoggingServiceOutput ==============================================
 
 describe('log', () => {
   test('writes one labeled line for informational and warning messages', () => {

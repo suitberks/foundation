@@ -37,7 +37,7 @@ import {
 // These tests cover Hono responses, validation, middleware, and global error handling behavior.
 // They preserve exact public contracts, stable failures, body limits, and request boundaries.
 
-// == CompileTimeContracts =============================================
+// == CompileTimeContracts ==============================================
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
@@ -230,7 +230,7 @@ describe('fileRespond', () => {
   });
 });
 
-// == RequestValidation ================================================
+// == RequestValidation =================================================
 
 describe('createHonoValidator', () => {
   test('passes asynchronously validated and transformed JSON to the route handler', async () => {
@@ -425,7 +425,7 @@ describe('createQueryValidator', () => {
   });
 });
 
-// == DevelopmentDelay =================================================
+// == DevelopmentDelay ==================================================
 
 describe('createDelayMiddleware', () => {
   test('defers downstream handling until the configured timer settles', async () => {
@@ -748,7 +748,7 @@ describe('loggingMiddleware', () => {
   });
 });
 
-// == RequestIdentifiers ===============================================
+// == RequestIdentifiers ================================================
 
 describe('requestIdMiddleware', () => {
   test('publishes one bounded token pattern for accepted identifiers', () => {

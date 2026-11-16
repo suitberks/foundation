@@ -17,7 +17,7 @@ import {
   getZonedTime,
 } from '@/index';
 
-// == CompileTimeContracts =============================================
+// == CompileTimeContracts ==============================================
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
@@ -40,7 +40,7 @@ afterEach(() => {
   setSystemTime();
 });
 
-// == DatetimePolicies =================================================
+// == DatetimePolicies ==================================================
 
 describe('datetime policies', () => {
   test('publishes the default timezone used by omitted options', () => {
@@ -48,7 +48,7 @@ describe('datetime policies', () => {
   });
 });
 
-// == TimezoneAwareFormatting ==========================================
+// == TimezoneAwareFormatting ===========================================
 
 describe('datetime utilities', () => {
   test('reports stable UTC offsets, including DST and fractional-hour zones', () => {

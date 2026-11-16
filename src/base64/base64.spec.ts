@@ -15,7 +15,7 @@ import {
 // These tests describe canonical Base64 encoding, decoding, and option validation.
 // They preserve byte identity and reject every representation encoding cannot produce.
 
-// == CompileTimeContracts =============================================
+// == CompileTimeContracts ==============================================
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
@@ -36,7 +36,7 @@ type _Base64ErrorCodeContract = Assert<
 
 const bytes = new Uint8Array([0, 1, 127, 128, 254, 255]);
 
-// == Base64Catalogs ===================================================
+// == Base64Catalogs ====================================================
 
 describe('Base64 catalogs', () => {
   test('keeps literal collections, aliases, and defaults synchronized', () => {
@@ -52,7 +52,7 @@ describe('Base64 catalogs', () => {
   });
 });
 
-// == Base64Encoding ===================================================
+// == Base64Encoding ====================================================
 
 describe('Base64 utilities', () => {
   test.each([

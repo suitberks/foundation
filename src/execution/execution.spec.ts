@@ -408,7 +408,7 @@ describe('executeWithTimeout', () => {
   });
 });
 
-// == ExecutionMeasurement =============================================
+// == ExecutionMeasurement ==============================================
 
 describe('measureExecutionTime', () => {
   test('measures synchronous executions through the same promise-based result', async () => {

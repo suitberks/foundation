@@ -9,7 +9,7 @@ import {
   randomErrors,
 } from '@/index';
 
-// == CompileTimeContracts =============================================
+// == CompileTimeContracts ==============================================
 
 type IsExact<TActual, TExpected> =
   (<TValue>() => TValue extends TActual ? 1 : 2) extends <TValue>() => TValue extends TExpected ? 1 : 2
@@ -22,7 +22,7 @@ type Assert<TCondition extends true> = TCondition;
 
 type _RandomErrorCodeContract = Assert<IsExact<RandomErrorCode, 'invalidRandomStringLength'>>;
 
-// == RandomPolicies ===================================================
+// == RandomPolicies ====================================================
 
 describe('random policies', () => {
   test('publishes the default alphabet, output length, and Web Crypto batch boundary', () => {
@@ -36,7 +36,7 @@ describe('random policies', () => {
   });
 });
 
-// == RandomStringGeneration ===========================================
+// == RandomStringGeneration ============================================
 
 describe('generateRandomString', () => {
   test('uses the documented default length and alphanumeric collection', () => {

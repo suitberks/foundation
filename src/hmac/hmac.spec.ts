@@ -83,7 +83,7 @@ describe('HMAC errors', () => {
   });
 });
 
-// == SignatureEncoding ================================================
+// == SignatureEncoding =================================================
 
 describe('HMAC encoding utilities', () => {
   test('encodes strings as UTF-8 and copies supplied byte arrays', () => {

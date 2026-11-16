@@ -52,7 +52,7 @@ function assertRejectedConditions(): void {
 
 void assertRejectedConditions;
 
-// == SharedSQLRepresentation ==========================================
+// == SharedSQLRepresentation ===========================================
 
 // Compiles a where fragment into Drizzle's stable public query representation.
 // Returning SQL and parameters avoids assertions against optional typing metadata.
@@ -75,7 +75,7 @@ describe('drizzle errors', () => {
   });
 });
 
-// == DefinedSQLConditions =============================================
+// == DefinedSQLConditions ==============================================
 
 describe('sqlWhere defined conditions', () => {
   test('builds a single equality condition', () => {
@@ -107,7 +107,7 @@ describe('sqlWhere defined conditions', () => {
   });
 });
 
-// == OmittedSQLConditions =============================================
+// == OmittedSQLConditions ==============================================
 
 describe('sqlWhere omitted conditions', () => {
   test('filters undefined values while retaining the remaining conditions', () => {
@@ -141,7 +141,7 @@ describe('sqlWhere omitted conditions', () => {
   );
 });
 
-// == OptionalSQLConditions ============================================
+// == OptionalSQLConditions =============================================
 
 describe('sqlWhereOptional', () => {
   test('returns undefined only for an omitted where object', () => {
