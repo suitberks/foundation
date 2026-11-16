@@ -101,10 +101,10 @@ barrel, named re-exports come first, followed by one blank line and the
 `export *` statements:
 
 ```ts
-export { DEFAULT_BASE64_ALPHABET } from "./base64.constants";
+export { DEFAULT_BASE64_ALPHABET } from './base64.constants';
 
-export * from "./base64.enums";
-export * from "./base64.utilities";
+export * from './base64.enums';
+export * from './base64.utilities';
 ```
 
 ## Naming and declarations
@@ -133,7 +133,7 @@ properties into a meaningfully named rest, and destructure that rest next:
 
 ```ts
 const { timeoutMilliseconds = DEFAULT_HTTP_TIMEOUT_MILLISECONDS, ...transportOptions } = options;
-const { credentials = "include", throwHttpErrors = false, hooks } = transportOptions;
+const { credentials = 'include', throwHttpErrors = false, hooks } = transportOptions;
 ```
 
 Order declarations dependency-first within each file. Place foundational types,
@@ -324,7 +324,7 @@ one blank line before that block:
 // ↓ Release every timer and cross-signal listener after settlement.
 
 clearTimeout(timeout);
-signal.removeEventListener("abort", onAbort);
+signal.removeEventListener('abort', onAbort);
 ```
 
 A multi-line `if`, loop, `try`, or similar construct counts as a block when the
