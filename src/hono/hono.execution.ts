@@ -10,11 +10,14 @@ import { getHonoRequestId } from './hono.request-id';
 import type { HonoErrorHandlerOptions } from './hono.types';
 
 /**
- * Identifies client HTTP exceptions safe to expose through the shared response body.
- * Both status membership and camelCase error-code syntax must satisfy the contract.
+ * Identifies HTTP exceptions safe to expose through the shared response body.
+ * Server exceptions qualify only when the handler explicitly exposes them.
  */
-function isExpectedHTTPException(error: unknown): error is HTTPException & { status: ErrorResponseStatus } {
-  // ↓ Exclude unknown failures and server-side exceptions before inspecting public fields.
+function isExpectedHTTPException(
+  error: unknown,
+  exposeServerErrors: boolean
+): error is HTTPException & { status: ErrorResponseStatus } {
+  // ↓ Exclude unknown failures and hidden server-side exceptions before inspecting public fields.
 
   const isHTTPException = error instanceof HTTPException;
 
@@ -22,9 +25,9 @@ function isExpectedHTTPException(error: unknown): error is HTTPException & { sta
     return false;
   }
 
-  const isServerError = error.status >= 500;
+  const isHiddenServerError = error.status >= 500 && exposeServerErrors === false;
 
-  if (isServerError) {
+  if (isHiddenServerError) {
     return false;
   }
 
@@ -41,15 +44,17 @@ function isExpectedHTTPException(error: unknown): error is HTTPException & { sta
  * Unexpected failures invoke application reporting before returning a stable fallback.
  */
 export function createHonoErrorHandler(options: HonoErrorHandlerOptions): ErrorHandler {
+  const { onUnexpectedError, exposeServerErrors = false } = options;
+
   return (error, context) => {
-    if (isExpectedHTTPException(error)) {
+    if (isExpectedHTTPException(error, exposeServerErrors)) {
       const response = createErrorResponse(error.status, error.message);
 
       // Hono represents concrete unofficial statuses through its `-1` type-level escape hatch.
       return context.json(response, response.status as ContentfulStatusCode);
     }
 
-    options.onUnexpectedError(error, context, getHonoRequestId(context));
+    onUnexpectedError(error, context, getHonoRequestId(context));
 
     const fallback = honoErrors.internalServerError();
 

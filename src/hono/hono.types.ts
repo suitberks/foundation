@@ -41,11 +41,12 @@ export type HonoQueryValidatorOptions<TSchema extends z.ZodType> = Omit<
 >;
 
 /**
- * Options controlling the application-owned side effect for unexpected failures.
- * Expected client exceptions bypass the callback and keep their stable codes.
+ * Options controlling unexpected-failure reporting and exposed server error codes.
+ * Coded 5xx exceptions reach clients only when `exposeServerErrors` is enabled.
  */
 export type HonoErrorHandlerOptions = {
   onUnexpectedError: (error: unknown, context: Context, requestId?: string) => void;
+  exposeServerErrors?: boolean;
 };
 
 /**

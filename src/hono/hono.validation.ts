@@ -1,5 +1,6 @@
 import type { ValidationTargets } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { HTTPException } from 'hono/http-exception';
 import { validator } from 'hono/validator';
 import type { z } from 'zod';
 
@@ -8,14 +9,14 @@ import type { HonoLimitedValidatorOptions, HonoQueryValidatorOptions, HonoValida
 
 /**
  * Creates asynchronous Zod validation for one supported Hono validation target.
- * Successful output keeps its inferred type through `context.req.valid()` calls.
+ * Malformed bodies and rejected values both fail through `createValidationError`.
  */
 export function createHonoValidator<TSchema extends z.ZodType, TTarget extends keyof ValidationTargets>(
   options: HonoValidatorOptions<TSchema, TTarget>
 ) {
   const { target, schema, createValidationError } = options;
 
-  return validator(target, async (value): Promise<z.output<TSchema>> => {
+  const validateValue = validator(target, async (value): Promise<z.output<TSchema>> => {
     const result = await schema.safeParseAsync(value);
 
     if (result.success) {
@@ -24,6 +25,25 @@ export function createHonoValidator<TSchema extends z.ZodType, TTarget extends k
 
     throw createValidationError();
   });
+
+  // ↓ Hono rejects unreadable bodies with its own client exception before the schema runs.
+  // ↓ Handler failures never surface here because Hono settles them at their own dispatch.
+
+  const validateRequest: typeof validateValue = async (context, next) => {
+    try {
+      return await validateValue(context, next);
+    } catch (error) {
+      const isUnreadableInput = error instanceof HTTPException && error.status === 400;
+
+      if (isUnreadableInput) {
+        throw createValidationError();
+      }
+
+      throw error;
+    }
+  };
+
+  return validateRequest;
 }
 
 /**

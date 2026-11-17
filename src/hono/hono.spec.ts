@@ -88,7 +88,10 @@ type _HonoFileRespondOptionsContract = Assert<
 type _HonoErrorHandlerOptionsContract = Assert<
   IsExact<
     HonoErrorHandlerOptions,
-    { onUnexpectedError: (error: unknown, context: Context, requestId?: string) => void }
+    {
+      onUnexpectedError: (error: unknown, context: Context, requestId?: string) => void;
+      exposeServerErrors?: boolean;
+    }
   >
 >;
 type _HonoLoggingMiddlewareOptionsContract = Assert<
@@ -288,6 +291,55 @@ describe('createHonoValidator', () => {
 
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('requestValidationFailed');
+  });
+
+  test('translates unreadable JSON through the application-owned error factory', async () => {
+    const app = new Hono();
+
+    app.onError((error, context) => context.text(error.message, 400));
+    app.post(
+      '/employees',
+      createHonoValidator({
+        target: 'json',
+        schema: z.object({ identifier: z.string() }),
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      (context) => context.body(null, 204)
+    );
+
+    const response = await app.request('/employees', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"identifier":',
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('requestValidationFailed');
+  });
+
+  test('keeps client exceptions thrown by the route handler untranslated', async () => {
+    const app = new Hono();
+
+    app.onError((error, context) => context.text(error.message, 409));
+    app.post(
+      '/employees',
+      createHonoValidator({
+        target: 'json',
+        schema: z.object({ identifier: z.string() }),
+        createValidationError: () => new Error('requestValidationFailed'),
+      }),
+      () => {
+        throw new HTTPException(400, { message: 'employeeAlreadyExists' });
+      }
+    );
+
+    const response = await app.request('/employees', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ identifier: 'employee-1' }),
+    });
+
+    expect(await response.text()).toBe('employeeAlreadyExists');
   });
 
   test('parses and validates URL-encoded form values through Hono', async () => {
@@ -548,6 +600,43 @@ describe('createHonoErrorHandler', () => {
 
     const response = await app.request('/error');
 
+    expect(await readJSON<ErrorResponse<HonoErrorCode>>(response)).toEqual({
+      kind: 'error',
+      status: 500,
+      error: 'internalServerError',
+    });
+    expect(reportedErrors).toEqual([error]);
+  });
+
+  test('exposes coded server exceptions without reporting them when the handler opts in', async () => {
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(new HTTPException(503, { message: 'documentProcessQueueFull' }), {
+      onUnexpectedError: (error) => reportedErrors.push(error),
+      exposeServerErrors: true,
+    });
+
+    const response = await app.request('/error');
+
+    expect(response.status).toBe(503);
+    expect(await readJSON<ErrorResponse>(response)).toEqual({
+      kind: 'error',
+      status: 503,
+      error: 'documentProcessQueueFull',
+    });
+    expect(reportedErrors).toEqual([]);
+  });
+
+  test('keeps human-readable server exceptions hidden even when server errors are exposed', async () => {
+    const error = new HTTPException(503, { message: 'Queue is full' });
+    const reportedErrors: unknown[] = [];
+    const app = createThrowingApp(error, {
+      onUnexpectedError: (reportedError) => reportedErrors.push(reportedError),
+      exposeServerErrors: true,
+    });
+
+    const response = await app.request('/error');
+
+    expect(response.status).toBe(500);
     expect(await readJSON<ErrorResponse<HonoErrorCode>>(response)).toEqual({
       kind: 'error',
       status: 500,
