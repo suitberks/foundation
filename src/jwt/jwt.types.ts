@@ -5,8 +5,8 @@ import type { z } from 'zod';
 export type { JWTPayload };
 
 /**
- * Configures the algorithm and default expiration used by `JWTService`.
- * Omitted values use `HS256` and fifteen minutes; negative ones expire.
+ * Configures the algorithm and the default expiration used by `JWTService`.
+ * Omitted values use `HS256` and fifteen minutes; negative lifetimes expire.
  */
 export type JWTServiceOptions = {
   algorithm?: SymmetricAlgorithm;
@@ -23,6 +23,6 @@ export type JWTSignOptions = {
 
 /**
  * Parses an untrusted JWT payload into the payload returned by `JWTService`.
- * Zod transformations and asynchronous refinements remain part of the contract.
+ * Zod transforms and asynchronous refinements remain part of the contract.
  */
 export type JWTPayloadSchema<TPayload extends JWTPayload> = z.ZodType<TPayload>;

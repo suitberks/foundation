@@ -1,16 +1,16 @@
 /**
  * Options defining the accepted shape of one canonical decimal string format.
- * Precision and scale are mandatory while sign and zero policies remain optional.
+ * Precision and scale are required while sign and zero policies stay optional.
  */
 export type DecimalFormatOptions = Readonly<{
   /**
    * Maximum digit count accepted across integer and fractional decimal parts.
-   * The value must be a positive safe integer greater than the configured scale.
+   * The value must be a positive safe integer above the configured scale.
    */
   precision: number;
 
   /**
-   * Maximum digit count accepted after the decimal separator of a value.
+   * Maximum digit count accepted after the decimal separator of each value.
    * The value must be a non-negative safe integer below the set precision.
    */
   scale: number;
@@ -22,8 +22,8 @@ export type DecimalFormatOptions = Readonly<{
   signed?: boolean;
 
   /**
-   * Allows every canonical textual representation of zero by default.
-   * Setting the option to `false` rejects signed and fractional zeros.
+   * Allows every canonical textual representation of zero values by default.
+   * Setting the option to `false` rejects signed and fractional zero forms.
    */
   zeroAllowed?: boolean;
 }>;

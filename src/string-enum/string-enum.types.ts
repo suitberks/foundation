@@ -10,7 +10,7 @@ export type ReplaceDotsWithUnderscores<TValue extends string> = TValue extends `
   : TValue;
 
 /**
- * Recursively replaces hyphens in a string literal with underscores.
+ * Recursively replaces each hyphen in one string literal with an underscore.
  * Every other character remains unchanged in the resulting literal type.
  *
  * @example
@@ -35,8 +35,8 @@ export type IsCamelCaseBoundaryPrefix<TCharacter extends string> =
     : true;
 
 /**
- * Inserts underscores where a lowercase letter or digit precedes a capital letter.
- * Consecutive capitals stay grouped while all other characters remain unchanged.
+ * Inserts underscores where a lowercase letter or digit precedes a capital.
+ * Consecutive capitals stay grouped while other characters remain unchanged.
  */
 export type SeparateCamelCase<
   TValue extends string,
@@ -59,7 +59,7 @@ export type StringEnumKey<TValue extends string> = Uppercase<
 
 /**
  * Maps a readonly string-literal collection into an immutable enum-like record.
- * Normalized uppercase keys retain their original source literals as record values.
+ * Normalized uppercase keys keep their original source literals as their values.
  *
  * @example
  * type Statuses = StringEnumRecord<readonly ['review.pending', 'published']>;

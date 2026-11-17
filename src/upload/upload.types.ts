@@ -4,7 +4,7 @@ import type { UploadValidationError } from './upload.enums';
 
 /**
  * Transport metadata describing one file format accepted by an upload policy.
- * MIME types and extension collections remain application-owned literal values.
+ * MIME types and extension collections remain application-owned literals.
  */
 export type UploadFormat = Readonly<{
   /**
@@ -53,8 +53,8 @@ export type UploadPreset<TFormats extends readonly UploadFormat[] = readonly Upl
 >;
 
 /**
- * Constraints used to validate an incoming collection of browser files.
- * Existing and incoming counts are combined when enforcing capacity.
+ * Constraints used to validate an incoming batch against collection capacity.
+ * Existing and incoming file counts are combined when enforcing the capacity.
  */
 export type UploadFilesValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
   UploadPreset<TFormats> &
@@ -64,8 +64,8 @@ export type UploadFilesValidationOptions<TFormats extends readonly UploadFormat[
 >;
 
 /**
- * Accepted files and the first rejection encountered in one batch.
- * Valid entries remain available when another entry fails validation.
+ * Accepted files and the first rejection encountered in one incoming batch.
+ * Valid entries remain available when another entry fails its validation.
  */
 export type UploadFilesValidationResult = Readonly<{
   acceptedFiles: readonly File[];

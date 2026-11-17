@@ -1,6 +1,6 @@
 /**
- * Receives one completely formatted logging line for final output or collection.
- * Implementations control the destination without changing formatting behavior.
+ * Receives one fully formatted logging line for final output or collection.
+ * Implementations choose the destination without changing the formatting.
  */
 export type LogSink = (line: string) => void;
 
@@ -35,8 +35,8 @@ export type HTTPRequestLogOptions = {
   method: string;
 
   /**
-   * Final HTTP status observed after all downstream request handling.
-   * Its numeric range selects the terminal color applied to the value.
+   * Final HTTP status observed after all downstream request handling ends.
+   * Its numeric range selects the terminal color applied to the printed value.
    */
   status: number;
 
@@ -48,7 +48,7 @@ export type HTTPRequestLogOptions = {
 
   /**
    * Request pathname printed without its query and padded to a stable column.
-   * Query parameters belong in `searchParams` so the path column stays aligned.
+   * Query parameters belong in `searchParams` so the path column stays even.
    */
   path: string;
 

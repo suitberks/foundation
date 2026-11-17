@@ -1,12 +1,12 @@
 /**
- * Synchronous or asynchronous operation consumed by execution utilities.
+ * Synchronous or asynchronous operation consumed by the execution utilities.
  * The resolved value remains inferred from its callback without widening.
  */
 export type Execution<TData> = () => TData | Promise<TData>;
 
 /**
  * Mutually exclusive result produced after capturing an operation outcome.
- * Successful data and unknown failures are distinguished by `success`.
+ * Successful data and unknown failures are distinguished by their `success`.
  */
 export type ExecutionResult<TData> =
   | {
@@ -19,8 +19,8 @@ export type ExecutionResult<TData> =
     };
 
 /**
- * Result returned after measuring one successful synchronous or async execution.
- * The resolved value remains available beside its rounded millisecond duration.
+ * Result returned after measuring one successful synchronous or async run.
+ * The resolved value stays available beside its rounded millisecond duration.
  */
 export type MeasuredExecution<TData> = {
   result: TData;
@@ -42,8 +42,8 @@ export type RetryExecutionContext = Readonly<{
  */
 export type RetryExecutionOptions = Readonly<{
   /**
-   * Positive total attempt count that includes the initial execution.
-   * Omitting this option applies the default policy of three attempts.
+   * Positive total attempt count that includes the initial execution attempt.
+   * Omitting this option applies the default retry policy of three attempts.
    */
   maxAttempts?: number;
 
@@ -61,7 +61,7 @@ export type RetryExecutionOptions = Readonly<{
 
   /**
    * Cancels pending delays and prevents subsequent attempts when aborted.
-   * Active operations must observe the signal to stop their own work.
+   * Active operations must observe the signal themselves to stop their work.
    */
   signal?: AbortSignal;
 }>;
@@ -72,14 +72,14 @@ export type RetryExecutionOptions = Readonly<{
  */
 export type ExecuteWithTimeoutOptions = Readonly<{
   /**
-   * Non-negative millisecond duration that stays within the runtime timer limit.
+   * Non-negative millisecond duration that stays within the runtime timer cap.
    * Expiration aborts the signal with a standard `TimeoutError` DOM exception.
    */
   timeoutMilliseconds: number;
 
   /**
    * Optional caller signal combined with the internally managed timeout signal.
-   * Its cancellation reason takes precedence when the signal is already aborted.
+   * Its cancellation reason takes precedence when the signal is pre-aborted.
    */
   signal?: AbortSignal;
 }>;
