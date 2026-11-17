@@ -25,7 +25,9 @@ boundary, or serve an observed consumer. Prefer leaving a small module small.
 
 Each module owns one coherent domain. Split files by responsibility rather than
 line count, and avoid vague owners such as `common`, `shared`, `helpers`, or
-`misc`. Use the established responsibility suffixes consistently:
+`misc`. Name each file `{module}.{role}.ts`, where the role states its single
+responsibility, and keep every role's meaning identical across modules. These
+core roles cover most files:
 
 - `*.constants.ts` for immutable configuration and meaningful defaults;
 - `*.enums.ts` for literal collections, unions, records, and aliases;
@@ -33,19 +35,16 @@ line count, and avoid vague owners such as `common`, `shared`, `helpers`, or
 - `*.types.ts` for reusable domain and public contracts;
 - `*.schemas.ts` for runtime schemas and schema factories;
 - `*.factory.ts` for non-schema value construction;
-- `*.policies.ts` for `define*` functions that validate and fix one policy;
-- `*.resolvers.ts` for result translation and unwrapping;
-- `*.validation.ts` for ordered validation behavior;
-- `*.refiners.ts` for refinement, narrowing, and condition construction;
 - `*.utilities.ts` for cohesive stateless reusable behavior;
 - `*.services.ts` for stateful service classes;
-- `*.measurements.ts` for execution timing measurement behavior;
-- `*.retry.ts` and `*.timeout.ts` for bounded execution policies;
-- `*.execution.ts`, `*.logging.ts`, `*.respond.ts`, and `*.delay.ts` for framework concerns;
-- `*.request-id.ts` and `*.security.ts` for their narrow cross-cutting concerns;
-- `*.requests.ts` for framework-neutral HTTP request formatting and previews;
 - `*.spec.ts` for the module's runtime and compile-time specification;
 - `index.ts` for the module's public barrel.
+
+A narrower responsibility takes a role named after what it does, such as
+`*.policies.ts` for `define*` functions, `*.validation.ts` for ordered checks,
+or `*.retry.ts` for one bounded execution policy. Reuse a role already present
+in the repository before inventing another, and inspect an existing file with
+that role before writing a new one.
 
 Create a separate file when a distinct responsibility exists. Do not extract a
 tiny function mechanically when it cannot be understood, reused, or tested
@@ -54,23 +53,21 @@ outside the operation whose invocation state it closes over.
 Dependencies flow from specialized adapters toward generic modules. Runtime and
 type-only imports follow the same direction. A generic module must not import
 its framework consumer or application-specific translation layer. Keep the
-repository dependency hierarchy aligned with the current package architecture:
+repository dependency hierarchy aligned with these layers, and place a new module
+in the lowest layer that holds every module it depends on:
 
 ```text
-Framework adapters
-  hono / drizzle / jwt
-            ↓
-Contract composition
-  upload
-            ↓
-Contract primitives
-  response / logging / zod / hmac
-            ↓
-Generic foundations
-  base64 / datetime / decimal / execution / guard / object / random / string / string-enum / type
+Framework adapters          such as hono, drizzle, jwt
+        ↓
+Contract composition        such as upload
+        ↓
+Contract primitives         such as response, logging, zod, hmac
+        ↓
+Generic foundations         such as base64, guard, string, type
 ```
 
 Independent modules may skip layers, but dependencies must never point upward.
+The examples are not exhaustive; `README.md` lists every current module.
 
 ## Public boundaries and barrels
 
@@ -266,7 +263,8 @@ constants follow the Constants section. Use at least two meaningful description
 lines of similar visual length. The first states responsibility; the second
 records behavior, a guarantee, default, failure mode, unit, or safety boundary.
 
-Balanced JSDoc and comment lines stay within four characters of each other.
+Balanced JSDoc and comment lines stay within four characters of each other,
+and the blocks of one file stay visually comparable to each other.
 Fixed templates, such as registry, enum, and specification headers, keep their
 exact wording even when the substituted entity name changes their length.
 
@@ -520,8 +518,9 @@ integration contour when the module genuinely requires one.
 
 ## Repository hygiene
 
-Keep registry tokens, environment files, and local credentials outside version
-control. A local `.npmrc` may hold publishing authentication only while it remains
+Never commit, push, publish, or bump a version without the user's explicit
+request. Keep registry tokens, environment files, and local credentials outside
+version control. A local `.npmrc` may hold publishing authentication only while it remains
 ignored; never copy its contents into source, documentation, logs, or fixtures.
 
 Preserve unrelated working-tree changes and inspect `git status` before and after
