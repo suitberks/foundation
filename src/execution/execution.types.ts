@@ -13,23 +13,17 @@ export type ExecutionResult<TData> =
       success: true;
       data: TData;
     }
-  | { success: false; error: unknown };
+  | {
+      success: false;
+      error: unknown;
+    };
 
 /**
  * Result returned after measuring one successful synchronous or async execution.
  * The resolved value remains available beside its rounded millisecond duration.
  */
 export type MeasuredExecution<TData> = {
-  /**
-   * Value resolved by the measured execution without cloning or transformation.
-   * Its generic type remains identical to the original operation result type.
-   */
   result: TData;
-
-  /**
-   * Rounded wall-clock duration of the measured execution in milliseconds.
-   * The value is collected only after the supplied operation has resolved.
-   */
   executionTime: number;
 };
 
@@ -38,16 +32,7 @@ export type MeasuredExecution<TData> = {
  * Attempts are one-based and share an optional caller cancellation signal.
  */
 export type RetryExecutionContext = Readonly<{
-  /**
-   * One-based number of the attempt that is currently being executed.
-   * The initial operation always receives the `attempt` value of `1`.
-   */
   attempt: number;
-
-  /**
-   * Optional signal allowing the operation to observe caller cancellation.
-   * The same signal remains available across every single execution attempt.
-   */
   signal?: AbortSignal;
 }>;
 

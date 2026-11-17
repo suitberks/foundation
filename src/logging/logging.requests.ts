@@ -70,9 +70,14 @@ export function formatHTTPRequestLog(options: HTTPRequestLogOptions): string {
   const status = getColoredHTTPStatus(options.status)(String(options.status).padEnd(4));
   const duration = dim(`${options.duration}ms`.padStart(6));
   const path = white(options.path.padEnd(32));
-  const searchParams = options.searchParams ? dim(` (${options.searchParams})`) : '';
-  const bodyPreview = options.bodyPreview ? dim(` ${options.bodyPreview}`) : '';
-  const requestId = options.requestId ? dim(` [${options.requestId}]`) : '';
+
+  const hasSearchParams = options.searchParams !== undefined && options.searchParams.length > 0;
+  const hasBodyPreview = options.bodyPreview !== undefined && options.bodyPreview.length > 0;
+  const hasRequestId = options.requestId !== undefined && options.requestId.length > 0;
+
+  const searchParams = hasSearchParams ? dim(` (${options.searchParams})`) : '';
+  const bodyPreview = hasBodyPreview ? dim(` ${options.bodyPreview}`) : '';
+  const requestId = hasRequestId ? dim(` [${options.requestId}]`) : '';
 
   return `${method} ${status} ${duration} ${path}${searchParams}${bodyPreview}${requestId}`;
 }

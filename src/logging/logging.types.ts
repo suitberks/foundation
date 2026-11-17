@@ -19,16 +19,7 @@ export type ScopedLogger = {
  * The default sink writes every fully formatted line through `console.log`.
  */
 export type CreateLoggerOptions = {
-  /**
-   * Stable service label displayed beside every message from the logger.
-   * Short labels retain the shared terminal column alignment automatically.
-   */
   service: string;
-
-  /**
-   * Optional destination receiving each completely formatted output line.
-   * Omission preserves the standard console-backed logging behavior here.
-   */
   sink?: LogSink;
 };
 
@@ -38,8 +29,8 @@ export type CreateLoggerOptions = {
  */
 export type HTTPRequestLogOptions = {
   /**
-   * HTTP method associated with the completed request in this log entry.
-   * Formatting reserves one stable terminal column for its displayed value.
+   * HTTP method printed in bold and padded to a stable four-character column.
+   * Longer custom methods widen their own column instead of being truncated.
    */
   method: string;
 
@@ -56,26 +47,26 @@ export type HTTPRequestLogOptions = {
   duration: number;
 
   /**
-   * Request pathname displayed without its serialized query parameters.
-   * Formatting reserves one stable terminal column for its displayed value.
+   * Request pathname printed without its query and padded to a stable column.
+   * Query parameters belong in `searchParams` so the path column stays aligned.
    */
   path: string;
 
   /**
-   * Optional redacted query representation without the leading question mark.
-   * Empty and omitted values do not produce a suffix in the formatted line.
+   * Redacted query string printed in parentheses without its leading `?`.
+   * Formatting prints it verbatim, so sensitive values are removed first.
    */
   searchParams?: string;
 
   /**
-   * Optional normalized, redacted, and length-limited request body preview.
-   * Empty and omitted values do not produce a suffix in the formatted line.
+   * Normalized, redacted, and length-limited preview of the request body.
+   * Formatting prints it verbatim after the query suffix when non-empty.
    */
   bodyPreview?: string;
 
   /**
-   * Optional identifier correlating this request with downstream reports.
-   * Empty and omitted values do not produce a suffix in the formatted line.
+   * Identifier correlating this request with downstream reports and logs.
+   * Formatting prints it in square brackets at the end of the line when set.
    */
   requestId?: string;
 };

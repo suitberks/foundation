@@ -15,41 +15,18 @@ export type HonoValidationErrorFactory = () => Error;
  * Successful parsing preserves the schema output through `context.req.valid()`.
  */
 export type HonoValidatorOptions<TSchema extends z.ZodType, TTarget extends keyof ValidationTargets> = {
-  /**
-   * Hono request segment that is parsed and validated before downstream handling.
-   * The selected target determines the key read through `context.req.valid()`.
-   */
   target: TTarget;
-
-  /**
-   * Zod schema owning asynchronous parsing, coercion, and output transformation.
-   * Its output type becomes the validated value exposed to downstream handlers.
-   */
   schema: TSchema;
-
-  /**
-   * Factory translating rejected request input into an application-owned failure.
-   * Applications retain ownership of status codes and machine-readable error codes.
-   */
   createValidationError: HonoValidationErrorFactory;
 };
 
 /**
- * Options validating a request body only after enforcing its byte-size boundary.
- * The transport limit runs before parsing so oversized payloads are never consumed.
+ * Options validating a request body only after enforcing its inclusive byte limit.
+ * `maxSize` is checked before parsing, so oversized payloads are never consumed.
  */
 export type HonoLimitedValidatorOptions<TSchema extends z.ZodType, TTarget extends 'form' | 'json'> = Simplify<
   HonoValidatorOptions<TSchema, TTarget> & {
-    /**
-     * Maximum accepted request-body size expressed as a positive integer of bytes.
-     * The boundary is inclusive and enforced before the body reaches its Zod schema.
-     */
     maxSize: number;
-
-    /**
-     * Factory translating an exceeded byte limit into an application-owned failure.
-     * Applications retain ownership of status codes and machine-readable error codes.
-     */
     createBodyTooLargeError: HonoValidationErrorFactory;
   }
 >;
@@ -68,10 +45,6 @@ export type HonoQueryValidatorOptions<TSchema extends z.ZodType> = Omit<
  * Expected client exceptions bypass the callback and keep their stable error codes.
  */
 export type HonoErrorHandlerOptions = {
-  /**
-   * Receives an unexpected failure, its context, and an optional request identifier.
-   * Applications may report the original context without changing the public envelope.
-   */
   onUnexpectedError: (error: unknown, context: Context, requestId?: string) => void;
 };
 

@@ -17,15 +17,6 @@ export type HMACSecret = HMACInput | CryptoKey;
  * Omitted values select SHA-256 and lowercase hexadecimal output by default.
  */
 export type HMACServiceOptions = Readonly<{
-  /**
-   * Web Crypto digest algorithm used to authenticate every payload.
-   * The service defaults to `SHA-256` whenever this option is omitted.
-   */
   algorithm?: HMACAlgorithm;
-
-  /**
-   * Text encoding applied to every generated and verified signature.
-   * The service defaults to `hex` whenever this option is omitted.
-   */
   encoding?: HMACEncoding;
 }>;

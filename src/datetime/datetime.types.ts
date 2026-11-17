@@ -1,14 +1,10 @@
 import type { Locale } from 'date-fns';
 
 /**
- * Options selecting the timezone used by current-time datetime operations.
- * An omitted timezone preserves the shared London-based default behavior.
+ * Options selecting the IANA timezone used by current-time datetime operations.
+ * An omitted timezone keeps the shared `Europe/London` default for all calls.
  */
 export type DateTimeZoneOptions = {
-  /**
-   * IANA timezone used to project and format the current instant in time.
-   * The shared London timezone applies whenever this option is omitted.
-   */
   tz?: string;
 };
 
@@ -17,10 +13,6 @@ export type DateTimeZoneOptions = {
  * Time output includes its UTC offset and stays on unless explicitly disabled.
  */
 export type FormattedDateOptions = DateTimeZoneOptions & {
-  /**
-   * Controls whether wall-clock time and its UTC offset are both included.
-   * Time information stays enabled unless this option is explicitly `false`.
-   */
   withTime?: boolean;
 };
 
@@ -29,9 +21,5 @@ export type FormattedDateOptions = DateTimeZoneOptions & {
  * British English and the shared timezone default apply when they are omitted.
  */
 export type FormatTimeOptions = DateTimeZoneOptions & {
-  /**
-   * date-fns locale used for the textual calendar date representation.
-   * British English remains the default whenever this option is omitted.
-   */
   locale?: Locale;
 };

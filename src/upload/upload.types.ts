@@ -26,30 +26,17 @@ export type UploadFormat = Readonly<{
  */
 export type UploadFormatValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> =
   Readonly<{
-    /**
-     * Format definitions accepted by this particular upload validation boundary.
-     * Literal tuples remain available to consumers defining narrower policies.
-     */
     formats: TFormats;
-
-    /**
-     * Allows extensions to compensate for absent or unreliable MIME metadata.
-     * Omission preserves strict MIME-only validation across every adapter.
-     */
     extensionFallback?: boolean;
   }>;
 
 /**
  * Constraints used to validate one browser file apart from collection capacity.
- * Empty files remain invalid regardless of the configured maximum size boundary.
+ * `maxFileSize` is measured in bytes, and empty files always remain invalid.
  */
 export type UploadFileValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
   UploadFormatValidationOptions<TFormats> &
     Readonly<{
-      /**
-       * Maximum accepted size of one uploaded file, measured in whole bytes.
-       * The boundary must be a non-negative integer number of bytes in total.
-       */
       maxFileSize: number;
     }>
 >;
@@ -61,10 +48,6 @@ export type UploadFileValidationOptions<TFormats extends readonly UploadFormat[]
 export type UploadPreset<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
   UploadFileValidationOptions<TFormats> &
     Readonly<{
-      /**
-       * Optional maximum number of files retained by one entire upload collection.
-       * Single-file controls can set this value to `1` for shared capacity rules.
-       */
       maxFilesCount?: number;
     }>
 >;
@@ -76,10 +59,6 @@ export type UploadPreset<TFormats extends readonly UploadFormat[] = readonly Upl
 export type UploadFilesValidationOptions<TFormats extends readonly UploadFormat[] = readonly UploadFormat[]> = Simplify<
   UploadPreset<TFormats> &
     Readonly<{
-      /**
-       * Number of files already retained before the incoming batch is validated.
-       * Existing entries reduce the remaining capacity without being revalidated.
-       */
       currentFilesCount: number;
     }>
 >;
@@ -89,15 +68,6 @@ export type UploadFilesValidationOptions<TFormats extends readonly UploadFormat[
  * Valid entries remain available when another entry fails validation.
  */
 export type UploadFilesValidationResult = Readonly<{
-  /**
-   * Valid incoming files that fit within the remaining collection capacity.
-   * File objects preserve their identity and ordering through a readonly view.
-   */
   acceptedFiles: readonly File[];
-
-  /**
-   * First stable rejection encountered while processing the incoming batch.
-   * The field remains absent when every supplied file has been accepted.
-   */
   validationError?: UploadValidationError;
 }>;

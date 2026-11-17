@@ -273,8 +273,11 @@ Do not write one-line JSDoc. Do not narrate a signature, repeat a symbol name, o
 add ceremonial documentation to trivial derived aliases. Use grouped ordinary
 comments when several adjacent helpers form one inseparable internal contract.
 
-Document meaningful public option properties when their units, defaults,
-interaction, or cancellation semantics are not obvious from the property type.
+Document object properties all-or-nothing within one type. Prefer the type's
+JSDoc for behavior shared by several properties or for one or two non-obvious
+details. Document every property only when several of them carry units,
+defaults, formats, interaction, or cancellation semantics that their names and
+types cannot convey; never document a property merely to repeat its name or type.
 
 Use `@example` only when concrete composition materially improves understanding.
 Never wrap JSDoc examples in fenced Markdown blocks. Show a short example result
