@@ -11,10 +11,12 @@ bun add @suitberks/foundation
 
 ## Modules
 
-- **Generic:** `base64`, `datetime`, `decimal`, `execution`, `guard`, `object`, `random`, `string`, `string-enum`, `type`.
-- **Contracts:** `response`, `upload`, `zod`.
-- **Security:** `hmac`, `jwt`.
-- **Adapters:** `drizzle`, `hono`, `logging`.
+Modules form dependency layers, and every module depends only on the layers below it:
+
+- **Framework adapters:** `drizzle`, `hono`, `jwt`.
+- **Contract composition:** `upload`.
+- **Contract primitives:** `hmac`, `logging`, `response`, `zod`.
+- **Generic foundations:** `base64`, `datetime`, `decimal`, `execution`, `guard`, `object`, `random`, `string`, `string-enum`, `type`.
 
 All supported APIs are exported from the package root. Generated declarations, public JSDoc, and colocated
 specifications are the API reference; internal source paths are not public entrypoints.
