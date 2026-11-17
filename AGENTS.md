@@ -305,10 +305,10 @@ ordering, typing, cleanup, cancellation, resource ownership, or safety. Every
 inline comment ends with a period; a comment ending with a documentation URL
 uses a semicolon instead.
 
-Choose comment geometry from its semantic target, not from comment length or
-the visual length of the following expression. A comment targeting an entire
-multi-line control-flow block or a sequence of operations uses `↓` and exactly
-one blank line before that block:
+Choose comment geometry from its semantic target and the visual extent of the
+code it describes, not from comment length. A comment targeting a multi-line
+control-flow block, a sequence of operations, or any statement that spans
+several lines uses `↓` and exactly one blank line before that code:
 
 ```ts
 // ↓ Release every timer and cross-signal listener after settlement.
@@ -333,9 +333,20 @@ If one compiler limitation or safety invariant motivates several declarations,
 checks, or operations, the comment targets their complete sequence and therefore
 uses the block form. Do not classify it from the first statement alone.
 
-When a comment explains one specific statement, omit the arrow and keep it
-directly adjacent without a blank line. This includes single declarations whose
-expressions happen to wrap across several visual lines:
+A single declaration, call, or `return` counts as a block once its expression
+wraps across several visual lines, even when it is syntactically one statement:
+
+```ts
+// ↓ Preserve literal nullability hidden from TypeScript by the runtime branch.
+
+return schema as unknown as z.ZodType<
+  FieldSchemaValue<z.output<TSchema>, TNullable>,
+  FieldSchemaValue<z.input<TSchema>, TNullable>
+>;
+```
+
+When a comment explains one statement that fits on a single line, omit the
+arrow and keep it directly adjacent without a blank line:
 
 ```ts
 // Preserve the original failure and its stack trace.

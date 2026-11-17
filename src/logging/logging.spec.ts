@@ -177,7 +177,8 @@ describe('sensitive log value redaction', () => {
       nested: [{ access_token: 'token-value' }, { clientSecret: 'secret-value' }],
     });
 
-    // Nested arrays and separator variants verify that matching is structural and normalized.
+    // ↓ Nested arrays and separator variants verify that matching is structural and normalized.
+
     expect(JSON.parse(redactSensitiveJSON(source))).toEqual({
       email: 'visible@example.com',
       newPassword: '[redacted]',
