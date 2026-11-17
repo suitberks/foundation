@@ -14,10 +14,10 @@ export const LOG_LEVEL_COLORS = {
 } as const satisfies Record<LogLevel, (text: string) => string>;
 
 /**
- * Public placeholder written instead of sensitive query and JSON values.
- * One stable marker keeps redacted output recognizable across log consumers.
+ * Number of characters retained from each edge of an oversized request body.
+ * The complete preview includes both edges separated by one explicit ellipsis.
  */
-export const REDACTED_LOG_VALUE = '[redacted]';
+export const LOG_BODY_PREVIEW_EDGE_LENGTH = 30;
 
 /**
  * Normalized key fragments that are treated as sensitive by logging redaction.
@@ -37,22 +37,22 @@ export const SENSITIVE_LOG_KEY_PARTS = [
 ] as const;
 
 /**
- * Number of characters retained from each edge of an oversized request body.
- * The complete preview includes both edges separated by one explicit ellipsis.
+ * Public placeholder written instead of sensitive query and JSON values.
+ * One stable marker keeps redacted output recognizable across log consumers.
  */
-export const LOG_BODY_PREVIEW_EDGE_LENGTH = 30;
-
-/**
- * Maximum request-body size in bytes read while building one log preview.
- * Larger bodies stop being buffered and emit a safe placeholder instead.
- */
-export const LOG_BODY_PREVIEW_MAX_BYTES = 64 * 1024;
+export const REDACTED_LOG_VALUE = '[redacted]';
 
 /**
  * Safe request-body placeholder emitted instead of reading multipart content.
  * Skipping multipart reads keeps file payloads out of logs and memory copies.
  */
 export const MULTIPART_LOG_BODY = '[multipart]';
+
+/**
+ * Maximum request-body size in bytes read while building one log preview.
+ * Larger bodies stop being buffered and emit a safe placeholder instead.
+ */
+export const LOG_BODY_PREVIEW_MAX_BYTES = 64 * 1024;
 
 /**
  * Safe request-body placeholder emitted instead of previewing an oversized payload.

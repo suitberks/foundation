@@ -130,8 +130,9 @@ const { credentials = 'include', throwHttpErrors = false, hooks } = transportOpt
 
 Order declarations dependency-first within each file. Place foundational types,
 constants, predicates, and low-level helpers before the declarations that consume
-them. For independent declarations, preserve the clearest public reading order;
-do not replace semantic grouping with mechanical alphabetical sorting. Inside
+them. Order independent declarations by the moment the owning flow first uses
+them, so error registries, constants, and option properties follow execution
+order; do not replace that order with mechanical alphabetical sorting. Inside
 classes, keep the public API before private implementation details unless moving
 a private member materially clarifies a non-obvious dependency.
 

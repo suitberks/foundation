@@ -2,8 +2,8 @@
 // Used by the owning module to communicate stable and machine-readable failures.
 
 export const drizzleErrors = {
-  whereConditionsRequired: () => new Error('whereConditionsRequired'),
   whereColumnNotFound: () => new Error('whereColumnNotFound'),
+  whereConditionsRequired: () => new Error('whereConditionsRequired'),
 };
 
 // Inferred literal union of error codes from `drizzleErrors`.

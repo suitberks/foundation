@@ -4,10 +4,10 @@ import { HTTPException } from 'hono/http-exception';
 // Used by the owning module to communicate stable and machine-readable failures.
 
 export const honoErrors = {
-  internalServerError: () => new HTTPException(500, { message: 'internalServerError' }),
+  invalidRequestId: () => new TypeError('invalidRequestId'),
   invalidBodyLimit: () => new RangeError('invalidBodyLimit'),
   invalidDelayMilliseconds: () => new RangeError('invalidDelayMilliseconds'),
-  invalidRequestId: () => new TypeError('invalidRequestId'),
+  internalServerError: () => new HTTPException(500, { message: 'internalServerError' }),
 };
 
 // Inferred literal union of error codes from `honoErrors`.

@@ -4,9 +4,9 @@ import type { ErrorResponseStatus } from './response.enums';
 // Used by the owning module to communicate stable and machine-readable failures.
 
 export const responseErrors = {
-  invalidResponseErrorCode: () => new TypeError('invalidResponseErrorCode'),
   invalidSuccessResponseStatus: () => new RangeError('invalidSuccessResponseStatus'),
   invalidErrorResponseStatus: () => new RangeError('invalidErrorResponseStatus'),
+  invalidResponseErrorCode: () => new TypeError('invalidResponseErrorCode'),
 };
 
 // Inferred literal union of error codes from `responseErrors`.
