@@ -1,6 +1,6 @@
 {
   "name": "@suitberks/foundation",
-  "version": "3.2.13",
+  "version": "3.2.14",
   "description": "Shared TypeScript foundations for reusable contracts, validation, framework adapters and utilities.",
   "license": "MIT",
   "repository": {
